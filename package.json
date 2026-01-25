@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "starter",
-  "version": "2025.12.24",
+  "version": "2026.01.25",
   "main": "server.ts",
   "scripts": {
     "prepare": "git config core.hooksPath .git-hooks || true",
@@ -19,26 +19,26 @@
     "types:check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.10",
-    "@testing-library/react": "^16.3.1",
+    "@biomejs/biome": "2.3.12",
+    "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/fs-extra": "^11.0.4",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@types/supertest": "^6.0.3",
     "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/coverage-v8": "^4.0.18",
     "fs-extra": "^11.3.3",
-    "jsdom": "^27.3.0",
-    "supertest": "^7.1.4",
+    "jsdom": "^27.4.0",
+    "supertest": "^7.2.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.0",
-    "vitest": "^4.0.16"
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "argon2": "^0.44.0",
@@ -47,10 +47,10 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "jsonwebtoken": "^9.0.3",
-    "mysql2": "^3.16.0",
+    "mysql2": "^3.16.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-router": "^7.11.0",
-    "zod": "^4.2.1"
+    "react-router": "^7.13.0",
+    "zod": "^4.3.6"
   }
 }
