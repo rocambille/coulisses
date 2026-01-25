@@ -36,8 +36,10 @@ import userRepository from "./userRepository";
   Response:
   - 200 with an array of users
 */
-const browse: RequestHandler = async (_req, res) => {
-  const users = await userRepository.readAll();
+const browse: RequestHandler = async (req, res) => {
+  const offset = Number(req.query.start ?? "0");
+
+  const users = await userRepository.readAll(10, offset);
 
   res.json(users);
 };
