@@ -85,12 +85,12 @@ class UserRepository {
     Read all non-deleted users.
 
     Notes:
-    - No pagination here by design
     - Meant to be composed or extended if needed
   */
-  async readAll(): Promise<User[]> {
+  async readAll(limit: number, offset: number): Promise<User[]> {
     const [rows] = await databaseClient.query<Rows>(
-      "select id, email from user where deleted_at is null",
+      "select id, email from user where deleted_at is null limit ? offset ?",
+      [limit, offset],
     );
 
     return rows.map<User>(({ id, email }) => ({ id, email }));

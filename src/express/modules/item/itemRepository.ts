@@ -85,12 +85,12 @@ class ItemRepository {
     Read all non-deleted items.
 
     Notes:
-    - No pagination here by design
     - Meant to be composed or extended if needed
   */
-  async readAll(): Promise<Item[]> {
+  async readAll(limit: number, offset: number): Promise<Item[]> {
     const [rows] = await databaseClient.query<Rows>(
-      "select id, title, user_id from item where deleted_at is null",
+      "select id, title, user_id from item where deleted_at is null limit ? offset ?",
+      [limit, offset],
     );
 
     return rows.map<Item>(({ id, title, user_id }) => ({

@@ -36,8 +36,10 @@ import itemRepository from "./itemRepository";
   Response:
   - 200 with an array of items
 */
-const browse: RequestHandler = async (_req, res) => {
-  const items = await itemRepository.readAll();
+const browse: RequestHandler = async (req, res) => {
+  const offset = Number(req.query.start ?? "0");
+
+  const items = await itemRepository.readAll(10, offset);
 
   res.json(items);
 };

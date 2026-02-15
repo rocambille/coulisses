@@ -21,6 +21,7 @@
 import fs from "node:fs";
 import express, { type ErrorRequestHandler, type Express } from "express";
 import { rateLimit } from "express-rate-limit";
+import helmet from "helmet";
 import { createServer as createViteServer } from "vite";
 
 // NOTE:
@@ -31,6 +32,8 @@ import "./src/database/checkConnection";
 /* ************************************************************************ */
 /*                                  Startup                                 */
 /* ************************************************************************ */
+
+const isProduction = process.env.NODE_ENV === "production";
 
 const port = +(process.env.APP_PORT ?? 5173);
 
@@ -47,6 +50,24 @@ createServer().then((server) => {
 
 async function createServer() {
   const app = express();
+
+  /* ********************************************************************** */
+  /* Helmet                                                                 */
+  /* ********************************************************************** */
+
+  // SECURITY:
+  // Sets HTTP response headers such as Content-Security-Policy and
+  // Strict-Transport-Security. See https://helmetjs.github.io/ for details.
+  //
+  // Content-Security-Policy is enabled only in production.
+  // In development it is disabled because Vite’s HMR relies on
+  // WebSocket connections and dynamic module evaluation, which
+  // are blocked by Helmet’s default CSP.
+  app.use(
+    helmet({
+      contentSecurityPolicy: isProduction,
+    }),
+  );
 
   /* ********************************************************************** */
   /* Rate limiting                                                          */
@@ -182,8 +203,6 @@ async function createServer() {
 /* ************************************************************************ */
 /*                              Helper utils                                */
 /* ************************************************************************ */
-
-const isProduction = process.env.NODE_ENV === "production";
 
 /**
  * Reads the HTML template depending on the environment.
