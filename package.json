@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "starter",
-  "version": "2026.02.15",
+  "version": "2026.02.16",
   "main": "server.ts",
   "scripts": {
     "prepare": "git config core.hooksPath .git-hooks || true",
@@ -19,7 +19,7 @@
     "types:check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.0",
+    "@biomejs/biome": "2.4.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/compression": "^1.8.1",
