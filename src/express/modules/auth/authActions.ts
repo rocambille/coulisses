@@ -144,7 +144,7 @@ const hashPassword: RequestHandler = async (req, _res, next) => {
 */
 const verifyAccessToken: RequestHandler = (req, res, next) => {
   try {
-    const token = req.cookies.auth;
+    const token = req.cookies["__Host-auth"];
 
     if (token == null) {
       throw new Error("Access token is missing in cookies");

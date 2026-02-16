@@ -28,7 +28,7 @@ describe("POST /api/access-tokens", () => {
     // Need a deep restore
     vi.mocked(argon2.verify).mockRestore();
   });
-  it("should return auth cookie successfully", async () => {
+  it("should return __Host-auth cookie successfully", async () => {
     vi.mocked(argon2.verify).mockResolvedValue(true);
 
     const response = await using(
@@ -42,7 +42,7 @@ describe("POST /api/access-tokens", () => {
 
     const cookie = response.headers["set-cookie"]?.toString() ?? "";
 
-    expect(cookie).toMatch(/\bauth=.*;\s+HttpOnly;/i);
+    expect(cookie).toMatch(/\b__Host-auth=.*;\s+HttpOnly;/i);
   });
   it("should fail without CSRF token", async () => {
     vi.mocked(argon2.verify).mockResolvedValue(true);
@@ -59,7 +59,7 @@ describe("POST /api/access-tokens", () => {
 
     const cookie = response.headers["set-cookie"]?.toString() ?? "";
 
-    expect(cookie).not.toMatch(/\bauth=.*/i);
+    expect(cookie).not.toMatch(/\b__Host-auth=.*/i);
   });
   it("should fail on invalid user", async () => {
     const response = await using(
@@ -74,7 +74,7 @@ describe("POST /api/access-tokens", () => {
 
     const cookie = response.headers["set-cookie"]?.toString() ?? "";
 
-    expect(cookie).not.toMatch(/\bauth=.*/i);
+    expect(cookie).not.toMatch(/\b__Host-auth=.*/i);
   });
   it("should fail on invalid password", async () => {
     vi.mocked(argon2.verify).mockResolvedValue(false);
@@ -91,7 +91,7 @@ describe("POST /api/access-tokens", () => {
 
     const cookie = response.headers["set-cookie"]?.toString() ?? "";
 
-    expect(cookie).not.toMatch(/\bauth=.*/i);
+    expect(cookie).not.toMatch(/\b__Host-auth=.*/i);
   });
 });
 describe("GET /api/me", () => {
