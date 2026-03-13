@@ -1,6 +1,9 @@
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 
+// https://vitest.dev/guide/browser/#spying-on-module-exports
+vi.mock("argon2", { spy: true });
+
 import {
   api,
   mockDatabaseClient,
@@ -20,10 +23,7 @@ afterEach(() => {
 });
 
 describe("POST /api/access-tokens", () => {
-  beforeEach(() => {
-    // https://vitest.dev/guide/browser/#spying-on-module-exports
-    vi.mock("argon2", { spy: true });
-  });
+  beforeEach(() => {});
   afterEach(() => {
     // Need a deep restore
     vi.mocked(argon2.verify).mockRestore();

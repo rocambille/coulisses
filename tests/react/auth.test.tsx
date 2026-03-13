@@ -49,7 +49,9 @@ describe("React auth components", () => {
 
       render(<Stub initialEntries={["/"]} />);
 
-      expect(globalThis.fetch).toHaveBeenCalledWith("/api/me");
+      await waitFor(() =>
+        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
+      );
     });
   });
   describe("useAuth()", () => {
@@ -59,7 +61,7 @@ describe("React auth components", () => {
     });
     it("should be used within <AuthProvider>", async () => {
       // Avoid exception noise in console
-      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.spyOn(console, "error").mockImplementationOnce(() => {});
 
       expect(() => {
         renderHook(() => useAuth());
@@ -68,12 +70,20 @@ describe("React auth components", () => {
     it("should return an auth object", async () => {
       const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 
+      await waitFor(() =>
+        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
+      );
+
       const auth = result.current;
 
       expect(auth).toBeDefined();
     });
     it("should return a check function", async () => {
       const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+
+      await waitFor(() =>
+        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
+      );
 
       const auth = result.current;
 
@@ -83,6 +93,10 @@ describe("React auth components", () => {
     });
     it("should return a login function", async () => {
       const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+
+      await waitFor(() =>
+        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
+      );
 
       const auth = result.current;
 
@@ -115,6 +129,10 @@ describe("React auth components", () => {
     it("should return a logout function", async () => {
       const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 
+      await waitFor(() =>
+        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
+      );
+
       const auth = result.current;
 
       expect(typeof auth.logout).toBe("function");
@@ -140,6 +158,10 @@ describe("React auth components", () => {
     });
     it("should return a register function", async () => {
       const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+
+      await waitFor(() =>
+        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
+      );
 
       const auth = result.current;
 
