@@ -30,10 +30,21 @@ async function confirm(question: string): Promise<boolean> {
 }
 
 async function main() {
-  const [, , useSeeder, ...unexpected] = process.argv;
+  const args = process.argv.slice(2);
 
-  if ((useSeeder && useSeeder !== "--use-seeder") || unexpected.length > 0) {
-    console.error("Usage: npm run database:sync [-- --use-seeder]");
+  const useSeeder = args.includes("--use-seeder");
+  const noInteraction =
+    args.includes("--no-interaction") || args.includes("-n");
+
+  const expectedArgs = [
+    ...(useSeeder ? ["--use-seeder"] : []),
+    ...(noInteraction ? ["--no-interaction"] : []),
+  ];
+
+  if (args.length !== expectedArgs.length) {
+    console.error(
+      "Usage: npm run database:sync [-- --use-seeder] [--no-interaction|-n]",
+    );
     process.exit(1);
   }
 
@@ -41,11 +52,20 @@ async function main() {
     `This script will drop existing database '${MYSQL_DATABASE}' to create a new one.`,
   );
 
-  const proceed = await confirm(
-    "Are you sure you want to continue? This action cannot be undone.",
-  );
+  const proceed = async () => {
+    if (noInteraction) {
+      console.info(
+        "Running in non-interactive mode. Proceeding automatically.",
+      );
+      return true;
+    } else {
+      return await confirm(
+        "Are you sure you want to continue? This action cannot be undone.",
+      );
+    }
+  };
 
-  if (!proceed) {
+  if (!(await proceed())) {
     console.info("\nSync operation cancelled.");
     return;
   }
