@@ -109,7 +109,7 @@ To get started, see the main pages:
 
 | `npm run types:check` | Checks the consistency of TypeScript types (executed in pre-commit). |
 
-| `npm run make:clone <source> <destination> <OldName> <NewName>` | Clones a module or file, automatically renaming the identifiers. |
+| `npm run make:clone -- <source> <destination> <OldName> <NewName>` | Clones a module or file, automatically renaming the identifiers. |
 
 | `npm run make:purge` | Removes default modules (`-- --keep-auth` to keep `user` and `auth`). |
 
