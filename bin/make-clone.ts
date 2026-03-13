@@ -1,5 +1,34 @@
 import path from "node:path";
 import fs from "fs-extra";
+import pluralize from "pluralize";
+
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getSafeReplacement(
+  content: string,
+  oldStr: string,
+  newStr: string,
+): string {
+  const regex = new RegExp(escapeRegExp(oldStr), "ig");
+
+  return content.replace(regex, (match: string) => {
+    // Simple checks for casing
+    const isAllUpperCase =
+      match === match.toUpperCase() && match !== match.toLowerCase();
+    const isFirstUpperCase =
+      match[0] === match[0].toUpperCase() &&
+      match[0] !== match[0].toLowerCase();
+
+    if (isAllUpperCase) {
+      return newStr.toUpperCase();
+    } else if (isFirstUpperCase) {
+      return newStr[0].toUpperCase() + newStr.slice(1);
+    }
+    return newStr.toLowerCase();
+  });
+}
 
 /**
  * Recursively walks through a directory,
@@ -10,22 +39,35 @@ async function walkAndReplace(
   oldName: string,
   newName: string,
 ): Promise<void> {
+  const oldNamePlural = pluralize(oldName);
+  const newNamePlural = pluralize(newName);
+
   const files = await fs.readdir(dir);
 
   for (const file of files) {
     const fullPath = path.join(dir, file);
     const stat = await fs.stat(fullPath);
 
+    const newFileBasePluralFirst = getSafeReplacement(
+      file,
+      oldNamePlural,
+      newNamePlural,
+    );
+    const newFileBase = getSafeReplacement(
+      newFileBasePluralFirst,
+      oldName,
+      newName,
+    );
+
+    const newFilePath = path.join(dir, newFileBase);
+
+    if (newFilePath !== fullPath) {
+      await fs.move(fullPath, newFilePath, { overwrite: true });
+    }
+
     if (stat.isDirectory()) {
-      await walkAndReplace(fullPath, oldName, newName);
+      await walkAndReplace(newFilePath, oldName, newName);
     } else {
-      // ✅ Rename file if filename contains oldName
-      const newFilePath = fullPath.replace(oldName, newName);
-
-      if (newFilePath !== fullPath) {
-        await fs.move(fullPath, newFilePath, { overwrite: true });
-      }
-
       // ✅ Replace inside file
       await replaceInsideFile(newFilePath, oldName, newName);
     }
@@ -37,27 +79,49 @@ async function replaceInsideFile(
   oldName: string,
   newName: string,
 ): Promise<void> {
+  const allowedExts = [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".json",
+    ".md",
+    ".css",
+    ".scss",
+    ".html",
+  ];
+  if (!allowedExts.includes(path.extname(filePath))) {
+    return;
+  }
+
   const content = await fs.readFile(filePath, "utf8");
 
-  const regex = new RegExp(oldName, "ig");
+  const oldNamePlural = pluralize(oldName);
+  const newNamePlural = pluralize(newName);
 
-  const newContent = content.replace(regex, (match: string) => {
-    if (match[0] !== oldName[0]) {
-      return newName[0].toUpperCase() + newName.substring(1);
-    }
+  const newContentPluralFirst = getSafeReplacement(
+    content,
+    oldNamePlural,
+    newNamePlural,
+  );
+  const newContent = getSafeReplacement(
+    newContentPluralFirst,
+    oldName,
+    newName,
+  );
 
-    return newName;
-  });
-
-  await fs.writeFile(filePath, newContent, "utf8");
+  if (content !== newContent) {
+    await fs.writeFile(filePath, newContent, "utf8");
+  }
 }
 
-async function main() {
-  const [, , src, dest, oldName, newName, ...unexpected] = process.argv;
+export async function main(argv: string[] = process.argv) {
+  const [, , src, dest, oldName, newName, ...unexpected] = argv;
 
   if (!src || !dest || !oldName || !newName || unexpected.length > 0) {
-    console.error("Usage: npm run make:clone <src> <dest> <OldName> <NewName>");
-    process.exit(1);
+    throw new Error(
+      "Usage: npm run make:clone -- <src> <dest> <OldName> <NewName>",
+    );
   }
 
   // thx https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers
@@ -65,20 +129,17 @@ async function main() {
     /^[$_\p{ID_Start}][$\p{ID_Continue}]*$/u.test(name);
 
   if (!isValidJsIdentifier(oldName)) {
-    console.error(`❌ ${oldName} is not a valid identifier in JavaScript`);
-    process.exit(1);
+    throw new Error(`❌ ${oldName} is not a valid identifier in JavaScript`);
   }
   if (!isValidJsIdentifier(newName)) {
-    console.error(`❌ ${newName} is not a valid identifier in JavaScript`);
-    process.exit(1);
+    throw new Error(`❌ ${newName} is not a valid identifier in JavaScript`);
   }
 
   const srcPath = path.resolve(src);
   const destPath = path.resolve(dest);
 
   if (!(await fs.pathExists(srcPath))) {
-    console.error(`❌ Source path does not exist: ${srcPath}`);
-    process.exit(1);
+    throw new Error(`❌ Source path does not exist: ${srcPath}`);
   }
 
   const stat = await fs.stat(srcPath);
@@ -96,12 +157,14 @@ async function main() {
     await walkAndReplace(destPath, oldName, newName);
     console.info(`✅ Cloned folder ${srcPath} → ${destPath}`);
   } else {
-    console.error("❌ Source is neither a file nor a directory.");
-    process.exit(1);
+    throw new Error("❌ Source is neither a file nor a directory.");
   }
 }
 
-main().catch((err) => {
-  console.error("An unexpected error occurred:", err);
-  process.exit(1);
-});
+/* v8 ignore next 6 */
+if (process.env.NODE_ENV !== "test") {
+  main().catch((err) => {
+    console.error(err instanceof Error ? err.message : err);
+    process.exit(1);
+  });
+}
