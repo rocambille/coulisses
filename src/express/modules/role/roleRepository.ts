@@ -1,0 +1,68 @@
+/*
+  Purpose:
+  Centralize all persistence logic related to Role entities.
+*/
+
+import databaseClient, {
+  type Result,
+  type Rows,
+} from "../../../database/client";
+
+class RoleRepository {
+  async create(
+    playId: number,
+    role: Omit<Role, "id" | "play_id">,
+    sceneIds: number[] = [],
+  ) {
+    // We need to insert the role and then the associations in scene_role
+    const [result] = await databaseClient.query<Result>(
+      `insert into role (play_id, name, description) values (?, ?, ?)`,
+      [playId, role.name, role.description ?? null],
+    );
+
+    const roleId = result.insertId;
+
+    if (sceneIds.length > 0) {
+      // Build multiple insert values: (?, ?), (?, ?)
+      const placeholders = sceneIds.map(() => "(?, ?)").join(", ");
+      const values = sceneIds.flatMap((sceneId) => [sceneId, roleId]);
+
+      await databaseClient.query(
+        `insert ignore into scene_role (scene_id, role_id) values ${placeholders}`,
+        values,
+      );
+    }
+
+    return roleId;
+  }
+
+  async browseByPlay(playId: number): Promise<Role[]> {
+    // Fetch all roles for a play, and aggregate their scene_ids
+    const [rows] = await databaseClient.query<Rows>(
+      `select r.id, r.name, r.description, r.play_id,
+       json_arrayagg(sr.scene_id) as sceneIds
+       from role r
+       left join scene_role sr on r.id = sr.role_id
+       where r.play_id = ?
+       group by r.id`,
+      [playId],
+    );
+
+    // MySQL json_arrayagg might return [null] if there are no related items, let's clean it up
+    return rows.map(({ id, name, description, play_id, sceneIds }) => {
+      if (typeof sceneIds === "string") {
+        try {
+          sceneIds = JSON.parse(sceneIds);
+        } catch (_err) {
+          sceneIds = [];
+        }
+      }
+      if (Array.isArray(sceneIds) && sceneIds[0] === null) {
+        sceneIds = [];
+      }
+      return { id, name, description, play_id, sceneIds: sceneIds || [] };
+    });
+  }
+}
+
+export default new RoleRepository();
