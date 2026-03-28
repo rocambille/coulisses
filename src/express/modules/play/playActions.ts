@@ -4,10 +4,6 @@
 */
 
 import type { RequestHandler } from "express";
-import databaseClient, {
-  type Result,
-  type Rows,
-} from "../../../database/client"; // To look up user directly for invitation
 import playRepository from "./playRepository";
 
 const browse: RequestHandler = async (req, res) => {
@@ -45,31 +41,12 @@ const browseMembers: RequestHandler = async (req, res) => {
 };
 
 const addMember: RequestHandler = async (req, res) => {
-  const { email, role } = req.body;
+  const { userId, role } = req.body;
   const { play } = req;
 
-  // 1. Find user by email
-  const [rows] = await databaseClient.query<Rows>(
-    "select id from user where email = ?",
-    [email],
-  );
-
-  let userId: number;
-  if (rows.length === 0) {
-    // For MVP, create a temporary user if they don't exist
-    const [result] = await databaseClient.query<Result>(
-      "insert into user (email, name) values (?, ?)",
-      [email, "Nom à définir"], // We default the name for now
-    );
-    userId = result.insertId;
-  } else {
-    userId = rows[0].id;
-  }
-
-  // 2. Add as member
   await playRepository.addMember(play.id, userId, role);
 
-  res.status(201).json({ success: true, userId });
+  res.sendStatus(204);
 };
 
 export default {

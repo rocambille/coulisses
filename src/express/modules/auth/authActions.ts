@@ -36,7 +36,7 @@ class Auth<Payload extends JwtPayload | string = JwtPayload> {
   }
 }
 
-const auth = new Auth(appSecret);
+const auth = new Auth<JwtPayload & { sub: string }>(appSecret);
 
 declare global {
   namespace Express {
@@ -74,11 +74,11 @@ const verifyAccessToken: RequestHandler = (req, res, next) => {
 const sendMagicLink: RequestHandler = async (req, res) => {
   const { email } = req.body;
   if (!email || typeof email !== "string") {
-    res.status(400).json({ error: "Email is required" });
+    res.sendStatus(400);
     return;
   }
 
-  const token = auth.signMagicLink({ email });
+  const token = auth.signMagicLink({ sub: email });
 
   // In a real app we would send the email here using an SMTP or API service.
   // For the POC, we log it and return it for easy testing.
@@ -104,21 +104,21 @@ const verifyMagicLink: RequestHandler = async (req, res) => {
   }
 
   try {
-    const payload = auth.verify(token) as { email: string };
+    const payload = auth.verify(token);
 
     // Find user directly, or create if doesn't exist yet (simplified onboarding)
-    let user = await userRepository.readByEmail(payload.email);
+    let user = await userRepository.readByEmail(payload.sub);
     if (user != null) {
       res.status(200);
     } else {
       const insertId = await userRepository.create({
-        email: payload.email,
-        name: payload.email.split("@")[0], // Default name for new users
+        email: payload.sub,
+        name: payload.sub.split("@")[0], // Default name for new users
       });
       user = {
         id: insertId,
-        email: payload.email,
-        name: payload.email.split("@")[0],
+        email: payload.sub,
+        name: payload.sub.split("@")[0],
       };
 
       res.status(201);

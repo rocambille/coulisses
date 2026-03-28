@@ -24,7 +24,7 @@ const validate: RequestHandler = (req, res, next) => {
 };
 
 const playMemberDTOSchema = z.object({
-  email: z.string().email(),
+  userId: z.number(),
   role: z.enum(["TEACHER", "ACTOR"]),
 });
 

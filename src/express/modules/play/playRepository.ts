@@ -49,7 +49,7 @@ class PlayRepository {
   async update(id: number, play: Omit<Play, "id">) {
     const [result] = await databaseClient.query<Result>(
       "update play set title = ?, description = ? where id = ?",
-      [play.title, play.description ?? null, id],
+      [play.title, play.description, id],
     );
 
     return result.affectedRows;
