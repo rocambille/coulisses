@@ -12,10 +12,7 @@ type Item = {
 type User = {
   id: number;
   email: string;
-};
-
-type UserWithPassword = User & {
-  password: string;
+  name: string;
 };
 
 type Play = {

@@ -256,7 +256,7 @@ describe("React auth components", () => {
   });
   describe("<LogoutForm />", () => {
     it("should mount successfully", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
+      mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
 
       const Stub = stubRoute("/", LogoutForm);
 
@@ -265,7 +265,7 @@ describe("React auth components", () => {
       await waitFor(() => screen.getByRole("button"));
     });
     it("should submit form logout", async () => {
-      const [auth] = mockUseAuth({ id: 1, email: "foo@mail.com" });
+      const [auth] = mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
 
       const Stub = stubRoute("/", LogoutForm);
 

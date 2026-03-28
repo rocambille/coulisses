@@ -155,7 +155,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
         })
         .then(({ insertId }) => {
           // Backend creates the user and authenticates implicitly
-          setUser({ id: insertId, email: credentials.email });
+          setUser({
+            id: insertId,
+            email: credentials.email,
+            name: credentials.email.split("@")[0],
+          });
         });
     },
     [],

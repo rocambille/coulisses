@@ -1,49 +1,19 @@
 /*
   Purpose:
-  Centralize all authentication-related actions and middleware.
-
-  This file handles:
-  - Password hashing and verification
-  - User authentication (login / register)
-  - JWT creation and verification
-  - Authentication cookie management
-
-  This file intentionally does NOT:
-  - Perform request validation (handled by validators)
-  - Handle routing concerns (handled by authRoutes)
-  - Implement authorization logic (handled elsewhere)
-
-  Security model:
-  - Stateless authentication via JWT stored in HttpOnly cookies
-  - Short-lived access tokens
-  - Strong password hashing using Argon2id
+  Centralize all authentication-related actions and middleware for Magic Link.
 */
 
-import argon2 from "argon2";
 import type { CookieOptions, RequestHandler } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 
 import userRepository from "../user/userRepository";
 
-/* ************************************************************************ */
-/* Configuration & primitives                                               */
-/* ************************************************************************ */
-
-/*
-  Application secret used to sign JWTs.
-  Must be defined at startup; failing fast is intentional.
-*/
 const appSecret = process.env.APP_SECRET;
 
 if (appSecret == null) {
   throw new Error("process.env.APP_SECRET is not defined");
 }
 
-/*
-  Minimal JWT wrapper to:
-  - Encapsulate signing and verification
-  - Enforce payload typing between methods
-*/
 class Auth<Payload extends JwtPayload | string = JwtPayload> {
   #secret: string;
 
@@ -51,10 +21,14 @@ class Auth<Payload extends JwtPayload | string = JwtPayload> {
     this.#secret = secret;
   }
 
-  sign(payload: Payload): string {
-    return jwt.sign(payload, this.#secret, {
-      expiresIn: "1h",
-    });
+  // Session token sign (long lived)
+  signSession(payload: Payload): string {
+    return jwt.sign(payload, this.#secret, { expiresIn: "30d" });
+  }
+
+  // Magic link token sign (short lived)
+  signMagicLink(payload: Payload): string {
+    return jwt.sign(payload, this.#secret, { expiresIn: "15m" });
   }
 
   verify(token: string): Payload {
@@ -64,10 +38,6 @@ class Auth<Payload extends JwtPayload | string = JwtPayload> {
 
 const auth = new Auth(appSecret);
 
-/*
-  Extend Express Request to carry authenticated user data.
-  This is populated exclusively by verifyAccessToken.
-*/
 declare global {
   namespace Express {
     interface Request {
@@ -76,72 +46,13 @@ declare global {
   }
 }
 
-/* ************************************************************************ */
-/* Security options                                                         */
-/* ************************************************************************ */
-
-/*
-  Password hashing options.
-
-  - Uses Argon2id (recommended by OWASP)
-  - Values are conservative but suitable for most applications
-
-  References:
-  - https://github.com/ranisalt/node-argon2/wiki/Options
-  - https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
-*/
-const hashingOptions = {
-  type: argon2.argon2id,
-  memoryCost: 19 * 2 ** 10, // 19 MiB
-  timeCost: 2,
-  parallelism: 1,
-};
-
-/*
-  Cookie configuration for authentication token.
-
-  Notes:
-  - HttpOnly: inaccessible to JavaScript
-  - SameSite=strict: mitigates CSRF
-  - Secure: HTTPS only
-*/
 const cookieOptions: CookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: "strict",
-  maxAge: 60 * 60 * 1000, // 1 hour
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 };
 
-/* ************************************************************************ */
-/* Middleware                                                               */
-/* ************************************************************************ */
-
-/*
-  Hash a plaintext password before persistence.
-
-  Preconditions:
-  - req.body.password exists and is a string
-
-  Postconditions:
-  - req.body.password contains a secure hash
-*/
-const hashPassword: RequestHandler = async (req, _res, next) => {
-  req.body.password = await argon2.hash(req.body.password, hashingOptions);
-
-  next();
-};
-
-/* ************************************************************************ */
-
-/*
-  Verify the access token from cookies and attach its payload to req.auth.
-
-  Preconditions:
-  - Cookie parser has already run
-
-  Response:
-  - 401 if token is missing or invalid
-*/
 const verifyAccessToken: RequestHandler = (req, res, next) => {
   try {
     const token = req.cookies["__Host-auth"];
@@ -151,116 +62,93 @@ const verifyAccessToken: RequestHandler = (req, res, next) => {
     }
 
     req.auth = auth.verify(token);
-
     next();
   } catch {
     res.sendStatus(401);
   }
 };
 
-/* ************************************************************************ */
-/* Actions                                                                  */
-/* ************************************************************************ */
-
 /*
-  Register a new user and issue an access token.
-
-  Preconditions:
-  - req.body has been validated
-  - req.body.password has been hashed
-
-  Response:
-  - 201 with the new user's id
-  - Sets authentication cookie
+  Send a Magic Link token.
 */
-const createUserAndAccessToken: RequestHandler = async (req, res) => {
-  const insertId = await userRepository.create(req.body);
-
-  const token = auth.sign({ sub: insertId.toString() });
-
-  res.cookie("__Host-auth", token, cookieOptions);
-
-  res.status(201).json({ insertId });
-};
-
-/* ************************************************************************ */
-
-/*
-  Authenticate an existing user and issue an access token.
-
-  Preconditions:
-  - req.body.email and req.body.password are present
-
-  Response:
-  - 201 with user payload (without password)
-  - 401 on invalid credentials
-*/
-const createAccessToken: RequestHandler = async (req, res) => {
-  const userWithPassword = await userRepository.readByEmailWithPassword(
-    req.body.email,
-  );
-
-  if (userWithPassword == null) {
-    res.sendStatus(401);
+const sendMagicLink: RequestHandler = async (req, res) => {
+  const { email } = req.body;
+  if (!email || typeof email !== "string") {
+    res.status(400).json({ error: "Email is required" });
     return;
   }
 
-  const verified = await argon2.verify(
-    userWithPassword.password,
-    req.body.password,
-  );
+  const token = auth.signMagicLink({ email });
 
-  if (!verified) {
-    res.sendStatus(401);
+  // In a real app we would send the email here using an SMTP or API service.
+  // For the POC, we log it and return it for easy testing.
+  const magicLink = `http://localhost:5173/verify?token=${token}`; // Assuming standard Vite port
+  console.log(`[MAGIC LINK] User requested login: ${magicLink}`);
+
+  res.status(200).json({
+    message: "Magic link sent to your email",
+    _testing_link: magicLink, // Included strictly for POC ease
+    _testing_token: token,
+  });
+};
+
+/*
+  Verify Magic Link token and issue session token.
+*/
+const verifyMagicLink: RequestHandler = async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    res.sendStatus(400);
     return;
   }
 
-  const { password: _password, ...user } = userWithPassword;
+  try {
+    const payload = auth.verify(token) as { email: string };
 
-  const token = auth.sign({ sub: user.id.toString() });
+    // Find user directly, or create if doesn't exist yet (simplified onboarding)
+    let user = await userRepository.readByEmail(payload.email);
+    if (user != null) {
+      res.status(200);
+    } else {
+      const insertId = await userRepository.create({
+        email: payload.email,
+        name: payload.email.split("@")[0], // Default name for new users
+      });
+      user = {
+        id: insertId,
+        email: payload.email,
+        name: payload.email.split("@")[0],
+      };
 
-  res.cookie("__Host-auth", token, cookieOptions);
+      res.status(201);
+    }
 
-  res.status(201).json(user);
+    const sessionToken = auth.signSession({ sub: user.id.toString() });
+
+    res.cookie("__Host-auth", sessionToken, cookieOptions);
+
+    res.json(user);
+  } catch (_err) {
+    res.sendStatus(401);
+  }
 };
 
-/* ************************************************************************ */
-
-/*
-  Destroy the authentication cookie.
-
-  Notes:
-  - Stateless logout: token invalidation relies on expiration
-*/
 const destroyAccessToken: RequestHandler = (_req, res) => {
   res.clearCookie("__Host-auth", cookieOptions);
 
   res.sendStatus(204);
 };
 
-/* ************************************************************************ */
-
-/*
-  Return the currently authenticated user.
-
-  Preconditions:
-  - verifyAccessToken has run successfully
-*/
 const readMe: RequestHandler = async (req, res) => {
   const me = await userRepository.read(Number(req.auth.sub));
-
   res.json(me);
 };
 
-/* ************************************************************************ */
-/* Export                                                                   */
-/* ************************************************************************ */
-
 export default {
-  hashPassword,
   verifyAccessToken,
-  createUserAndAccessToken,
-  createAccessToken,
+  sendMagicLink,
+  verifyMagicLink,
   destroyAccessToken,
   readMe,
 };

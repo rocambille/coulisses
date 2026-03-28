@@ -77,7 +77,7 @@ describe("React item components", () => {
       expect(result.current.item).toBeUndefined();
     });
     it("should return editItem function", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
+      mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
 
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
 
@@ -120,7 +120,7 @@ describe("React item components", () => {
       );
     });
     it("should return addItem function", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
+      mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
 
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
 
@@ -159,7 +159,7 @@ describe("React item components", () => {
       expect(mockedNavigate).toHaveBeenCalledWith(`/items/${mockedInsertId}`);
     });
     it("should return deleteItem function", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
+      mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
 
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
 
@@ -316,7 +316,7 @@ describe("React item components", () => {
       await waitFor(() => expect(screen.queryByTestId("items-new")).toBeNull());
     });
     it("should display link to create item when authentified", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
+      mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
       mockUseItems();
 
       const Stub = stubRoute("/items", ItemList);
@@ -368,7 +368,7 @@ describe("React item components", () => {
       );
     });
     it("should display link to edit item when authentified", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
+      mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
       mockUseItems({ id: mockedItems[0].id.toString() });
 
       const Stub = stubRoute("/items/:id", ItemShow);
