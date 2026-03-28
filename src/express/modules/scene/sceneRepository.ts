@@ -46,33 +46,25 @@ class SceneRepository {
     return rows as Scene[];
   }
 
-  async update(id: number, scene: Partial<Scene>) {
+  async update(id: number, scene: Omit<Scene, "id">) {
     // Dynamic update based on provided fields
     const fields: string[] = [];
     const values: unknown[] = [];
 
-    if (scene.title !== undefined) {
-      fields.push("title = ?");
-      values.push(scene.title);
-    }
-    if (scene.description !== undefined) {
-      fields.push("description = ?");
-      values.push(scene.description);
-    }
-    if (scene.duration !== undefined) {
-      fields.push("duration = ?");
-      values.push(scene.duration);
-    }
-    if (scene.order !== undefined) {
-      fields.push("order = ?");
-      values.push(scene.order);
-    }
-    if (scene.is_active !== undefined) {
-      fields.push("is_active = ?");
-      values.push(scene.is_active);
-    }
+    fields.push("title = ?");
+    values.push(scene.title);
 
-    if (fields.length === 0) return 0;
+    fields.push("description = ?");
+    values.push(scene.description);
+
+    fields.push("duration = ?");
+    values.push(scene.duration);
+
+    fields.push("order = ?");
+    values.push(scene.order);
+
+    fields.push("is_active = ?");
+    values.push(scene.is_active);
 
     values.push(id);
     const query = `update scene set ${fields.join(", ")} where id = ?`;

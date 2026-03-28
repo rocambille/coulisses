@@ -44,3 +44,20 @@ type Role = {
   name: string;
   description: string | null;
 };
+
+type PreferenceLevel = "HIGH" | "MEDIUM" | "LOW" | "NOT_INTERESTED";
+
+type Preference = {
+  id: number;
+  user_id: number;
+  scene_id: number;
+  level: PreferenceLevel;
+  created_at?: string;
+};
+
+type Casting = {
+  id: number;
+  user_id: number;
+  role_id: number;
+  assigned_at?: string;
+};

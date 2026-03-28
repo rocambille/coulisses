@@ -1,6 +1,6 @@
 /*
   Purpose:
-  Routes related to "roles".
+  Routes related to "castings".
 */
 
 import { Router } from "express";
@@ -11,17 +11,18 @@ import type { RequestHandler } from "express";
 import authActions from "../auth/authActions";
 import playParamConverter from "../play/playParamConverter";
 import playRepository from "../play/playRepository";
-import roleActions from "./roleActions";
-import roleValidator from "./roleValidator";
+import castingActions from "./castingActions";
+import castingValidator from "./castingValidator";
 
-const ROLES_BY_PLAY_PATH = "/api/plays/:playId/roles";
+const CASTINGS_BY_PLAY_PATH = "/api/plays/:playId/castings";
 
 router.param("playId", playParamConverter.convert);
 
 // Reusable middlewares to check permissions
 const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
   const userId = Number(req.auth.sub);
-  const members = await playRepository.getMembers(req.play.id);
+  const playId = req.play.id;
+  const members = await playRepository.getMembers(playId);
   const isMember = members.some((m) => m.id === userId);
 
   if (isMember) {
@@ -33,6 +34,7 @@ const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
 
 const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
   const userId = Number(req.auth.sub);
+
   const members = await playRepository.getMembers(req.play.id);
   const member = members.find((m) => m.id === userId);
 
@@ -43,11 +45,16 @@ const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
   }
 };
 
-router.use(ROLES_BY_PLAY_PATH, authActions.verifyAccessToken);
+router.use(CASTINGS_BY_PLAY_PATH, authActions.verifyAccessToken);
 
+// Teacher can assign a role to a user
 router
-  .route(ROLES_BY_PLAY_PATH)
-  .get(checkIsMemberByPlayId, roleActions.browse)
-  .post(checkIsTeacherByPlayId, roleValidator.validate, roleActions.add);
+  .route(CASTINGS_BY_PLAY_PATH)
+  .post(
+    checkIsTeacherByPlayId,
+    castingValidator.validate,
+    castingActions.assignRole,
+  )
+  .get(checkIsMemberByPlayId, castingActions.getMatrix);
 
 export default router;

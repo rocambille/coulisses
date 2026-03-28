@@ -1,20 +1,18 @@
 /*
   Purpose:
-  Validate and normalize incoming Role payloads for mutative requests.
+  Validate and normalize incoming Preference payloads.
 */
 
 import type { RequestHandler } from "express";
 import { type ZodError, z } from "zod";
 
-const roleDTOSchema = z.object({
-  name: z.string().max(255),
-  description: z.string().nullable().optional(),
-  sceneIds: z.array(z.number()).optional(),
+const preferenceDTOSchema = z.object({
+  level: z.enum(["HIGH", "MEDIUM", "LOW", "NOT_INTERESTED"]),
 });
 
 const validate: RequestHandler = (req, res, next) => {
   try {
-    req.body = roleDTOSchema.parse(req.body);
+    req.body = preferenceDTOSchema.parse(req.body);
     next();
   } catch (err) {
     const { issues } = err as ZodError;

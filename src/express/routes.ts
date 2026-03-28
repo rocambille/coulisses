@@ -87,8 +87,10 @@ const importAndUse = async (path: string) =>
   The order does not matter as long as routes do not conflict.
 */
 await importAndUse("./modules/auth/authRoutes");
+await importAndUse("./modules/casting/castingRoutes");
 await importAndUse("./modules/item/itemRoutes");
 await importAndUse("./modules/play/playRoutes");
+await importAndUse("./modules/preference/preferenceRoutes");
 await importAndUse("./modules/role/roleRoutes");
 await importAndUse("./modules/scene/sceneRoutes");
 await importAndUse("./modules/user/userRoutes");

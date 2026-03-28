@@ -14,7 +14,7 @@ const sceneDTOSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-const validateAdd: RequestHandler = (req, res, next) => {
+const validate: RequestHandler = (req, res, next) => {
   try {
     req.body = sceneDTOSchema.parse(req.body);
     next();
@@ -24,16 +24,4 @@ const validateAdd: RequestHandler = (req, res, next) => {
   }
 };
 
-const sceneEditDTOSchema = sceneDTOSchema.partial();
-
-const validateEdit: RequestHandler = (req, res, next) => {
-  try {
-    req.body = sceneEditDTOSchema.parse(req.body);
-    next();
-  } catch (err) {
-    const { issues } = err as ZodError;
-    res.status(400).json(issues);
-  }
-};
-
-export default { validateAdd, validateEdit };
+export default { validate };
