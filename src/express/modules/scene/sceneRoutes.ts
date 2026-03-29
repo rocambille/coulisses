@@ -46,6 +46,19 @@ const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
   }
 };
 
+const checkIsMemberBySceneId: RequestHandler = async (req, res, next) => {
+  const userId = Number(req.auth.sub);
+  const playId = req.scene.play_id;
+  const members = await playRepository.getMembers(playId);
+  const isMember = members.some((m) => m.id === userId);
+
+  if (isMember) {
+    next();
+  } else {
+    res.sendStatus(403);
+  }
+};
+
 const checkIsTeacherBySceneId: RequestHandler = async (req, res, next) => {
   const userId = Number(req.auth.sub);
   const playId = req.scene.play_id;
@@ -68,11 +81,12 @@ router
   .get(checkIsMemberByPlayId, sceneActions.browse)
   .post(checkIsTeacherByPlayId, sceneValidator.validate, sceneActions.add);
 
+router.route(SCENE_PATH).all(checkIsMemberBySceneId).get(sceneActions.read);
+
 // Edit/Delete an existing scene (requires to be TEACHER of the play the scene belongs to)
 router
   .route(SCENE_PATH)
   .all(checkIsTeacherBySceneId)
-  .get(sceneActions.read) // Or allow members to read single scenes? For now restricted if we want. Actually let's allow member read if needed, but the UI might only browse.
   .put(sceneValidator.validate, sceneActions.edit)
   .delete(sceneActions.destroy);
 

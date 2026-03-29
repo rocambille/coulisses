@@ -35,6 +35,13 @@ describe("GET /api/plays/:id/roles", () => {
         play_id: mockedData.role[0].play_id,
         sceneIds: [1],
       },
+      {
+        id: mockedData.role[1].id,
+        name: mockedData.role[1].name,
+        description: mockedData.role[1].description,
+        play_id: mockedData.role[1].play_id,
+        sceneIds: [],
+      },
     ]);
   });
 

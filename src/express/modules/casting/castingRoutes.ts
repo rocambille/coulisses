@@ -45,7 +45,7 @@ const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
   }
 };
 
-router.use(CASTINGS_BY_PLAY_PATH, authActions.verifyAccessToken);
+router.use(authActions.verifyAccessToken);
 
 // Teacher can assign a role to a user
 router
@@ -54,6 +54,11 @@ router
     checkIsTeacherByPlayId,
     castingValidator.validate,
     castingActions.assignRole,
+  )
+  .delete(
+    checkIsTeacherByPlayId,
+    castingValidator.validate,
+    castingActions.unassignRole,
   )
   .get(checkIsMemberByPlayId, castingActions.getMatrix);
 

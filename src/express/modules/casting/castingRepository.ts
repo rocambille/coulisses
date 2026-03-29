@@ -23,7 +23,7 @@ class CastingRepository {
     return result.affectedRows;
   }
 
-  async removeRole(userId: number, roleId: number) {
+  async unassignRole(userId: number, roleId: number) {
     const [result] = await databaseClient.query<Result>(
       `delete from casting where user_id = ? and role_id = ?`,
       [userId, roleId],

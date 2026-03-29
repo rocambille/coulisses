@@ -18,7 +18,12 @@ afterEach(() => {
 
 describe("GET /api/users", () => {
   it("should fetch users successfully", async () => {
-    const response = await api.get("/api/users");
+    mockJwtVerify(mockedData.user[0].id.toString());
+
+    const response = await using(api.get("/api/users"), {
+      withCsrf: false,
+      withAuth: true,
+    });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(mockedData.user);
@@ -27,14 +32,24 @@ describe("GET /api/users", () => {
 
 describe("GET /api/users/:id", () => {
   it("should fetch a single user successfully", async () => {
-    const response = await api.get(`/api/users/${mockedData.user[0].id}`);
+    mockJwtVerify(mockedData.user[0].id.toString());
+
+    const response = await using(
+      api.get(`/api/users/${mockedData.user[0].id}`),
+      { withCsrf: false, withAuth: true },
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(mockedData.user[0]);
   });
 
   it("should fail on invalid id", async () => {
-    const response = await api.get("/api/users/not-a-number");
+    mockJwtVerify(mockedData.user[0].id.toString());
+
+    const response = await using(api.get("/api/users/not-a-number"), {
+      withCsrf: false,
+      withAuth: true,
+    });
 
     expect(response.status).toBe(404);
   });

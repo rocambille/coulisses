@@ -44,8 +44,12 @@ describe("POST /api/scenes/:sceneId/preferences", () => {
   });
 
   it("should fail when sceneId is not found", async () => {
+    mockJwtVerify(mockedData.user[0].id.toString());
+
     const response = await using(
-      api.post(`/api/scenes/not-a-number/preferences`).send({}),
+      api.post(`/api/scenes/not-a-number/preferences`).send({
+        level: "HIGH",
+      }),
       { withCsrf: true, withAuth: true },
     );
 

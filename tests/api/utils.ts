@@ -30,7 +30,10 @@ export const mockedData = {
       is_active: 1,
     },
   ],
-  role: [{ id: 1, play_id: 1, name: "Role 1", description: "" }],
+  role: [
+    { id: 1, play_id: 1, name: "Role 1", description: "With a scene" },
+    { id: 2, play_id: 1, name: "Role 2", description: "Without a scene" },
+  ],
   scene_role: [{ id: null, scene_id: 1, role_id: 1 }],
   preference: [{ id: 1, user_id: 1, scene_id: 1, level: "HIGH" }],
   casting: [{ id: 1, user_id: 1, role_id: 1 }],
@@ -58,7 +61,10 @@ export const resetMockData = () => {
       is_active: 1,
     },
   ];
-  mockedData.role = [{ id: 1, play_id: 1, name: "Role 1", description: "" }];
+  mockedData.role = [
+    { id: 1, play_id: 1, name: "Role 1", description: "With a scene" },
+    { id: 2, play_id: 1, name: "Role 2", description: "Without a scene" },
+  ];
   mockedData.scene_role = [{ id: null, scene_id: 1, role_id: 1 }];
   mockedData.preference = [{ id: 1, user_id: 1, scene_id: 1, level: "HIGH" }];
   mockedData.casting = [{ id: 1, user_id: 1, role_id: 1 }];
@@ -243,10 +249,14 @@ export const mockDatabaseClient = () => {
 // -------------------------
 // JWT.verify mock
 // -------------------------
-export const mockJwtVerify = (sub: string) => {
-  return vi
-    .spyOn(jwt, "verify")
-    .mockImplementation((): JwtPayload => ({ sub }));
+export const mockJwtVerify = (sub: string | null) => {
+  return vi.spyOn(jwt, "verify").mockImplementation((): JwtPayload => {
+    if (sub == null) {
+      throw new Error("Invalid token");
+    }
+
+    return { sub };
+  });
 };
 
 // -------------------------

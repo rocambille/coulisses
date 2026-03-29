@@ -48,20 +48,13 @@ class RoleRepository {
       [playId],
     );
 
-    // MySQL json_arrayagg might return [null] if there are no related items, let's clean it up
-    return rows.map(({ id, name, description, play_id, sceneIds }) => {
-      if (typeof sceneIds === "string") {
-        try {
-          sceneIds = JSON.parse(sceneIds);
-        } catch (_err) {
-          sceneIds = [];
-        }
-      }
-      if (Array.isArray(sceneIds) && sceneIds[0] === null) {
-        sceneIds = [];
-      }
-      return { id, name, description, play_id, sceneIds: sceneIds || [] };
-    });
+    return rows.map(({ id, name, description, play_id, sceneIds }) => ({
+      id,
+      name,
+      description,
+      play_id,
+      sceneIds: sceneIds || [],
+    }));
   }
 }
 

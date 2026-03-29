@@ -32,7 +32,7 @@ const checkIsMemberBySceneId: RequestHandler = async (req, res, next) => {
   }
 };
 
-router.use(PREFERENCES_BY_SCENE_PATH, authActions.verifyAccessToken);
+router.use(authActions.verifyAccessToken);
 
 // A Comédien connected can save or update their preference.
 router

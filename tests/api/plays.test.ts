@@ -64,6 +64,17 @@ describe("POST /api/plays", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("should fail without CSRF token", async () => {
+    mockJwtVerify(mockedData.user[0].id.toString());
+
+    const response = await using(api.post("/api/plays").send({}), {
+      withCsrf: false,
+      withAuth: true,
+    });
+
+    expect(response.status).toBe(401);
+  });
 });
 
 describe("GET /api/plays/:id", () => {

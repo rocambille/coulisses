@@ -76,6 +76,17 @@ describe("POST /api/auth/verify", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("should fail on invalid token", async () => {
+    mockJwtVerify(null);
+
+    const response = await using(
+      api.post("/api/auth/verify").send({ token: "invalid_token" }),
+      { withCsrf: true, withAuth: true },
+    );
+
+    expect(response.status).toBe(401);
+  });
 });
 
 describe("POST /api/auth/logout", () => {

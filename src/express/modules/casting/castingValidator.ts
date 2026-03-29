@@ -8,6 +8,7 @@ import { type ZodError, z } from "zod";
 
 const castingDTOSchema = z.object({
   userId: z.number(),
+  roleId: z.number(),
 });
 
 const validate: RequestHandler = (req, res, next) => {

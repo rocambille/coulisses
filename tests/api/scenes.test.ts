@@ -90,6 +90,37 @@ describe("POST /api/plays/:id/scenes", () => {
   });
 });
 
+describe("GET /api/scenes/:id", () => {
+  it("should fetch a scene successfully", async () => {
+    mockJwtVerify(mockedData.user[0].id.toString());
+
+    const response = await using(
+      api.get(`/api/scenes/${mockedData.scene[0].id}`),
+      {
+        withCsrf: false,
+        withAuth: true,
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(mockedData.scene[0]);
+  });
+
+  it("should fail when user is not a member of the play", async () => {
+    mockJwtVerify("not-a-member");
+
+    const response = await using(
+      api.get(`/api/scenes/${mockedData.scene[0].id}`),
+      {
+        withCsrf: false,
+        withAuth: true,
+      },
+    );
+
+    expect(response.status).toBe(403);
+  });
+});
+
 describe("PUT /api/scenes/:id", () => {
   it("should update a scene successfully", async () => {
     mockJwtVerify(mockedData.user[0].id.toString());
@@ -103,6 +134,20 @@ describe("PUT /api/scenes/:id", () => {
     );
 
     expect(response.status).toBe(204);
+  });
+
+  it("should fail when user is not a teacher of the play", async () => {
+    mockJwtVerify(mockedData.user[1].id.toString());
+
+    const response = await using(
+      api.put(`/api/scenes/${mockedData.scene[0].id}`).send({
+        title: "Updated Scene",
+        order: 1,
+      }),
+      { withCsrf: true, withAuth: true },
+    );
+
+    expect(response.status).toBe(403);
   });
 });
 
@@ -129,5 +174,16 @@ describe("DELETE /api/scenes/:id", () => {
 
     // Assuming the soft/hard delete mechanism in Repository returns affected rows natively
     expect(response.status).toBe(204);
+  });
+
+  it("should fail when user is not a teacher of the play", async () => {
+    mockJwtVerify(mockedData.user[1].id.toString());
+
+    const response = await using(
+      api.delete(`/api/scenes/${mockedData.scene[0].id}`),
+      { withCsrf: true, withAuth: true },
+    );
+
+    expect(response.status).toBe(403);
   });
 });
