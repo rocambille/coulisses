@@ -65,13 +65,11 @@ create table preference (
 );
 
 create table casting (
-  id int unsigned primary key auto_increment not null,
+  role_id int unsigned primary key not null,
   user_id int unsigned not null,
-  role_id int unsigned not null,
   assigned_at datetime default current_timestamp,
-  foreign key(user_id) references user(id) on delete cascade,
   foreign key(role_id) references role(id) on delete cascade,
-  unique(user_id, role_id)
+  foreign key(user_id) references user(id) on delete cascade
 );
 
 create table event (

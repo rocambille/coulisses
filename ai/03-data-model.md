@@ -170,16 +170,15 @@ model Preference {
 }
 
 model Casting {
-  id            String         @id @default(uuid())
-  userId        String
   roleId        String
+  userId        String
   assignedAt    DateTime       @default(now())
 
   // Relations
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   role          Role           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([roleId, userId]) // Optionnel: on peut assigner un seul User à un Role selon les besoins métier
+  @@unique([roleId]) // Un rôle ne peut être assigné qu'à un seul user
 }
 
 model Event {

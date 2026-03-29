@@ -56,8 +56,7 @@ type Preference = {
 };
 
 type Casting = {
-  id: number;
-  user_id: number;
   role_id: number;
+  user_id: number;
   assigned_at?: string;
 };

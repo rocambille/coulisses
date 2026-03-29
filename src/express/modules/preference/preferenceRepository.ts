@@ -11,11 +11,10 @@ class PreferenceRepository {
     const [result] = await databaseClient.query<Result>(
       `insert into preference (user_id, scene_id, level) 
        values (?, ?, ?)
-       on duplicate key update level = values(level), created_at = current_timestamp`,
-      [userId, sceneId, level],
+       on duplicate key update level = ?`,
+      [userId, sceneId, level, level],
     );
 
-    // Note: insertId is not guaranteed on duplicate update, but we return affected rows.
     return result.affectedRows;
   }
 }

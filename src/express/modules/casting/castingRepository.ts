@@ -11,13 +11,11 @@ import databaseClient, {
 class CastingRepository {
   async assignRole(userId: number, roleId: number) {
     // MySQL UPSERT to keep only one official casting per user/role pair
-    // In our model, a role could have multiple actors? `casting` has `user_id` and `role_id`
-    // "Le professeur assigne officiellement un rôle à un comédien"
     const [result] = await databaseClient.query<Result>(
-      `insert into casting (user_id, role_id) 
+      `insert into casting (role_id, user_id) 
        values (?, ?)
-       on duplicate key update assigned_at = current_timestamp`,
-      [userId, roleId],
+       on duplicate key update user_id = ?`,
+      [roleId, userId, userId],
     );
 
     return result.affectedRows;

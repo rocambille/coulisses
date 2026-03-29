@@ -36,7 +36,7 @@ export const mockedData = {
   ],
   scene_role: [{ id: null, scene_id: 1, role_id: 1 }],
   preference: [{ id: 1, user_id: 1, scene_id: 1, level: "HIGH" }],
-  casting: [{ id: 1, user_id: 1, role_id: 1 }],
+  casting: [{ role_id: 1, user_id: 1 }],
 };
 
 // Allows a clean slate per test
@@ -67,7 +67,7 @@ export const resetMockData = () => {
   ];
   mockedData.scene_role = [{ id: null, scene_id: 1, role_id: 1 }];
   mockedData.preference = [{ id: 1, user_id: 1, scene_id: 1, level: "HIGH" }];
-  mockedData.casting = [{ id: 1, user_id: 1, role_id: 1 }];
+  mockedData.casting = [{ role_id: 1, user_id: 1 }];
 };
 
 export const mockedInsertId = 42;
@@ -165,6 +165,13 @@ export const mockDatabaseClient = () => {
           if (/\bwhere\s+id\s*=/i.test(sql)) {
             const id = sql.match(/\s+id\s*=\s*([^\s]+)/)?.at(1);
 
+            if (table === "casting") {
+              return [
+                mockedData[table].filter((row) => row.role_id === Number(id)),
+                [],
+              ];
+            }
+
             return [
               mockedData[table].filter((row) => row.id === Number(id)),
               [],
@@ -204,6 +211,19 @@ export const mockDatabaseClient = () => {
 
           const id = sql.match(/\s+id\s*=\s*([^\s]+)/)?.at(1);
 
+          if (table === "casting") {
+            return [
+              {
+                affectedRows: mockedData[table].some(
+                  (row) => row.role_id === Number(id),
+                )
+                  ? 1
+                  : 0,
+              },
+              [],
+            ];
+          }
+
           return [
             {
               affectedRows: mockedData[table].some(
@@ -228,6 +248,19 @@ export const mockDatabaseClient = () => {
             mayBeTable as keyof typeof mockedData;
 
           const id = sql.match(/\s+id\s*=\s*([^\s]+)/)?.at(1);
+
+          if (table === "casting") {
+            return [
+              {
+                affectedRows: mockedData[table].some(
+                  (row) => row.role_id === Number(id),
+                )
+                  ? 1
+                  : 0,
+              },
+              [],
+            ];
+          }
 
           return [
             {
