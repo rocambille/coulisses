@@ -4,21 +4,12 @@
 
   This context:
   - Stores the currently authenticated user (or null)
-  - Exposes high-level auth actions (login, logout, register)
+  - Exposes high-level auth actions (sendMagicLink, verifyMagicLink, logout)
   - Performs an initial session check on mount (/api/me)
-
-  Design notes:
-  - One source of truth for authentication state
-  - Side effects live at the edge (fetch, cookies, CSRF)
-  - Consumers interact with intent-based methods, not HTTP details
 
   Usage:
   - Wrap the app with <AuthProvider>
   - Access auth state and actions via the useAuth() hook
-
-  Related docs:
-  - https://react.dev/learn/passing-data-deeply-with-context
-  - https://react.dev/learn/scaling-up-with-reducer-and-context#moving-all-wiring-into-a-single-file
 */
 
 import {
@@ -38,36 +29,16 @@ import { csrfToken } from "../utils";
 
 type AuthContextType = {
   user: User | null;
-
-  /*
-    Synchronous helper:
-    Returns true when a user is authenticated.
-    Useful for conditional rendering.
-  */
   check: () => boolean;
-
-  /*
-    Auth actions:
-    Each method encapsulates:
-    - HTTP call
-    - CSRF handling
-    - State updates
-  */
-  login: (credentials: Credentials) => Promise<void>;
+  sendMagicLink: (email: string) => Promise<void>;
+  verifyMagicLink: (token: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (
-    credentials: Credentials & { confirmPassword: string },
-  ) => Promise<void>;
 };
 
 /* ************************************************************************ */
 /* Context                                                                  */
 /* ************************************************************************ */
 
-/*
-  The context starts as null to enforce correct usage.
-  Consumers must be wrapped in <AuthProvider>.
-*/
 const AuthContext = createContext<AuthContextType | null>(null);
 
 /* ************************************************************************ */
@@ -75,21 +46,12 @@ const AuthContext = createContext<AuthContextType | null>(null);
 /* ************************************************************************ */
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  /*
-    user represents the authenticated session.
-    - null: not authenticated
-    - User: authenticated
-  */
   const [user, setUser] = useState<User | null>(null);
 
   /* ********************************************************************** */
   /* Initial session check                                                 */
   /* ********************************************************************** */
 
-  /*
-    On first render, ask the backend if a session already exists.
-    The auth cookie is sent automatically by the browser.
-  */
   useEffect(() => {
     fetch("/api/me")
       .then((response) => {
@@ -97,8 +59,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
           return response.json();
         }
       })
-      .then((user: User) => {
-        setUser(user);
+      .then((data: User | undefined) => {
+        if (data) setUser(data);
       });
   }, []);
 
@@ -106,64 +68,47 @@ export function AuthProvider({ children }: PropsWithChildren) {
   /* Actions                                                                */
   /* ********************************************************************** */
 
-  const login = useCallback(async (credentials: Credentials) => {
-    fetch("/api/access-tokens", {
+  const sendMagicLink = useCallback(async (email: string) => {
+    await fetch("/api/auth/magic-link", {
       method: "post",
       headers: {
         "Content-Type": "application/json",
         "X-CSRF-Token": await csrfToken(),
       },
-      body: JSON.stringify(credentials),
-    })
-      .then((response) => {
-        if (response.status === 201) {
-          return response.json();
-        }
-      })
-      .then((user: User) => {
-        setUser(user);
-      });
-  }, []);
-
-  const logout = useCallback(async () => {
-    fetch("/api/access-tokens", {
-      method: "delete",
-      headers: {
-        "X-CSRF-Token": await csrfToken(),
-      },
-    }).then((response) => {
-      if (response.status === 204) {
-        setUser(null);
-      }
+      body: JSON.stringify({ email }),
     });
   }, []);
 
-  const register = useCallback(
-    async (credentials: Credentials & { confirmPassword: string }) => {
-      fetch("/api/users", {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": await csrfToken(),
-        },
-        body: JSON.stringify(credentials),
-      })
-        .then((response) => {
-          if (response.status === 201) {
-            return response.json();
-          }
-        })
-        .then(({ insertId }) => {
-          // Backend creates the user and authenticates implicitly
-          setUser({
-            id: insertId,
-            email: credentials.email,
-            name: credentials.email.split("@")[0],
-          });
-        });
-    },
-    [],
-  );
+  const verifyMagicLink = useCallback(async (token: string) => {
+    const response = await fetch("/api/auth/verify", {
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": await csrfToken(),
+      },
+      body: JSON.stringify({ token }),
+    });
+
+    if (response.ok) {
+      const data: User = await response.json();
+      setUser(data);
+    } else {
+      throw new Error("Invalid or expired magic link");
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    const response = await fetch("/api/auth/logout", {
+      method: "post",
+      headers: {
+        "X-CSRF-Token": await csrfToken(),
+      },
+    });
+
+    if (response.ok) {
+      setUser(null);
+    }
+  }, []);
 
   /* ********************************************************************** */
   /* Provider value                                                         */
@@ -174,9 +119,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       value={{
         user,
         check: () => user != null,
-        login,
+        sendMagicLink,
+        verifyMagicLink,
         logout,
-        register,
       }}
     >
       {children}
@@ -191,10 +136,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
 export const useAuth = () => {
   const value = useContext(AuthContext);
 
-  /*
-    Fail fast if the hook is used outside the provider.
-    This prevents silent bugs and undefined behavior.
-  */
   if (value == null) {
     throw new Error("useAuth has to be used within <AuthProvider />");
   }

@@ -9,20 +9,13 @@
 */
 
 import { useAuth } from "./AuthContext";
-
-import LoginRegisterForm from "./LoginRegisterForm";
 import LogoutForm from "./LogoutForm";
+import MagicLinkForm from "./MagicLinkForm";
 
 function AuthForm() {
   const auth = useAuth();
 
-  /*
-    Rendering flow:
-
-    - If the user is authenticated, show the logout action
-    - Otherwise, show the login / registration form
-  */
-  return auth.check() ? <LogoutForm /> : <LoginRegisterForm />;
+  return auth.check() ? <LogoutForm /> : <MagicLinkForm />;
 }
 
 export default AuthForm;

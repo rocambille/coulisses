@@ -4,15 +4,13 @@
 
   This component:
   - Exposes the primary navigation links
+  - Adapts links based on authentication state
   - Relies on React Router for active link handling
-
-  Design notes:
-  - No business logic
-  - Purely declarative navigation
 */
 
 import type { ReactNode } from "react";
 import { NavLink } from "react-router";
+import { useAuth } from "./auth/AuthContext";
 
 /*
   Helper to keep JSX concise and consistent.
@@ -27,17 +25,13 @@ const link = (to: string, children: ReactNode) => (
 );
 
 function NavBar() {
-  return (
-    /*
-      Semantic navigation container.
+  const { check } = useAuth();
 
-      The <nav> / <ul> structure is intentionally simple
-      and accessible by default.
-    */
+  return (
     <nav>
       <ul>
-        {link("/", "Home")}
-        {link("/items", "Items")}
+        {link("/", "🎭 Coulisses")}
+        {check() ? link("/", "Mes Pièces") : link("/login", "Connexion")}
       </ul>
     </nav>
   );

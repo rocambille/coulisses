@@ -1,8 +1,3 @@
-type Credentials = {
-  email: string;
-  password: string;
-};
-
 type Item = {
   id: number;
   title: string;

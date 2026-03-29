@@ -37,18 +37,28 @@ export const mockFetch = (
           return customResult;
         }
       }
-      if (path === "/api/access-tokens" && method === "post") {
+      if (path === "/api/auth/magic-link" && method === "post") {
         return Promise.resolve().then(
           () =>
-            new Response(JSON.stringify({ id: 1, email: "foo@mail.com" }), {
-              status: 201,
-              headers: {
-                "Content-Type": "application/json",
-              },
+            new Response(JSON.stringify({ message: "Magic link sent" }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
             }),
         );
       }
-      if (path === "/api/access-tokens" && method === "delete") {
+      if (path === "/api/auth/verify" && method === "post") {
+        return Promise.resolve().then(
+          () =>
+            new Response(
+              JSON.stringify({ id: 1, email: "foo@mail.com", name: "foo" }),
+              {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              },
+            ),
+        );
+      }
+      if (path === "/api/auth/logout" && method === "post") {
         return Promise.resolve().then(
           () => new Response(null, { status: 204 }),
         );
@@ -88,23 +98,13 @@ export const mockFetch = (
       if (path === "/api/me" && method === "get") {
         return Promise.resolve().then(
           () =>
-            new Response(JSON.stringify({ id: 1, email: "foo@mail.com" }), {
-              status: 200,
-              headers: {
-                "Content-Type": "application/json",
+            new Response(
+              JSON.stringify({ id: 1, email: "foo@mail.com", name: "foo" }),
+              {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
               },
-            }),
-        );
-      }
-      if (path === "/api/users" && method === "post") {
-        return Promise.resolve().then(
-          () =>
-            new Response(JSON.stringify({ insertId: mockedInsertId }), {
-              status: 201,
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }),
+            ),
         );
       }
 
@@ -118,9 +118,9 @@ export const mockUseAuth = (user: User | null) => {
   const auth: ReturnType<typeof AuthContext.useAuth> = {
     user,
     check: () => user != null,
-    login: vi.fn(),
+    sendMagicLink: vi.fn(),
+    verifyMagicLink: vi.fn(),
     logout: vi.fn(),
-    register: vi.fn(),
   };
 
   const spy = vi.spyOn(AuthContext, "useAuth").mockImplementation(() => auth);

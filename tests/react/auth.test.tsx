@@ -11,8 +11,8 @@ import {
   AuthProvider,
   useAuth,
 } from "../../src/react/components/auth/AuthContext";
-import LoginRegisterForm from "../../src/react/components/auth/LoginRegisterForm";
 import LogoutForm from "../../src/react/components/auth/LogoutForm";
+import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
 
 import {
   mockCsrfToken,
@@ -91,7 +91,7 @@ describe("React auth components", () => {
 
       expect(auth.check()).toBe(auth.user != null);
     });
-    it("should return a login function", async () => {
+    it("should return a sendMagicLink function", async () => {
       const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 
       await waitFor(() =>
@@ -100,12 +100,9 @@ describe("React auth components", () => {
 
       const auth = result.current;
 
-      expect(typeof auth.login).toBe("function");
+      expect(typeof auth.sendMagicLink).toBe("function");
 
-      await act(
-        async () =>
-          await auth.login({ email: "foo@mail.com", password: "secret" }),
-      );
+      await act(async () => await auth.sendMagicLink("foo@mail.com"));
 
       expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
         expires: expect.any(Number),
@@ -115,14 +112,46 @@ describe("React auth components", () => {
         value: mockedRandomUUID,
       });
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/access-tokens",
+        "/api/auth/magic-link",
         expect.objectContaining({
           method: "post",
           headers: {
             "Content-Type": "application/json",
             "X-CSRF-Token": mockedRandomUUID,
           },
-          body: JSON.stringify({ email: "foo@mail.com", password: "secret" }),
+          body: JSON.stringify({ email: "foo@mail.com" }),
+        }),
+      );
+    });
+    it("should return a verifyMagicLink function", async () => {
+      const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+
+      await waitFor(() =>
+        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
+      );
+
+      const auth = result.current;
+
+      expect(typeof auth.verifyMagicLink).toBe("function");
+
+      await act(async () => await auth.verifyMagicLink("token"));
+
+      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
+        expires: expect.any(Number),
+        name: "__Host-x-csrf-token",
+        path: "/",
+        sameSite: "strict",
+        value: mockedRandomUUID,
+      });
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/auth/verify",
+        expect.objectContaining({
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": mockedRandomUUID,
+          },
+          body: JSON.stringify({ token: "token" }),
         }),
       );
     });
@@ -147,111 +176,41 @@ describe("React auth components", () => {
         value: mockedRandomUUID,
       });
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/access-tokens",
-        expect.objectContaining({
-          method: "delete",
-          headers: {
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-        }),
-      );
-    });
-    it("should return a register function", async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
-
-      const auth = result.current;
-
-      expect(typeof auth.register).toBe("function");
-
-      await act(
-        async () =>
-          await auth.register({
-            email: "foo@mail.com",
-            password: "secret",
-            confirmPassword: "secret",
-          }),
-      );
-
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/users",
+        "/api/auth/logout",
         expect.objectContaining({
           method: "post",
           headers: {
-            "Content-Type": "application/json",
             "X-CSRF-Token": mockedRandomUUID,
           },
-          body: JSON.stringify({
-            email: "foo@mail.com",
-            password: "secret",
-            confirmPassword: "secret",
-          }),
         }),
       );
     });
   });
-  describe("<LoginRegisterForm />", () => {
+  describe("<MagicLinkForm />", () => {
     it("should mount successfully", async () => {
       mockUseAuth(null);
 
-      const Stub = stubRoute("/", LoginRegisterForm);
+      const Stub = stubRoute("/", MagicLinkForm);
 
       render(<Stub initialEntries={["/"]} />);
 
-      await waitFor(() => screen.getByTestId("login"));
-      await waitFor(() => screen.getByTestId("register"));
+      await waitFor(() => screen.getByRole("button"));
     });
-    it("should submit form login", async () => {
+    it("should submit email and show confirmation", async () => {
       const [auth] = mockUseAuth(null);
 
-      const Stub = stubRoute("/", LoginRegisterForm);
+      const Stub = stubRoute("/", MagicLinkForm);
 
       render(<Stub initialEntries={["/"]} />);
 
-      await waitFor(() => screen.getByTestId("login"));
+      await waitFor(() => screen.getByRole("button"));
 
       const user = userEvent.setup();
 
       await user.type(screen.getByLabelText(/^email$/i), "foo@mail.com");
-      await user.type(screen.getByLabelText(/^password$/i), "secret");
-      await user.click(screen.getByTestId("login"));
+      await user.click(screen.getByRole("button"));
 
-      expect(auth.login).toHaveBeenCalledWith({
-        email: "foo@mail.com",
-        password: "secret",
-      });
-    });
-    it("should submit form register", async () => {
-      const [auth] = mockUseAuth(null);
-
-      const Stub = stubRoute("/", LoginRegisterForm);
-
-      render(<Stub initialEntries={["/"]} />);
-
-      await waitFor(() => screen.getByTestId("register"));
-
-      const user = userEvent.setup();
-
-      await user.type(screen.getByLabelText(/^email$/i), "foo@mail.com");
-      await user.type(screen.getByLabelText(/^password$/i), "secret");
-      await user.type(screen.getByLabelText(/^confirm\spassword$/i), "secret");
-      await user.click(screen.getByTestId("register"));
-
-      expect(auth.register).toHaveBeenCalledWith({
-        email: "foo@mail.com",
-        password: "secret",
-        confirmPassword: "secret",
-      });
+      expect(auth.sendMagicLink).toHaveBeenCalledWith("foo@mail.com");
     });
   });
   describe("<LogoutForm />", () => {
