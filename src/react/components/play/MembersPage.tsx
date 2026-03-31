@@ -1,0 +1,82 @@
+/*
+  Purpose:
+  Members management page for the teacher.
+  Route: /plays/:playId/members
+*/
+
+import { use } from "react";
+import { useParams } from "react-router";
+import { cache, invalidateCache, mutate } from "../utils";
+
+type Member = User & { role: string };
+
+function MembersPage() {
+  const { playId } = useParams();
+  const members: Member[] = use(cache(`/api/plays/${playId}/members`));
+
+  const handleInvite = async (formData: FormData) => {
+    const email = formData.get("email")?.toString();
+    const role = formData.get("role")?.toString();
+
+    if (!email || !role) return;
+
+    const response = await mutate(`/api/plays/${playId}/members`, "post", {
+      email,
+      role,
+    });
+
+    if (response.ok) {
+      invalidateCache(`/api/plays/${playId}/members`);
+      location.reload();
+    }
+  };
+
+  return (
+    <>
+      <h2>Membres</h2>
+
+      {members.length === 0 ? (
+        <p>Aucun membre pour le moment.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            {members.map((member) => (
+              <tr key={member.id}>
+                <td>{member.name}</td>
+                <td>{member.email}</td>
+                <td>{member.role === "TEACHER" ? "Professeur" : "Comédien"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <details>
+        <summary>Inviter un membre</summary>
+        <form action={handleInvite}>
+          <input
+            name="email"
+            type="email"
+            placeholder="son.adresse@mail.com"
+            aria-label="Email"
+            required
+          />
+          <select name="role" aria-label="Rôle" defaultValue="ACTOR">
+            <option value="ACTOR">Comédien</option>
+            <option value="TEACHER">Professeur</option>
+          </select>
+          <button type="submit">Inviter</button>
+        </form>
+      </details>
+    </>
+  );
+}
+
+export default MembersPage;

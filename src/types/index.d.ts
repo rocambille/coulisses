@@ -29,7 +29,7 @@ type Scene = {
   title: string;
   description: string | null;
   duration: number | null;
-  order: number;
+  scene_order: number;
   is_active: boolean;
 };
 

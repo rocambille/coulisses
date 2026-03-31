@@ -45,7 +45,7 @@ const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
   }
 };
 
-router.use(authActions.verifyAccessToken);
+router.use(CASTINGS_BY_PLAY_PATH, authActions.verifyAccessToken);
 
 // Teacher can assign a role to a user
 router

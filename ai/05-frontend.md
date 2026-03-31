@@ -30,10 +30,12 @@ Ce document décrit la structure, les composants et les parcours utilisateurs de
 
 L'application sera découpée en grandes sections via un routeur (ex: React Router).
 
-- `/login` : Page de connexion simple (Magic Link).
+- `/login` : Page de connexion (Magic Link).
+- `/verify` : Page de vérification du token magique.
+- `/logout` : Page de déconnexion.
 - `/` : **Dashboard** (Liste des pièces de l'utilisateur).
 - `/plays/:playId` : **Layout partagé** pour une pièce spécifique (affiche un menu de navigation interne à la pièce).
-  - `/plays/:playId/scenes` : **La Conduite**. Liste des scènes (dans le bon `order`). Les profs peuvent l'éditer, les acteurs peuvent y ajouter leurs préférences (`level`).
+  - `/plays/:playId/scenes` : **La Conduite**. Liste des scènes (dans le bon `scene_order`). Les profs peuvent l'éditer, les acteurs peuvent y ajouter leurs préférences (`level`).
   - `/plays/:playId/casting` : **Distribution Officielle**. Matrice ou liste des rôles avec l'acteur affecté, vue complète et filtrable.
   - `/plays/:playId/calendar` : **Agenda**. Liste chronologique des répétitions et représentations.
 

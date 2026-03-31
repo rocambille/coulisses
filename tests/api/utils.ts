@@ -26,7 +26,7 @@ export const mockedData = {
       title: "Scene 1",
       description: null,
       duration: 10,
-      order_num: 1,
+      scene_order: 1,
       is_active: 1,
     },
   ],
@@ -57,7 +57,7 @@ export const resetMockData = () => {
       title: "Scene 1",
       description: null,
       duration: 10,
-      order_num: 1,
+      scene_order: 1,
       is_active: 1,
     },
   ];

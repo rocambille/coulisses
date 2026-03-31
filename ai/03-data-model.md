@@ -136,7 +136,7 @@ model Scene {
   title         String
   description   String?
   durationEst   Int?           // Durée estimée en minutes
-  order         Int            // Ordre dans la conduite (timeline)
+  scene_order   Int            // Ordre dans la conduite (timeline)
   isActive      Boolean        @default(true)
   
   // Relations

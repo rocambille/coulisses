@@ -15,13 +15,13 @@
 import {
   createContext,
   type PropsWithChildren,
+  use,
   useCallback,
   useContext,
-  useEffect,
   useState,
 } from "react";
 
-import { csrfToken } from "../utils";
+import { cache, csrfToken } from "../utils";
 
 /* ************************************************************************ */
 /* Types                                                                    */
@@ -46,23 +46,13 @@ const AuthContext = createContext<AuthContextType | null>(null);
 /* ************************************************************************ */
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState<User | null>(null);
-
   /* ********************************************************************** */
   /* Initial session check                                                 */
   /* ********************************************************************** */
 
-  useEffect(() => {
-    fetch("/api/me")
-      .then((response) => {
-        if (response.status === 200) {
-          return response.json();
-        }
-      })
-      .then((data: User | undefined) => {
-        if (data) setUser(data);
-      });
-  }, []);
+  const me: User | null = use(cache("/api/me"));
+
+  const [user, setUser] = useState<User | null>(me);
 
   /* ********************************************************************** */
   /* Actions                                                                */
@@ -107,6 +97,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     if (response.ok) {
       setUser(null);
+    } else {
+      throw new Error("Logout failed");
     }
   }, []);
 

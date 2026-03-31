@@ -17,43 +17,37 @@
 */
 
 import type { PropsWithChildren } from "react";
-
-import { AuthProvider } from "./auth/AuthContext";
-import AuthForm from "./auth/AuthForm";
-import BurgerMenu from "./BurgerMenu";
+import { useLocation } from "react-router";
+import { useAuth } from "./auth/AuthContext";
+import MagicLinkForm from "./auth/MagicLinkForm";
 import NavBar from "./NavBar";
 
 function Layout({ children }: PropsWithChildren) {
+  const { check } = useAuth();
+  const location = useLocation();
+
   return (
-    /*
-      Authentication context:
-      Wraps the entire layout so any descendant component
-      can access authentication state and actions.
-    */
-    <AuthProvider>
+    <>
       {/* **************************************************************** */}
       {/* Persistent header                                                */}
       {/* **************************************************************** */}
 
       <header>
         <NavBar />
-
-        {/*
-          The burger menu hosts contextual UI elements.
-          Authentication is exposed here to keep login/logout
-          accessible without polluting page components.
-        */}
-        <BurgerMenu>
-          <AuthForm />
-        </BurgerMenu>
       </header>
 
       {/* **************************************************************** */}
       {/* Routed content                                                   */}
       {/* **************************************************************** */}
 
-      <main>{children}</main>
-    </AuthProvider>
+      <main>
+        {check() || location.pathname === "/verify" ? (
+          children
+        ) : (
+          <MagicLinkForm />
+        )}
+      </main>
+    </>
   );
 }
 

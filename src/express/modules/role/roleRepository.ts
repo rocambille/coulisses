@@ -17,7 +17,7 @@ class RoleRepository {
     // We need to insert the role and then the associations in scene_role
     const [result] = await databaseClient.query<Result>(
       `insert into role (play_id, name, description) values (?, ?, ?)`,
-      [playId, role.name, role.description ?? null],
+      [playId, role.name, role.description],
     );
 
     const roleId = result.insertId;
@@ -53,7 +53,7 @@ class RoleRepository {
       name,
       description,
       play_id,
-      sceneIds: sceneIds || [],
+      sceneIds,
     }));
   }
 }

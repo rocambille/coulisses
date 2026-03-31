@@ -10,7 +10,7 @@ const sceneDTOSchema = z.object({
   title: z.string().max(255),
   description: z.string().nullable().optional(),
   duration: z.number().nullable().optional(),
-  order: z.number(),
+  scene_order: z.number(),
   is_active: z.boolean().optional(),
 });
 

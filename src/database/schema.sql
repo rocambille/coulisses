@@ -32,7 +32,7 @@ create table scene (
   title varchar(255) not null,
   description text,
   duration int,
-  order int not null,
+  scene_order int not null,
   is_active boolean default true,
   foreign key(play_id) references play(id) on delete cascade
 );

@@ -36,7 +36,7 @@ Voici le plan de build progressif recommandé, découpé en tâches logiques, en
 ## 🎨 Phase 3 : Initialisation Frontend & Auth (React)
 *Objectif : Connecter les premiers composants React à notre nouvelle API depuis `src/react/`.*
 
-- [ ] **Tâche 3.1 : Page de Login (/login)**
+- [ ] **Tâche 3.1 : Pages de Login (/login, /verify, /logout)**
   - Composant de saisie d'email.
   - Gestion du retour du Magic Link (sauvegarde JWT dans le state / localStorage).
 - [ ] **Tâche 3.2 : Layouts partagés**

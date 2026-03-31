@@ -5,18 +5,28 @@
 */
 
 import { use } from "react";
-import { Navigate, NavLink } from "react-router";
+import { NavLink } from "react-router";
 import { useAuth } from "./auth/AuthContext";
-import { cache } from "./utils";
+import { cache, invalidateCache, mutate } from "./utils";
 
 function DashboardPage() {
-  const { user, check } = useAuth();
-
-  if (!check()) {
-    return <Navigate to="/login" replace />;
-  }
+  const { user } = useAuth();
 
   const plays: Play[] = use(cache("/api/plays"));
+
+  const handleAdd = async (formData: FormData) => {
+    const title = formData.get("title")?.toString();
+    if (!title) return;
+
+    const response = await mutate("/api/plays", "post", {
+      title,
+    });
+
+    if (response.ok) {
+      invalidateCache("/api/plays");
+      location.reload();
+    }
+  };
 
   return (
     <>
@@ -41,6 +51,19 @@ function DashboardPage() {
           ))}
         </div>
       )}
+
+      <details>
+        <summary>Ajouter une pièce</summary>
+        <form action={handleAdd}>
+          <input
+            name="title"
+            placeholder="Titre de la pièce"
+            aria-label="Titre de la nouvelle pièce"
+            required
+          />
+          <button type="submit">Ajouter</button>
+        </form>
+      </details>
     </>
   );
 }

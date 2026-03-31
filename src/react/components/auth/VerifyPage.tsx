@@ -22,18 +22,20 @@ function VerifyPage() {
   const token = searchParams.get("token");
 
   useEffect(() => {
-    if (!token) {
-      setError(true);
-      return;
-    }
-
-    verifyMagicLink(token)
-      .then(() => {
-        navigate("/", { replace: true });
-      })
-      .catch(() => {
+    const verify = async () => {
+      if (!token) {
         setError(true);
-      });
+        return;
+      }
+
+      try {
+        await verifyMagicLink(token);
+        navigate("/", { replace: true });
+      } catch {
+        setError(true);
+      }
+    };
+    verify();
   }, [token, verifyMagicLink, navigate]);
 
   if (error) {

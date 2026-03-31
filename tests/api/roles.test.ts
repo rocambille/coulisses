@@ -55,6 +55,17 @@ describe("GET /api/plays/:id/roles", () => {
 
     expect(response.status).toBe(403);
   });
+
+  it("should fail when play does not exist", async () => {
+    mockJwtVerify(mockedData.user[0].id.toString());
+
+    const response = await using(api.get(`/api/plays/not-a-play/roles`), {
+      withCsrf: false,
+      withAuth: true,
+    });
+
+    expect(response.status).toBe(404);
+  });
 });
 
 describe("POST /api/plays/:id/roles", () => {
@@ -98,5 +109,20 @@ describe("POST /api/plays/:id/roles", () => {
     );
 
     expect(response.status).toBe(400);
+  });
+
+  it("should fail when play does not exist", async () => {
+    mockJwtVerify(mockedData.user[0].id.toString());
+
+    const response = await using(
+      api.post(`/api/plays/not-a-play/roles`).send({
+        name: "Hamlet",
+        description: "The Prince of Denmark",
+        sceneIds: [1],
+      }),
+      { withCsrf: true, withAuth: true },
+    );
+
+    expect(response.status).toBe(404);
   });
 });

@@ -45,7 +45,7 @@ L'authentification repose sur l'envoi d'un email contenant un token, qui sera en
   - **Action** : Récupère la liste des scènes (conduite).
 
 - `POST /api/plays/:playId/scenes` *(Professeur)*
-  - **Body** : `{ title: string, durationEst?: number, order: number }`
+  - **Body** : `{ title: string, durationEst?: number, scene_order: number }`
   - **Action** : Crée une scène.
   
 - `GET /api/plays/:playId/roles`
@@ -56,7 +56,7 @@ L'authentification repose sur l'envoi d'un email contenant un token, qui sera en
   - **Action** : Crée un rôle et l'associe à diverses scènes.
 
 - `PUT /api/scenes/:sceneId` *(Professeur)*
-  - **Body** : `{ title?: string, order?: number, isActive?: boolean }`
+  - **Body** : `{ title?: string, scene_order?: number, isActive?: boolean }`
   - **Action** : Modifie une scène (par exemple : changer son ordre dans la conduite).
 
 - `DELETE /api/scenes/:sceneId` *(Professeur)*

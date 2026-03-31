@@ -14,14 +14,14 @@ class SceneRepository {
     scene: Omit<Scene, "id" | "play_id" | "is_active">,
   ) {
     const [result] = await databaseClient.query<Result>(
-      `insert into scene (play_id, title, description, duration, order) 
+      `insert into scene (play_id, title, description, duration, scene_order) 
        values (?, ?, ?, ?, ?)`,
       [
         playId,
         scene.title,
         scene.description ?? null,
         scene.duration ?? null,
-        scene.order,
+        scene.scene_order,
       ],
     );
 
@@ -40,7 +40,7 @@ class SceneRepository {
 
   async browseByPlay(playId: number): Promise<Scene[]> {
     const [rows] = await databaseClient.query<Rows>(
-      "select * from scene where play_id = ? order by order asc",
+      "select * from scene where play_id = ? order by scene_order asc",
       [playId],
     );
     return rows as Scene[];
@@ -60,8 +60,8 @@ class SceneRepository {
     fields.push("duration = ?");
     values.push(scene.duration);
 
-    fields.push("order = ?");
-    values.push(scene.order);
+    fields.push("scene_order = ?");
+    values.push(scene.scene_order);
 
     fields.push("is_active = ?");
     values.push(scene.is_active);

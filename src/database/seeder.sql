@@ -12,7 +12,7 @@ values
   (1, 1, 1, 'TEACHER'),
   (2, 1, 2, 'ACTOR');
 
-insert into scene(id, play_id, title, description, duration, order)
+insert into scene(id, play_id, title, description, duration, scene_order)
 values
   (1, 1, "Acte 1 Scène 1", "Sur les remparts", 15, 1),
   (2, 1, "Acte 1 Scène 2", "Salle d'Audience", 20, 2);

@@ -1,12 +1,19 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-
-import Home from "../../src/react/components/Home";
+import DashboardPage from "../../src/react/components/DashboardPage";
 import Layout from "../../src/react/components/Layout";
-
-import { mockFetch, stubRoute } from "./utils";
+import { mockedData } from "../api/utils";
+import {
+  mockCsrfToken,
+  mockedRandomUUID,
+  mockFetch,
+  mockUseAuth,
+  renderAsync,
+  stubRoute,
+} from "./utils";
 
 beforeEach(() => {
+  mockCsrfToken();
   mockFetch();
 });
 
@@ -15,48 +22,77 @@ afterEach(() => {
 });
 
 describe("React base components", () => {
-  describe("<Home />", () => {
+  describe("<DashboardPage />", () => {
     it("should mount successfully", async () => {
-      const Stub = stubRoute("/", Home);
+      mockUseAuth(mockedData.user[0]);
 
-      render(<Stub initialEntries={["/"]} />);
+      const Stub = stubRoute("/", DashboardPage);
+
+      await renderAsync(<Stub initialEntries={["/"]} />);
 
       await waitFor(() =>
-        screen.getByRole("heading", { level: 1, name: /starter/i }),
+        screen.getByRole("heading", { level: 1, name: /mes pièces/i }),
       );
     });
-    it("should count the clicks", async () => {
-      const Stub = stubRoute("/", Home);
 
-      render(<Stub initialEntries={["/"]} />);
+    it("should add a play", async () => {
+      mockUseAuth(mockedData.user[0]);
 
-      const count = screen.getByTestId("count-value");
+      const Stub = stubRoute("/", DashboardPage);
 
-      expect(count.textContent).toBe("0");
+      await renderAsync(<Stub initialEntries={["/"]} />);
 
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /count/i }));
+      await user.type(screen.getByLabelText(/titre/i), "Test");
+      await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-      await waitFor(() => {
-        expect(count.textContent).toBe("1");
+      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
+        expires: expect.any(Number),
+        name: "__Host-x-csrf-token",
+        path: "/",
+        sameSite: "strict",
+        value: mockedRandomUUID,
+      });
+      expect(globalThis.fetch).toHaveBeenCalledWith("/api/plays", {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": mockedRandomUUID,
+        },
+        body: JSON.stringify({
+          title: "Test",
+        }),
       });
     });
   });
   describe("<Layout />", () => {
     it("should mount successfully", async () => {
+      mockUseAuth(mockedData.user[0]);
+
       const Stub = stubRoute("/", () => <Layout />);
 
-      render(<Stub initialEntries={["/"]} />);
+      await renderAsync(<Stub initialEntries={["/"]} />);
 
       await waitFor(() => screen.getByRole("navigation"));
     });
-    it("should render its children", async () => {
+    it("should render its children when authenticated", async () => {
+      mockUseAuth(mockedData.user[0]);
+
       const Stub = stubRoute("/", () => <Layout>hello, world!</Layout>);
 
-      render(<Stub initialEntries={["/"]} />);
+      await renderAsync(<Stub initialEntries={["/"]} />);
 
       await waitFor(() => screen.getByText("hello, world!"));
+    });
+    it("should render magic link form when not authenticated", async () => {
+      mockUseAuth(null);
+
+      const Stub = stubRoute("/", () => <Layout>hello, world!</Layout>);
+
+      await renderAsync(<Stub initialEntries={["/"]} />);
+
+      await waitFor(() => screen.getByLabelText(/email/i));
     });
   });
 });

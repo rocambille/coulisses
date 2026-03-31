@@ -35,7 +35,7 @@ class CastingRepository {
     // To avoid massive unstructured JSON from MySQL, let's fetch individual sets and assemble them.
 
     const [scenes] = await databaseClient.query<Rows>(
-      "select * from scene where play_id = ? order by order_num asc",
+      "select * from scene where play_id = ? order by scene_order asc",
       [playId],
     );
 

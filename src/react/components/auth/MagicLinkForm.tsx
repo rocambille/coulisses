@@ -20,7 +20,7 @@ function MagicLinkForm() {
   ) : (
     <form
       action={(formData) => {
-        const email = formData.get("email")?.toString();
+        const email = formData.get("email")?.toString() ?? "";
 
         if (email) {
           sendMagicLink(email);
@@ -28,12 +28,17 @@ function MagicLinkForm() {
         }
       }}
     >
+      <hgroup>
+        <h1>Connexion</h1>
+        <p>Entre ton email pour recevoir un lien de connexion.</p>
+      </hgroup>
+
       <input
         aria-label="Email"
         type="email"
         name="email"
         defaultValue=""
-        placeholder="ton.email@exemple.com"
+        placeholder="ton.adresse@mail.com"
         required
       />
       <button type="submit">Recevoir mon lien de connexion</button>

@@ -55,7 +55,7 @@ describe("POST /api/plays/:id/scenes", () => {
     const response = await using(
       api.post(`/api/plays/${mockedData.play[0].id}/scenes`).send({
         title: "New Scene",
-        order: 2,
+        scene_order: 2,
       }),
       { withCsrf: true, withAuth: true },
     );
@@ -70,7 +70,7 @@ describe("POST /api/plays/:id/scenes", () => {
     const response = await using(
       api.post(`/api/plays/${mockedData.play[0].id}/scenes`).send({
         title: "New Scene",
-        order: 2,
+        scene_order: 2,
       }),
       { withCsrf: true, withAuth: true },
     );
@@ -128,7 +128,7 @@ describe("PUT /api/scenes/:id", () => {
     const response = await using(
       api.put(`/api/scenes/${mockedData.scene[0].id}`).send({
         title: "Updated Scene",
-        order: 1,
+        scene_order: 1,
       }),
       { withCsrf: true, withAuth: true },
     );
@@ -142,7 +142,7 @@ describe("PUT /api/scenes/:id", () => {
     const response = await using(
       api.put(`/api/scenes/${mockedData.scene[0].id}`).send({
         title: "Updated Scene",
-        order: 1,
+        scene_order: 1,
       }),
       { withCsrf: true, withAuth: true },
     );

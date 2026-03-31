@@ -11,7 +11,40 @@ export const mockCsrfToken = () => {
   vi.spyOn(crypto, "randomUUID").mockImplementation(() => mockedRandomUUID);
 };
 
-export const mockedItems = [{ id: 1, title: "foo", user_id: 1 }];
+export const mockedItems: Item[] = [{ id: 1, title: "foo", user_id: 1 }];
+
+export const mockedPlays: (Play & {
+  members: PlayMember[];
+  roles: (Role & { sceneIds: number[] })[];
+  scenes: Scene[];
+})[] = [
+  {
+    id: 1,
+    title: "foo",
+    description: "foo ipsum",
+    members: [{ id: 1, user_id: 1, play_id: 1, role: "TEACHER" }],
+    roles: [
+      {
+        id: 1,
+        name: "foo",
+        description: "foo ipsum",
+        play_id: 1,
+        sceneIds: [1],
+      },
+    ],
+    scenes: [
+      {
+        id: 1,
+        title: "foo.1",
+        description: "foo ipsum",
+        duration: 1,
+        play_id: 1,
+        scene_order: 1,
+        is_active: true,
+      },
+    ],
+  },
+];
 
 export const mockedInsertId = 42;
 
@@ -105,6 +138,90 @@ export const mockFetch = (
                 headers: { "Content-Type": "application/json" },
               },
             ),
+        );
+      }
+      if (path === "/api/plays" && method === "get") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify(mockedPlays), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }),
+        );
+      }
+      if (path === "/api/plays" && method === "post") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify({ insertId: mockedInsertId }), {
+              status: 201,
+            }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/members/) && method === "get") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify(mockedPlays[0].members), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/members/) && method === "post") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 204 }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/roles/) && method === "get") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify(mockedPlays[0].roles), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/roles/) && method === "post") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify({ insertId: mockedInsertId }), {
+              status: 201,
+            }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/scenes/) && method === "get") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify(mockedPlays[0].scenes), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/scenes/) && method === "post") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify({ insertId: mockedInsertId }), {
+              status: 201,
+            }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+/) && method === "get") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify(mockedPlays[0]), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }),
         );
       }
 
