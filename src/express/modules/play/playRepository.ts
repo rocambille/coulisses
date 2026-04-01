@@ -18,7 +18,7 @@ class PlayRepository {
     return result.insertId;
   }
 
-  async read(byId: number): Promise<Play | null> {
+  async find(byId: number): Promise<Play | null> {
     const [rows] = await databaseClient.query<Rows>(
       "select id, title, description from play where id = ?",
       [byId],

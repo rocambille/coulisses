@@ -18,7 +18,7 @@ class UserRepository {
     return result.insertId;
   }
 
-  async read(byId: number): Promise<User | null> {
+  async find(byId: number): Promise<User | null> {
     const [rows] = await databaseClient.query<Rows>(
       "select id, email, name from user where id = ? and deleted_at is null",
       [byId],
@@ -28,7 +28,7 @@ class UserRepository {
     return rows[0] as User;
   }
 
-  async readByEmail(byEmail: string): Promise<User | null> {
+  async findByEmail(byEmail: string): Promise<User | null> {
     const [rows] = await databaseClient.query<Rows>(
       "select id, email, name from user where email = ? and deleted_at is null",
       [byEmail],
@@ -38,7 +38,7 @@ class UserRepository {
     return rows[0] as User;
   }
 
-  async readAll(limit: number, offset: number): Promise<User[]> {
+  async findAll(limit: number, offset: number): Promise<User[]> {
     const [rows] = await databaseClient.query<Rows>(
       "select id, email, name from user where deleted_at is null limit ? offset ?",
       [limit, offset],

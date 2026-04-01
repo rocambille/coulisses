@@ -23,6 +23,6 @@ router.post("/api/auth/logout", authActions.destroyAccessToken);
 /* Authenticated routes                                                     */
 /* ************************************************************************ */
 
-router.get("/api/me", authActions.verifyAccessToken, authActions.readMe);
+router.get("/api/me", authActions.verifyAccessToken, authActions.findMe);
 
 export default router;

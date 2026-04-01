@@ -39,7 +39,7 @@ import userRepository from "./userRepository";
 const browse: RequestHandler = async (req, res) => {
   const offset = Number(req.query.start ?? "0");
 
-  const users = await userRepository.readAll(10, offset);
+  const users = await userRepository.findAll(10, offset);
 
   res.json(users);
 };

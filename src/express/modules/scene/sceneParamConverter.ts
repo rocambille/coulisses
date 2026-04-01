@@ -16,7 +16,7 @@ import type { RequestParamHandler } from "express";
 import sceneRepository from "./sceneRepository";
 
 const convert: RequestParamHandler = async (req, res, next, sceneId) => {
-  const scene = await sceneRepository.read(+sceneId);
+  const scene = await sceneRepository.find(+sceneId);
 
   if (scene == null) {
     res.sendStatus(req.method === "DELETE" ? 204 : 404);

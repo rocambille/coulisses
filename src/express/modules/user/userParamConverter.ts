@@ -60,7 +60,7 @@ import userRepository from "./userRepository";
   - Controllers never deal with "missing user" cases
 */
 const convert: RequestParamHandler = async (req, res, next, userId) => {
-  const user = await userRepository.read(+userId);
+  const user = await userRepository.find(+userId);
 
   if (user == null) {
     res.sendStatus(req.method === "DELETE" ? 204 : 404);

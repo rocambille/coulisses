@@ -28,7 +28,7 @@ class SceneRepository {
     return result.insertId;
   }
 
-  async read(byId: number): Promise<Scene | null> {
+  async find(byId: number): Promise<Scene | null> {
     const [rows] = await databaseClient.query<Rows>(
       "select * from scene where id = ?",
       [byId],

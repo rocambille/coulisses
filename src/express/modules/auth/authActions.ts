@@ -107,7 +107,7 @@ const verifyMagicLink: RequestHandler = async (req, res) => {
     const payload = auth.verify(token);
 
     // Find user directly, or create if doesn't exist yet (simplified onboarding)
-    let user = await userRepository.readByEmail(payload.sub);
+    let user = await userRepository.findByEmail(payload.sub);
     if (user != null) {
       res.status(200);
     } else {
@@ -140,8 +140,8 @@ const destroyAccessToken: RequestHandler = (_req, res) => {
   res.sendStatus(204);
 };
 
-const readMe: RequestHandler = async (req, res) => {
-  const me = await userRepository.read(Number(req.auth.sub));
+const findMe: RequestHandler = async (req, res) => {
+  const me = await userRepository.find(Number(req.auth.sub));
   res.json(me);
 };
 
@@ -150,5 +150,5 @@ export default {
   sendMagicLink,
   verifyMagicLink,
   destroyAccessToken,
-  readMe,
+  findMe,
 };

@@ -16,7 +16,7 @@ import type { RequestParamHandler } from "express";
 import playRepository from "./playRepository";
 
 const convert: RequestParamHandler = async (req, res, next, playId) => {
-  const play = await playRepository.read(+playId);
+  const play = await playRepository.find(+playId);
 
   if (play == null) {
     res.sendStatus(req.method === "DELETE" ? 204 : 404);
