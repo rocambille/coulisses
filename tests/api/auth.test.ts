@@ -48,7 +48,7 @@ describe("POST /api/auth/verify", () => {
       { withCsrf: true, withAuth: false },
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(201);
     const cookies = response.headers["set-cookie"]?.toString();
     expect(cookies).toBeDefined();
     expect(cookies.includes("__Host-auth=")).toBe(true);

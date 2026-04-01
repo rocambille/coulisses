@@ -95,7 +95,7 @@ describe("React auth components", () => {
 
       expect(typeof auth.check).toBe("function");
 
-      expect(auth.check()).toBe(auth.user != null);
+      expect(auth.check()).toBe(auth.me != null);
     });
     it("should return a sendMagicLink function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {

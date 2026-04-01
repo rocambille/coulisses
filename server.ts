@@ -76,12 +76,14 @@ async function createServer() {
   // SECURITY:
   // Basic rate limiting to mitigate brute-force and abuse.
   // This is intentionally simple and should be tuned per deployment.
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 100, // max 100 requests per window
-  });
+  if (isProduction) {
+    const limiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      limit: 100, // max 100 requests per window
+    });
 
-  app.use(limiter);
+    app.use(limiter);
+  }
 
   /* ********************************************************************** */
   /* API routes                                                             */

@@ -10,7 +10,7 @@ import { useAuth } from "./auth/AuthContext";
 import { cache, invalidateCache, mutate } from "./utils";
 
 function DashboardPage() {
-  const { user } = useAuth();
+  const { me } = useAuth();
 
   const plays: Play[] = use(cache("/api/plays"));
 
@@ -32,7 +32,7 @@ function DashboardPage() {
     <>
       <hgroup>
         <h1>Mes Pièces</h1>
-        <p>Bienvenue, {user?.name} !</p>
+        <p>Bienvenue, {me?.name} !</p>
       </hgroup>
 
       {plays.length === 0 ? (

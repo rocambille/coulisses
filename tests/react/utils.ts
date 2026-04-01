@@ -11,18 +11,27 @@ export const mockCsrfToken = () => {
   vi.spyOn(crypto, "randomUUID").mockImplementation(() => mockedRandomUUID);
 };
 
+export const mockedUsers: User[] = [
+  { id: 1, email: "foo@mail.com", name: "foo" },
+  { id: 2, email: "bar@mail.com", name: "bar" },
+];
+
 export const mockedItems: Item[] = [{ id: 1, title: "foo", user_id: 1 }];
 
 export const mockedPlays: (Play & {
-  members: PlayMember[];
+  members: (User & { role: string })[];
   roles: (Role & { sceneIds: number[] })[];
   scenes: Scene[];
+  preferences: Preference[];
 })[] = [
   {
     id: 1,
     title: "foo",
     description: "foo ipsum",
-    members: [{ id: 1, user_id: 1, play_id: 1, role: "TEACHER" }],
+    members: [
+      { id: 1, email: "foo@mail.com", name: "foo", role: "TEACHER" },
+      { id: 2, email: "bar@mail.com", name: "bar", role: "ACTOR" },
+    ],
     roles: [
       {
         id: 1,
@@ -42,6 +51,10 @@ export const mockedPlays: (Play & {
         scene_order: 1,
         is_active: true,
       },
+    ],
+    preferences: [
+      { user_id: 1, scene_id: 1, level: "HIGH" },
+      { user_id: 2, scene_id: 1, level: "MEDIUM" },
     ],
   },
 ];
@@ -213,6 +226,22 @@ export const mockFetch = (
             }),
         );
       }
+      if (path.match(/\/api\/plays\/\d+\/preferences/) && method === "get") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify(mockedPlays[0].preferences), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }),
+        );
+      }
+      if (path.match(/\/api\/scenes\/\d+\/preferences/) && method === "post") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 204 }),
+        );
+      }
       if (path.match(/\/api\/plays\/\d+/) && method === "get") {
         return Promise.resolve().then(
           () =>
@@ -233,7 +262,7 @@ export const mockFetch = (
 
 export const mockUseAuth = (user: User | null) => {
   const auth: ReturnType<typeof AuthContext.useAuth> = {
-    user,
+    me: user,
     check: () => user != null,
     sendMagicLink: vi.fn(),
     verifyMagicLink: vi.fn(),

@@ -28,7 +28,7 @@ import { cache, csrfToken } from "../utils";
 /* ************************************************************************ */
 
 type AuthContextType = {
-  user: User | null;
+  me: User | null;
   check: () => boolean;
   sendMagicLink: (email: string) => Promise<void>;
   verifyMagicLink: (token: string) => Promise<void>;
@@ -50,9 +50,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   /* Initial session check                                                 */
   /* ********************************************************************** */
 
-  const me: User | null = use(cache("/api/me"));
-
-  const [user, setUser] = useState<User | null>(me);
+  const [user, setUser] = useState<User | null>(use(cache("/api/me")));
 
   /* ********************************************************************** */
   /* Actions                                                                */
@@ -109,7 +107,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   return (
     <AuthContext
       value={{
-        user,
+        me: user,
         check: () => user != null,
         sendMagicLink,
         verifyMagicLink,

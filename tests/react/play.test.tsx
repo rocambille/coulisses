@@ -7,7 +7,9 @@ import ScenesPage from "../../src/react/components/play/ScenesPage";
 import {
   mockCsrfToken,
   mockedRandomUUID,
+  mockedUsers,
   mockFetch,
+  mockUseAuth,
   renderAsync,
   stubRoute,
 } from "./utils";
@@ -108,6 +110,8 @@ describe("React play components", () => {
 
   describe("<ScenesPage />", () => {
     it("should mount successfully", async () => {
+      mockUseAuth(mockedUsers[0]);
+
       const Stub = stubRoute("/plays/:playId/scenes", ScenesPage);
 
       await renderAsync(<Stub initialEntries={["/plays/1/scenes"]} />);
@@ -115,7 +119,9 @@ describe("React play components", () => {
       await waitFor(() => screen.getByRole("heading", { level: 2 }));
     });
 
-    it("should add a new scene successfully", async () => {
+    it("should add a new scene successfully (teacher)", async () => {
+      mockUseAuth(mockedUsers[0]);
+
       const Stub = stubRoute("/plays/:playId/scenes", ScenesPage);
 
       await renderAsync(<Stub initialEntries={["/plays/1/scenes"]} />);
@@ -140,6 +146,37 @@ describe("React play components", () => {
         },
         body: JSON.stringify({ title: "Test", scene_order: 2 }),
       });
+    });
+
+    it("should add a new preference successfully (actor)", async () => {
+      mockUseAuth(mockedUsers[1]);
+
+      const Stub = stubRoute("/plays/:playId/scenes", ScenesPage);
+
+      await renderAsync(<Stub initialEntries={["/plays/1/scenes"]} />);
+
+      const user = userEvent.setup();
+
+      await user.selectOptions(screen.getByLabelText(/envie/i), "HIGH");
+
+      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
+        expires: expect.any(Number),
+        name: "__Host-x-csrf-token",
+        path: "/",
+        sameSite: "strict",
+        value: mockedRandomUUID,
+      });
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/scenes/1/preferences",
+        {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": mockedRandomUUID,
+          },
+          body: JSON.stringify({ level: "HIGH" }),
+        },
+      );
     });
   });
 });

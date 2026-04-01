@@ -35,15 +35,52 @@ class SceneRepository {
     );
 
     if (rows[0] == null) return null;
-    return rows[0] as Scene;
+
+    const {
+      id,
+      title,
+      description,
+      play_id,
+      duration,
+      scene_order,
+      is_active,
+    } = rows[0];
+
+    return {
+      id,
+      title,
+      description,
+      play_id,
+      duration,
+      scene_order,
+      is_active,
+    };
   }
 
-  async browseByPlay(playId: number): Promise<Scene[]> {
+  async findByPlay(play: Play): Promise<Scene[]> {
     const [rows] = await databaseClient.query<Rows>(
       "select * from scene where play_id = ? order by scene_order asc",
-      [playId],
+      [play.id],
     );
-    return rows as Scene[];
+    return rows.map<Scene>(
+      ({
+        id,
+        title,
+        description,
+        play_id,
+        duration,
+        scene_order,
+        is_active,
+      }) => ({
+        id,
+        title,
+        description,
+        play_id,
+        duration,
+        scene_order,
+        is_active,
+      }),
+    );
   }
 
   async update(id: number, scene: Omit<Scene, "id">) {

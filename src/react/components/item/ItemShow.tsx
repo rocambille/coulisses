@@ -44,7 +44,7 @@ function ItemShow() {
       {/* Owner-only actions                                               */}
       {/* **************************************************************** */}
 
-      {auth.user?.id === item.user_id && (
+      {auth.me?.id === item.user_id && (
         <>
           {/*
             Edit action:

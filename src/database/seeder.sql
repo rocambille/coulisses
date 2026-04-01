@@ -28,9 +28,9 @@ values
   (2, 1),
   (2, 2);
 
-insert into preference(id, user_id, scene_id, level)
+insert into preference(user_id, scene_id, level)
 values
-  (1, 2, 1, 'HIGH');
+  (2, 1, 'HIGH');
 
 insert into casting(role_id, user_id)
 values

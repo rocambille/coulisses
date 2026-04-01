@@ -34,7 +34,7 @@ describe("GET /api/plays/:id/scenes", () => {
   });
 
   it("should fail when user is not a member of the play", async () => {
-    mockJwtVerify("not-a-member");
+    mockJwtVerify(mockedData.user[2].id.toString());
 
     const response = await using(
       api.get(`/api/plays/${mockedData.play[0].id}/scenes`),
@@ -107,7 +107,7 @@ describe("GET /api/scenes/:id", () => {
   });
 
   it("should fail when user is not a member of the play", async () => {
-    mockJwtVerify("not-a-member");
+    mockJwtVerify(mockedData.user[2].id.toString());
 
     const response = await using(
       api.get(`/api/scenes/${mockedData.scene[0].id}`),

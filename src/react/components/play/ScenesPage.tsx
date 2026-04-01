@@ -6,12 +6,31 @@
 
 import { use, useState } from "react";
 import { useParams } from "react-router";
+import { useAuth } from "../auth/AuthContext";
 import { cache, invalidateCache, mutate } from "../utils";
+import PreferenceList from "./PreferenceList";
+import PreferenceSelector from "./PreferenceSelector";
 
 function ScenesPage() {
-  const { playId } = useParams();
-  const scenes: Scene[] = use(cache(`/api/plays/${playId}/scenes`));
+  const { me } = useAuth();
+
   const [editing, setEditing] = useState<number | null>(null);
+
+  const { playId } = useParams();
+  if (!playId) return null;
+
+  const scenes: Scene[] = use(cache(`/api/plays/${playId}/scenes`));
+  const members: (User & { role: string })[] = use(
+    cache(`/api/plays/${playId}/members`),
+  );
+  const preferences: Preference[] = use(
+    cache(`/api/plays/${playId}/preferences`),
+  );
+
+  const isTeacher =
+    members.find((member) => member.id === me?.id)?.role === "TEACHER";
+  const isActor =
+    members.find((member) => member.id === me?.id)?.role === "ACTOR";
 
   const handleAdd = async (formData: FormData) => {
     const title = formData.get("title")?.toString();
@@ -56,7 +75,10 @@ function ScenesPage() {
 
   return (
     <>
-      <h2>Scènes</h2>
+      <hgroup>
+        <h2>Scènes</h2>
+        <p>Organisation de la pièce et expression des préférences.</p>
+      </hgroup>
 
       {scenes.length === 0 ? (
         <p>Aucune scène pour le moment.</p>
@@ -88,46 +110,75 @@ function ScenesPage() {
               </form>
             ) : (
               <>
-                <header>
+                <header
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "0.5rem",
+                  }}
+                >
                   <strong>
                     {scene.scene_order}. {scene.title}
                   </strong>
+                  {isActor && (
+                    <PreferenceSelector
+                      sceneId={scene.id}
+                      playId={playId}
+                      currentLevel={
+                        preferences.find(
+                          (p) =>
+                            p.scene_id === scene.id && p.user_id === me?.id,
+                        )?.level
+                      }
+                    />
+                  )}
                 </header>
                 {scene.description && <p>{scene.description}</p>}
-                <footer>
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => setEditing(scene.id)}
-                  >
-                    Modifier
-                  </button>
-                  <button
-                    type="button"
-                    className="contrast"
-                    onClick={() => handleDelete(scene.id)}
-                  >
-                    Supprimer
-                  </button>
-                </footer>
+                <PreferenceList
+                  sceneId={scene.id}
+                  preferences={preferences}
+                  members={members}
+                />
+                {isTeacher && (
+                  <footer style={{ marginTop: "1rem" }}>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setEditing(scene.id)}
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      type="button"
+                      className="contrast"
+                      onClick={() => handleDelete(scene.id)}
+                    >
+                      Supprimer
+                    </button>
+                  </footer>
+                )}
               </>
             )}
           </article>
         ))
       )}
 
-      <details>
-        <summary>Ajouter une scène</summary>
-        <form action={handleAdd}>
-          <input
-            name="title"
-            placeholder="Titre de la scène"
-            aria-label="Titre de la nouvelle scène"
-            required
-          />
-          <button type="submit">Ajouter</button>
-        </form>
-      </details>
+      {isTeacher && (
+        <details>
+          <summary>Ajouter une scène</summary>
+          <form action={handleAdd}>
+            <input
+              name="title"
+              placeholder="Titre de la scène"
+              aria-label="Titre de la nouvelle scène"
+              required
+            />
+            <button type="submit">Ajouter</button>
+          </form>
+        </details>
+      )}
     </>
   );
 }

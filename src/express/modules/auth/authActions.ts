@@ -41,7 +41,7 @@ const auth = new Auth<JwtPayload & { sub: string }>(appSecret);
 declare global {
   namespace Express {
     interface Request {
-      auth: ReturnType<typeof auth.verify>;
+      me: User;
     }
   }
 }
@@ -53,7 +53,7 @@ const cookieOptions: CookieOptions = {
   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 };
 
-const verifyAccessToken: RequestHandler = (req, res, next) => {
+const verifyAccessToken: RequestHandler = async (req, res, next) => {
   try {
     const token = req.cookies["__Host-auth"];
 
@@ -61,7 +61,16 @@ const verifyAccessToken: RequestHandler = (req, res, next) => {
       throw new Error("Access token is missing in cookies");
     }
 
-    req.auth = auth.verify(token);
+    const payload = auth.verify(token);
+
+    const me = await userRepository.find(Number(payload.sub));
+
+    if (me == null) {
+      throw new Error("User not found");
+    }
+
+    req.me = me;
+
     next();
   } catch {
     res.sendStatus(401);
@@ -107,28 +116,13 @@ const verifyMagicLink: RequestHandler = async (req, res) => {
     const payload = auth.verify(token);
 
     // Find user directly, or create if doesn't exist yet (simplified onboarding)
-    let user = await userRepository.findByEmail(payload.sub);
-    if (user != null) {
-      res.status(200);
-    } else {
-      const insertId = await userRepository.create({
-        email: payload.sub,
-        name: payload.sub.split("@")[0], // Default name for new users
-      });
-      user = {
-        id: insertId,
-        email: payload.sub,
-        name: payload.sub.split("@")[0],
-      };
-
-      res.status(201);
-    }
+    const user = await userRepository.findOrCreateByEmail(payload.sub);
 
     const sessionToken = auth.signSession({ sub: user.id.toString() });
 
     res.cookie("__Host-auth", sessionToken, cookieOptions);
 
-    res.json(user);
+    res.status(201).json(user);
   } catch (_err) {
     res.sendStatus(401);
   }
@@ -141,8 +135,7 @@ const destroyAccessToken: RequestHandler = (_req, res) => {
 };
 
 const findMe: RequestHandler = async (req, res) => {
-  const me = await userRepository.find(Number(req.auth.sub));
-  res.json(me);
+  res.json(req.me);
 };
 
 export default {

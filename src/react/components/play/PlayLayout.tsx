@@ -30,6 +30,9 @@ function PlayLayout() {
             <NavLink to={`/plays/${playId}/roles`}>Rôles</NavLink>
           </li>
           <li>
+            <NavLink to={`/plays/${playId}/casting`}>Distribution</NavLink>
+          </li>
+          <li>
             <NavLink to={`/plays/${playId}/members`}>Membres</NavLink>
           </li>
         </ul>

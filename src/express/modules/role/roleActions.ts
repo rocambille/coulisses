@@ -7,7 +7,7 @@ import type { RequestHandler } from "express";
 import roleRepository from "./roleRepository";
 
 const browse: RequestHandler = async (req, res) => {
-  const roles = await roleRepository.browseByPlay(req.play.id);
+  const roles = await roleRepository.findByPlay(req.play);
   res.json(roles);
 };
 

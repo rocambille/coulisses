@@ -14,6 +14,7 @@ import {
   mockedInsertId,
   mockedItems,
   mockedRandomUUID,
+  mockedUsers,
   mockFetch,
   mockUseAuth,
   mockUseItems,
@@ -368,7 +369,7 @@ describe("React item components", () => {
       );
     });
     it("should display link to edit item when authentified", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
+      mockUseAuth(mockedUsers[0]);
       mockUseItems({ id: mockedItems[0].id.toString() });
 
       const Stub = stubRoute("/items/:id", ItemShow);

@@ -54,14 +54,13 @@ create table scene_role (
 );
 
 create table preference (
-  id int unsigned primary key auto_increment not null,
   user_id int unsigned not null,
   scene_id int unsigned not null,
   level enum('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED') not null,
   created_at datetime default current_timestamp,
+  primary key(user_id, scene_id),
   foreign key(user_id) references user(id) on delete cascade,
-  foreign key(scene_id) references scene(id) on delete cascade,
-  unique(user_id, scene_id)
+  foreign key(scene_id) references scene(id) on delete cascade
 );
 
 create table casting (

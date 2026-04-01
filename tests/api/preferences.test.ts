@@ -31,7 +31,7 @@ describe("POST /api/scenes/:sceneId/preferences", () => {
   });
 
   it("should fail when user is not a member of the play", async () => {
-    mockJwtVerify("not-a-member");
+    mockJwtVerify(mockedData.user[2].id.toString());
 
     const response = await using(
       api.post(`/api/scenes/${mockedData.scene[0].id}/preferences`).send({
@@ -67,5 +67,31 @@ describe("POST /api/scenes/:sceneId/preferences", () => {
     );
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe("GET /api/plays/:playId/preferences", () => {
+  it("should fetch all preferences for the play successfully", async () => {
+    mockJwtVerify(mockedData.user[0].id.toString());
+
+    const response = await using(
+      api.get(`/api/plays/${mockedData.play[0].id}/preferences`),
+      { withAuth: true, withCsrf: false },
+    );
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body[0]).toHaveProperty("level");
+  });
+
+  it("should fail when user is not a member of the play", async () => {
+    mockJwtVerify(mockedData.user[2].id.toString());
+
+    const response = await using(
+      api.get(`/api/plays/${mockedData.play[0].id}/preferences`),
+      { withAuth: true, withCsrf: false },
+    );
+
+    expect(response.status).toBe(403);
   });
 });

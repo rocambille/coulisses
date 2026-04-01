@@ -13,6 +13,7 @@ export const mockedData = {
   user: [
     { id: 1, email: "foo@mail.com", name: "foo" },
     { id: 2, email: "bar@mail.com", name: "bar" },
+    { id: 3, email: "not-a-member@mail.com", name: "not-a-member" },
   ],
   play: [{ id: 1, title: "Play 1", description: "Desc 1" }],
   play_member: [
@@ -44,6 +45,7 @@ export const resetMockData = () => {
   mockedData.user = [
     { id: 1, email: "foo@mail.com", name: "foo" },
     { id: 2, email: "bar@mail.com", name: "bar" },
+    { id: 3, email: "not-a-member@mail.com", name: "not-a-member" },
   ];
   mockedData.play = [{ id: 1, title: "Play 1", description: "Desc 1" }];
   mockedData.play_member = [

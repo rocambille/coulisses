@@ -7,7 +7,7 @@ import type { RequestHandler } from "express";
 import sceneRepository from "./sceneRepository";
 
 const browse: RequestHandler = async (req, res) => {
-  const scenes = await sceneRepository.browseByPlay(req.play.id);
+  const scenes = await sceneRepository.findByPlay(req.play);
   res.json(scenes);
 };
 

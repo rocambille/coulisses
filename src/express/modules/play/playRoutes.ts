@@ -22,10 +22,8 @@ router.param("playId", playParamConverter.convert);
 
 // Authorization check: User must be a member of the play to view or modify it
 const checkIsMember: RequestHandler = async (req, res, next) => {
-  const userId = Number(req.auth.sub);
-
   const members = await playRepository.getMembers(req.play.id);
-  const isMember = members.some((m) => m.id === userId);
+  const isMember = members.some((member) => member.id === req.me.id);
 
   if (isMember) {
     // For MVP, we can attach the user's role if needed or just pass
@@ -36,10 +34,8 @@ const checkIsMember: RequestHandler = async (req, res, next) => {
 };
 
 const checkIsTeacher: RequestHandler = async (req, res, next) => {
-  const userId = Number(req.auth.sub);
-
   const members = await playRepository.getMembers(req.play.id);
-  const member = members.find((m) => m.id === userId);
+  const member = members.find((member) => member.id === req.me.id);
 
   if (member?.role === "TEACHER") {
     next();

@@ -36,7 +36,7 @@ class RoleRepository {
     return roleId;
   }
 
-  async browseByPlay(playId: number): Promise<Role[]> {
+  async findByPlay(play: Play): Promise<Role[]> {
     // Fetch all roles for a play, and aggregate their scene_ids
     const [rows] = await databaseClient.query<Rows>(
       `select r.id, r.name, r.description, r.play_id,
@@ -45,10 +45,16 @@ class RoleRepository {
        left join scene_role sr on r.id = sr.role_id
        where r.play_id = ?
        group by r.id`,
-      [playId],
+      [play.id],
     );
 
-    return rows.map(({ id, name, description, play_id, sceneIds }) => ({
+    return rows.map<{
+      id: number;
+      name: string;
+      description: string | null;
+      play_id: number;
+      sceneIds: number[];
+    }>(({ id, name, description, play_id, sceneIds }) => ({
       id,
       name,
       description,

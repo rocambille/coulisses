@@ -25,7 +25,10 @@ class UserRepository {
     );
 
     if (rows[0] == null) return null;
-    return rows[0] as User;
+
+    const { id, email, name } = rows[0];
+
+    return { id, email, name };
   }
 
   async findByEmail(byEmail: string): Promise<User | null> {
@@ -35,7 +38,22 @@ class UserRepository {
     );
 
     if (rows[0] == null) return null;
-    return rows[0] as User;
+
+    const { id, email, name } = rows[0];
+
+    return { id, email, name };
+  }
+
+  async findOrCreateByEmail(email: string, name?: string) {
+    const user = await this.findByEmail(email);
+    if (user) return user;
+
+    const id = await this.create({
+      email,
+      name: name ?? email.split("@")[0],
+    });
+
+    return { id, email, name: name ?? email.split("@")[0] };
   }
 
   async findAll(limit: number, offset: number): Promise<User[]> {
@@ -44,7 +62,7 @@ class UserRepository {
       [limit, offset],
     );
 
-    return rows as User[];
+    return rows.map<User>(({ id, email, name }) => ({ id, email, name }));
   }
 
   async update(id: number, user: Omit<User, "id">) {

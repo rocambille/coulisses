@@ -43,7 +43,6 @@ type Role = {
 type PreferenceLevel = "HIGH" | "MEDIUM" | "LOW" | "NOT_INTERESTED";
 
 type Preference = {
-  id: number;
   user_id: number;
   scene_id: number;
   level: PreferenceLevel;
@@ -54,4 +53,12 @@ type Casting = {
   role_id: number;
   user_id: number;
   assigned_at?: string;
+};
+
+type CastingMatrix = {
+  scenes: Scene[];
+  roles: Role[];
+  sceneRoles: { scene_id: number; role_id: number }[];
+  castings: { user_id: number; role_id: number }[];
+  preferences: { user_id: number; scene_id: number; level: string }[];
 };

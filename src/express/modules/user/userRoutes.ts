@@ -19,7 +19,7 @@ const USER_PATH = "/api/users/:userId";
 router.param("userId", userParamConverter.convert);
 
 const checkAccess: RequestHandler = (req, res, next) => {
-  if (req.params.userId === req.auth.sub) {
+  if (Number(req.params.userId) === req.me.id) {
     next();
   } else {
     res.sendStatus(403);

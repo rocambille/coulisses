@@ -34,16 +34,20 @@ class PlayRepository {
   }
 
   // Browse only plays where the user is a member
-  async browseForUser(userId: number): Promise<Play[]> {
+  async findByUser(user: User): Promise<Play[]> {
     const [rows] = await databaseClient.query<Rows>(
       `select p.id, p.title, p.description 
        from play p 
        join play_member pm on p.id = pm.play_id 
        where pm.user_id = ?`,
-      [userId],
+      [user.id],
     );
 
-    return rows as Play[];
+    return rows.map<Play>(({ id, title, description }) => ({
+      id,
+      title,
+      description,
+    }));
   }
 
   async update(id: number, play: Omit<Play, "id">) {
@@ -83,7 +87,9 @@ class PlayRepository {
        where pm.play_id = ?`,
       [playId],
     );
-    return rows as (User & { role: string })[];
+    return rows.map<{ id: number; email: string; role: string; name: string }>(
+      ({ id, email, role, name }) => ({ id, email, role, name }),
+    );
   }
 }
 

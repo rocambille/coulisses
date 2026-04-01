@@ -4,11 +4,11 @@
 */
 
 import type { RequestHandler } from "express";
+import userRepository from "../user/userRepository";
 import playRepository from "./playRepository";
 
 const browse: RequestHandler = async (req, res) => {
-  const userId = Number(req.auth.sub);
-  const plays = await playRepository.browseForUser(userId);
+  const plays = await playRepository.findByUser(req.me);
   res.json(plays);
 };
 
@@ -25,7 +25,7 @@ const add: RequestHandler = async (req, res) => {
   const insertId = await playRepository.create(req.body);
 
   // Directly add the creator as TEACHER
-  await playRepository.addMember(insertId, Number(req.auth.sub), "TEACHER");
+  await playRepository.addMember(insertId, req.me.id, "TEACHER");
 
   res.status(201).json({ insertId });
 };
@@ -41,10 +41,11 @@ const browseMembers: RequestHandler = async (req, res) => {
 };
 
 const addMember: RequestHandler = async (req, res) => {
-  const { userId, role } = req.body;
+  const { email, role } = req.body;
   const { play } = req;
 
-  await playRepository.addMember(play.id, userId, role);
+  const user = await userRepository.findOrCreateByEmail(email);
+  await playRepository.addMember(play.id, user.id, role);
 
   res.sendStatus(204);
 };

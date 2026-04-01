@@ -40,7 +40,7 @@ class CastingRepository {
     );
 
     const [roles] = await databaseClient.query<Rows>(
-      "select id, name, description from role where play_id = ?",
+      "select * from role where play_id = ?",
       [playId],
     );
 
@@ -55,7 +55,7 @@ class CastingRepository {
 
     // Get Official Casting
     const [castings] = await databaseClient.query<Rows>(
-      `select c.id, c.user_id, c.role_id, c.assigned_at 
+      `select c.* 
        from casting c 
        join role r on c.role_id = r.id 
        where r.play_id = ?`,
@@ -64,7 +64,7 @@ class CastingRepository {
 
     // Get Preferences for scenes of this play
     const [preferences] = await databaseClient.query<Rows>(
-      `select p.id, p.user_id, p.scene_id, p.level 
+      `select p.* 
        from preference p 
        join scene s on p.scene_id = s.id 
        where s.play_id = ?`,
@@ -72,11 +72,39 @@ class CastingRepository {
     );
 
     return {
-      scenes,
-      roles,
-      sceneRoles,
-      castings,
-      preferences,
+      scenes: scenes.map<Scene>((scene) => ({
+        id: scene.id,
+        title: scene.title,
+        description: scene.description,
+        scene_order: scene.scene_order,
+        play_id: scene.play_id,
+        duration: scene.duration,
+        is_active: scene.is_active,
+      })),
+      roles: roles.map<Role>((role) => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        play_id: role.play_id,
+      })),
+      sceneRoles: sceneRoles.map<{
+        scene_id: number;
+        role_id: number;
+      }>((sceneRole) => ({
+        scene_id: sceneRole.scene_id,
+        role_id: sceneRole.role_id,
+      })),
+      castings: castings.map<Casting>((casting) => ({
+        user_id: casting.user_id,
+        role_id: casting.role_id,
+        assigned_at: casting.assigned_at,
+      })),
+      preferences: preferences.map<Preference>((preference) => ({
+        id: preference.id,
+        user_id: preference.user_id,
+        scene_id: preference.scene_id,
+        level: preference.level,
+      })),
     };
   }
 }

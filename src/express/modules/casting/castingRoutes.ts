@@ -20,10 +20,10 @@ router.param("playId", playParamConverter.convert);
 
 // Reusable middlewares to check permissions
 const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
-  const userId = Number(req.auth.sub);
+  const userId = req.me.id;
   const playId = req.play.id;
   const members = await playRepository.getMembers(playId);
-  const isMember = members.some((m) => m.id === userId);
+  const isMember = members.some((member) => member.id === userId);
 
   if (isMember) {
     next();
@@ -33,10 +33,8 @@ const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
 };
 
 const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
-  const userId = Number(req.auth.sub);
-
   const members = await playRepository.getMembers(req.play.id);
-  const member = members.find((m) => m.id === userId);
+  const member = members.find((member) => member.id === req.me.id);
 
   if (member?.role === "TEACHER") {
     next();
