@@ -40,27 +40,24 @@ class RoleRepository {
     // Fetch all roles for a play, and aggregate their scene_ids
     const [rows] = await databaseClient.query<Rows>(
       `select r.id, r.name, r.description, r.play_id,
-       json_arrayagg(sr.scene_id) as sceneIds
+       json_arrayagg(json_object('id', s.id, 'title', s.title, 'description', s.description, 'duration', s.duration, 'play_id', s.play_id, 'scene_order', s.scene_order, 'is_active', s.is_active)) as scenes
        from role r
        left join scene_role sr on r.id = sr.role_id
+       left join scene s on sr.scene_id = s.id
        where r.play_id = ?
        group by r.id`,
       [play.id],
     );
 
-    return rows.map<{
-      id: number;
-      name: string;
-      description: string | null;
-      play_id: number;
-      sceneIds: number[];
-    }>(({ id, name, description, play_id, sceneIds }) => ({
-      id,
-      name,
-      description,
-      play_id,
-      sceneIds,
-    }));
+    return rows.map<RoleWithScenes>(
+      ({ id, name, description, play_id, scenes }) => ({
+        id,
+        name,
+        description,
+        play_id,
+        scenes: JSON.parse(scenes),
+      }),
+    );
   }
 }
 

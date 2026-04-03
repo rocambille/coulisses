@@ -32,8 +32,20 @@ export const mockedData = {
     },
   ],
   role: [
-    { id: 1, play_id: 1, name: "Role 1", description: "With a scene" },
-    { id: 2, play_id: 1, name: "Role 2", description: "Without a scene" },
+    {
+      id: 1,
+      play_id: 1,
+      name: "Role 1",
+      description: "With a scene",
+      scenes: "[]",
+    },
+    {
+      id: 2,
+      play_id: 1,
+      name: "Role 2",
+      description: "Without a scene",
+      scenes: "[]",
+    },
   ],
   scene_role: [{ id: null, scene_id: 1, role_id: 1 }],
   preference: [{ id: 1, user_id: 1, scene_id: 1, level: "HIGH" }],
@@ -64,8 +76,20 @@ export const resetMockData = () => {
     },
   ];
   mockedData.role = [
-    { id: 1, play_id: 1, name: "Role 1", description: "With a scene" },
-    { id: 2, play_id: 1, name: "Role 2", description: "Without a scene" },
+    {
+      id: 1,
+      play_id: 1,
+      name: "Role 1",
+      description: "With a scene",
+      scenes: "[]",
+    },
+    {
+      id: 2,
+      play_id: 1,
+      name: "Role 2",
+      description: "Without a scene",
+      scenes: "[]",
+    },
   ];
   mockedData.scene_role = [{ id: null, scene_id: 1, role_id: 1 }];
   mockedData.preference = [{ id: 1, user_id: 1, scene_id: 1, level: "HIGH" }];

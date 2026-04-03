@@ -14,15 +14,17 @@ export const mockCsrfToken = () => {
 export const mockedUsers: User[] = [
   { id: 1, email: "foo@mail.com", name: "foo" },
   { id: 2, email: "bar@mail.com", name: "bar" },
+  { id: 3, email: "baz@mail.com", name: "baz" },
 ];
 
 export const mockedItems: Item[] = [{ id: 1, title: "foo", user_id: 1 }];
 
 export const mockedPlays: (Play & {
   members: (User & { role: string })[];
-  roles: (Role & { sceneIds: number[] })[];
+  roles: RoleWithScenes[];
   scenes: Scene[];
-  preferences: Preference[];
+  preferences: PreferenceWithUser[];
+  matrix: CastingMatrix;
 })[] = [
   {
     id: 1,
@@ -32,15 +34,7 @@ export const mockedPlays: (Play & {
       { id: 1, email: "foo@mail.com", name: "foo", role: "TEACHER" },
       { id: 2, email: "bar@mail.com", name: "bar", role: "ACTOR" },
     ],
-    roles: [
-      {
-        id: 1,
-        name: "foo",
-        description: "foo ipsum",
-        play_id: 1,
-        sceneIds: [1],
-      },
-    ],
+    roles: [],
     scenes: [
       {
         id: 1,
@@ -51,13 +45,87 @@ export const mockedPlays: (Play & {
         scene_order: 1,
         is_active: true,
       },
+      {
+        id: 2,
+        title: "foo.2",
+        description: "foo ipsum",
+        duration: 2,
+        play_id: 1,
+        scene_order: 2,
+        is_active: false,
+      },
     ],
     preferences: [
-      { user_id: 1, scene_id: 1, level: "HIGH" },
-      { user_id: 2, scene_id: 1, level: "MEDIUM" },
+      {
+        user_id: mockedUsers[0].id,
+        name: mockedUsers[0].name,
+        email: mockedUsers[0].email,
+        scene_id: 1,
+        level: "HIGH",
+      },
+      {
+        user_id: mockedUsers[1].id,
+        name: mockedUsers[1].name,
+        email: mockedUsers[1].email,
+        scene_id: 1,
+        level: "MEDIUM",
+      },
+      {
+        user_id: mockedUsers[0].id,
+        name: mockedUsers[0].name,
+        email: mockedUsers[0].email,
+        scene_id: 2,
+        level: "LOW",
+      },
+      {
+        user_id: mockedUsers[1].id,
+        name: mockedUsers[1].name,
+        email: mockedUsers[1].email,
+        scene_id: 2,
+        level: "NOT_INTERESTED",
+      },
     ],
+    matrix: {
+      scenes: [],
+      roles: [],
+      sceneRoles: [],
+      castings: [],
+      preferences: [],
+    },
   },
 ];
+
+mockedPlays[0].roles.push({
+  id: 1,
+  name: "foo",
+  description: "foo ipsum",
+  play_id: 1,
+  scenes: [mockedPlays[0].scenes[0]],
+});
+
+mockedPlays[0].matrix = {
+  scenes: mockedPlays[0].scenes,
+  roles: mockedPlays[0].roles,
+  sceneRoles: [
+    {
+      scene_id: 1,
+      role_id: 1,
+    },
+  ],
+  castings: [
+    {
+      user_id: mockedUsers[1].id,
+      role_id: 1,
+    },
+  ],
+  preferences: mockedPlays[0].preferences.map(
+    ({ user_id, scene_id, level }) => ({
+      user_id,
+      scene_id,
+      level,
+    }),
+  ),
+};
 
 export const mockedInsertId = 42;
 
@@ -242,6 +310,27 @@ export const mockFetch = (
           () => new Response(null, { status: 204 }),
         );
       }
+      if (path.match(/\/api\/plays\/\d+\/castings/) && method === "get") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify(mockedPlays[0].matrix), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/castings/) && method === "post") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 204 }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/castings/) && method === "delete") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 204 }),
+        );
+      }
       if (path.match(/\/api\/plays\/\d+/) && method === "get") {
         return Promise.resolve().then(
           () =>
@@ -277,7 +366,7 @@ export const mockUseAuth = (user: User | null) => {
 };
 
 export const mockUseItems = (params?: { id: string }) => {
-  const itemsStuff: ReturnType<typeof itemHooks.useItems> = {
+  const itemsStub: ReturnType<typeof itemHooks.useItems> = {
     items: mockedItems,
     item: mockedItems.find((item) => item.id === Number(params?.id)),
     editItem: vi.fn(),
@@ -287,9 +376,22 @@ export const mockUseItems = (params?: { id: string }) => {
 
   const spy = vi
     .spyOn(itemHooks, "useItems")
-    .mockImplementation(() => itemsStuff);
+    .mockImplementation(() => itemsStub);
 
-  const result: [typeof itemsStuff, typeof spy] = [itemsStuff, spy];
+  const result: [typeof itemsStub, typeof spy] = [itemsStub, spy];
+
+  return result;
+};
+
+export const mockWindowLocation = () => {
+  const locationStub = {
+    ...window.location,
+    reload: vi.fn(),
+  };
+
+  const spy = vi.spyOn(window, "location", "get").mockReturnValue(locationStub);
+
+  const result: [typeof locationStub, typeof spy] = [locationStub, spy];
 
   return result;
 };

@@ -22,7 +22,6 @@ function CastingPage() {
 
   const handleAssign = async (roleId: number, userId: number | string) => {
     if (userId === "") {
-      // Unassign
       const currentCasting = matrix.castings.find((c) => c.role_id === roleId);
       if (currentCasting) {
         await mutate(`/api/plays/${playId}/castings`, "delete", {
@@ -83,7 +82,7 @@ function CastingPage() {
                     {member.name}
                   </th>
                 ))}
-              <th scope="col">Casting Officiel</th>
+              <th scope="col">Distribution</th>
             </tr>
           </thead>
           <tbody>
@@ -92,21 +91,19 @@ function CastingPage() {
                 <th scope="row">
                   {scene.scene_order}. {scene.title}
                 </th>
-                {members
-                  .filter((m) => m.role === "ACTOR")
-                  .map((member) => (
-                    <td
-                      key={member.id}
-                      style={{
-                        textAlign: "center",
-                        backgroundColor: getPreferenceColor(
-                          getPreferenceLevel(member.id, scene.id),
-                        ),
-                      }}
-                    >
-                      {getPreferenceLevel(member.id, scene.id) ? "●" : ""}
-                    </td>
-                  ))}
+                {members.map((member) => (
+                  <td
+                    key={member.id}
+                    style={{
+                      textAlign: "center",
+                      backgroundColor: getPreferenceColor(
+                        getPreferenceLevel(member.id, scene.id),
+                      ),
+                    }}
+                  >
+                    {getPreferenceLevel(member.id, scene.id) ? "●" : ""}
+                  </td>
+                ))}
                 <td>—</td>
               </tr>
             ))}
@@ -129,7 +126,7 @@ function CastingPage() {
                 />
                 <td>
                   <select
-                    aria-label="Assigner un acteur"
+                    aria-label={`Assigner le rôle ${role.name}`}
                     defaultValue={
                       matrix.castings.find((c) => c.role_id === role.id)
                         ?.user_id ?? ""

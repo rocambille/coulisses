@@ -6,11 +6,9 @@
 function PreferenceList({
   sceneId,
   preferences,
-  members,
 }: {
   sceneId: number;
-  preferences: Preference[];
-  members: (User & { role: string })[];
+  preferences: PreferenceWithUser[];
 }) {
   const scenePreferences = preferences.filter((p) => p.scene_id === sceneId);
 
@@ -24,8 +22,6 @@ function PreferenceList({
         return "🤏";
       case "NOT_INTERESTED":
         return "❌";
-      default:
-        return "";
     }
   };
 
@@ -38,8 +34,6 @@ function PreferenceList({
       .slice(0, 2);
   };
 
-  if (scenePreferences.length === 0) return null;
-
   return (
     <div
       style={{
@@ -49,14 +43,11 @@ function PreferenceList({
         marginTop: "0.5rem",
       }}
     >
-      {scenePreferences.map((pref) => {
-        const member = members.find((member) => member.id === pref.user_id);
-        if (!member) return null;
-
+      {scenePreferences.map((preference) => {
         return (
           <span
-            key={`${pref.user_id}-${pref.scene_id}`}
-            title={`${member.name}: ${pref.level}`}
+            key={`${preference.user_id}-${preference.scene_id}`}
+            title={`${preference.name}: ${preference.level}`}
             style={{
               fontSize: "0.75rem",
               padding: "0.1rem 0.4rem",
@@ -68,7 +59,8 @@ function PreferenceList({
               gap: "0.2rem",
             }}
           >
-            <strong>{getInitials(member.name)}</strong> {getEmoji(pref.level)}
+            <strong>{getInitials(preference.name)}</strong>{" "}
+            {getEmoji(preference.level)}
           </span>
         );
       })}

@@ -23,18 +23,18 @@ function ScenesPage() {
   const members: (User & { role: string })[] = use(
     cache(`/api/plays/${playId}/members`),
   );
-  const preferences: Preference[] = use(
+  const preferences: PreferenceWithUser[] = use(
     cache(`/api/plays/${playId}/preferences`),
   );
 
-  const isTeacher =
-    members.find((member) => member.id === me?.id)?.role === "TEACHER";
-  const isActor =
-    members.find((member) => member.id === me?.id)?.role === "ACTOR";
+  const member = members.find((member) => member.id === me?.id);
+  const isTeacher = member?.role === "TEACHER";
+  const isActor = member?.role === "ACTOR";
 
   const handleAdd = async (formData: FormData) => {
     const title = formData.get("title")?.toString();
-    if (!title) return;
+
+    if (!title) throw new Error("Invalid form submission");
 
     const response = await mutate(`/api/plays/${playId}/scenes`, "post", {
       title,
@@ -50,11 +50,13 @@ function ScenesPage() {
   const handleEdit = async (sceneId: number, formData: FormData) => {
     const title = formData.get("title")?.toString();
     const scene_order = Number(formData.get("scene_order"));
-    if (!title) return;
+
+    if (!title || Number.isNaN(scene_order))
+      throw new Error("Invalid form submission");
 
     const response = await mutate(`/api/scenes/${sceneId}`, "put", {
       title,
-      scene_order: scene_order || 1,
+      scene_order,
     });
 
     if (response.ok) {
@@ -136,11 +138,7 @@ function ScenesPage() {
                   )}
                 </header>
                 {scene.description && <p>{scene.description}</p>}
-                <PreferenceList
-                  sceneId={scene.id}
-                  preferences={preferences}
-                  members={members}
-                />
+                <PreferenceList sceneId={scene.id} preferences={preferences} />
                 {isTeacher && (
                   <footer style={{ marginTop: "1rem" }}>
                     <button

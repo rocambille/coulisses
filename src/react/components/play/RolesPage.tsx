@@ -8,8 +8,6 @@ import { use } from "react";
 import { useParams } from "react-router";
 import { cache, invalidateCache, mutate } from "../utils";
 
-type RoleWithScenes = Role & { sceneIds: number[] };
-
 function RolesPage() {
   const { playId } = useParams();
   const roles: RoleWithScenes[] = use(cache(`/api/plays/${playId}/roles`));
@@ -17,7 +15,8 @@ function RolesPage() {
 
   const handleAdd = async (formData: FormData) => {
     const name = formData.get("name")?.toString();
-    if (!name) return;
+
+    if (!name) throw new Error("Invalid form submission");
 
     const description = formData.get("description")?.toString() || null;
     const sceneIds = formData.getAll("sceneIds").map(Number);
@@ -47,17 +46,9 @@ function RolesPage() {
               <strong>{role.name}</strong>
             </header>
             {role.description && <p>{role.description}</p>}
-            {role.sceneIds.length > 0 && (
-              <footer>
-                Scènes :{" "}
-                {role.sceneIds
-                  .map(
-                    (sid) =>
-                      scenes.find((s) => s.id === sid)?.title ?? `#${sid}`,
-                  )
-                  .join(", ")}
-              </footer>
-            )}
+            <footer>
+              Scènes : {role.scenes.map((scene) => scene.title).join(", ")}
+            </footer>
           </article>
         ))
       )}

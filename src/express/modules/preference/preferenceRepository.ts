@@ -23,15 +23,18 @@ class PreferenceRepository {
 
   async findByPlay(playId: number) {
     const [rows] = await databaseClient.query<Rows>(
-      `select p.user_id, p.scene_id, p.level 
-       from preference p 
+      `select p.user_id, u.name, u.email, p.scene_id, p.level 
+       from preference p
+       join user u on p.user_id = u.id
        join scene s on p.scene_id = s.id 
        where s.play_id = ?`,
       [playId],
     );
 
-    return rows.map<Preference>((row) => ({
+    return rows.map<PreferenceWithUser>((row) => ({
       user_id: row.user_id,
+      name: row.name,
+      email: row.email,
       scene_id: row.scene_id,
       level: row.level,
     }));

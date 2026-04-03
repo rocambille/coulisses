@@ -34,7 +34,7 @@ function PreferenceSelector({
       </label>
       <select
         id={selectId}
-        aria-label="Niveau d'envie"
+        aria-label={`Niveau d'envie pour la scène ${sceneId}`}
         value={currentLevel ?? ""}
         onChange={(e) => handleChange(e.target.value)}
         style={{

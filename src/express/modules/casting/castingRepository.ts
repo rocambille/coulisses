@@ -71,7 +71,7 @@ class CastingRepository {
       [playId],
     );
 
-    return {
+    const matrix: CastingMatrix = {
       scenes: scenes.map<Scene>((scene) => ({
         id: scene.id,
         title: scene.title,
@@ -106,6 +106,8 @@ class CastingRepository {
         level: preference.level,
       })),
     };
+
+    return matrix;
   }
 }
 

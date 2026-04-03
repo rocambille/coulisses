@@ -18,7 +18,7 @@ function MembersPage() {
     const email = formData.get("email")?.toString();
     const role = formData.get("role")?.toString();
 
-    if (!email || !role) return;
+    if (!email || !role) throw new Error("Invalid form submission");
 
     const response = await mutate(`/api/plays/${playId}/members`, "post", {
       email,

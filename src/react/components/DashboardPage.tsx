@@ -12,11 +12,14 @@ import { cache, invalidateCache, mutate } from "./utils";
 function DashboardPage() {
   const { me } = useAuth();
 
+  if (!me) throw new Error("User not authenticated");
+
   const plays: Play[] = use(cache("/api/plays"));
 
   const handleAdd = async (formData: FormData) => {
     const title = formData.get("title")?.toString();
-    if (!title) return;
+
+    if (!title) throw new Error("Invalid form submission");
 
     const response = await mutate("/api/plays", "post", {
       title,
@@ -32,7 +35,7 @@ function DashboardPage() {
     <>
       <hgroup>
         <h1>Mes Pièces</h1>
-        <p>Bienvenue, {me?.name} !</p>
+        <p>{me.name}</p>
       </hgroup>
 
       {plays.length === 0 ? (

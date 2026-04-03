@@ -20,12 +20,12 @@ function MagicLinkForm() {
   ) : (
     <form
       action={(formData) => {
-        const email = formData.get("email")?.toString() ?? "";
+        const email = formData.get("email")?.toString();
 
-        if (email) {
-          sendMagicLink(email);
-          setSent(true);
-        }
+        if (!email) throw new Error("Invalid form submission");
+
+        sendMagicLink(email);
+        setSent(true);
       }}
     >
       <hgroup>

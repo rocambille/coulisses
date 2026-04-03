@@ -40,6 +40,8 @@ type Role = {
   description: string | null;
 };
 
+type RoleWithScenes = Role & { scenes: Scene[] };
+
 type PreferenceLevel = "HIGH" | "MEDIUM" | "LOW" | "NOT_INTERESTED";
 
 type Preference = {
@@ -48,6 +50,8 @@ type Preference = {
   level: PreferenceLevel;
   created_at?: string;
 };
+
+type PreferenceWithUser = Preference & Omit<User, "id">;
 
 type Casting = {
   role_id: number;
