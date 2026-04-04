@@ -124,4 +124,15 @@ describe("GET /api/me", () => {
 
     expect(response.status).toBe(401);
   });
+
+  it("should fail when user does not exist", async () => {
+    mockJwtVerify("not-a-user");
+
+    const response = await using(api.get("/api/me"), {
+      withCsrf: false,
+      withAuth: true,
+    });
+
+    expect(response.status).toBe(401);
+  });
 });

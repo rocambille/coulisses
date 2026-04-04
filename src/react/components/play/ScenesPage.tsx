@@ -51,8 +51,9 @@ function ScenesPage() {
     const title = formData.get("title")?.toString();
     const scene_order = Number(formData.get("scene_order"));
 
-    if (!title || Number.isNaN(scene_order))
+    if (!title || Number.isNaN(scene_order)) {
       throw new Error("Invalid form submission");
+    }
 
     const response = await mutate(`/api/scenes/${sceneId}`, "put", {
       title,
@@ -101,10 +102,16 @@ function ScenesPage() {
                   defaultValue={scene.scene_order}
                   aria-label="Ordre"
                 />
-                <button type="submit">Enregistrer</button>
+                <button
+                  type="submit"
+                  aria-label={`Enregistrer la scène ${scene.title}`}
+                >
+                  Enregistrer
+                </button>
                 <button
                   type="button"
                   className="secondary"
+                  aria-label={`Annuler la modification de la scène ${scene.title}`}
                   onClick={() => setEditing(null)}
                 >
                   Annuler
@@ -144,6 +151,7 @@ function ScenesPage() {
                     <button
                       type="button"
                       className="secondary"
+                      aria-label={`Modifier la scène ${scene.title}`}
                       onClick={() => setEditing(scene.id)}
                     >
                       Modifier
@@ -151,6 +159,7 @@ function ScenesPage() {
                     <button
                       type="button"
                       className="contrast"
+                      aria-label={`Supprimer la scène ${scene.title}`}
                       onClick={() => handleDelete(scene.id)}
                     >
                       Supprimer

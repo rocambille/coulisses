@@ -69,7 +69,7 @@ describe("GET /api/plays/:id/roles", () => {
 });
 
 describe("POST /api/plays/:id/roles", () => {
-  it("should add a new role successfully given valid data", async () => {
+  it("should add a new role successfully with scenes", async () => {
     mockJwtVerify(mockedData.user[0].id.toString());
 
     const response = await using(
@@ -77,6 +77,22 @@ describe("POST /api/plays/:id/roles", () => {
         name: "Hamlet",
         description: "The Prince of Denmark",
         sceneIds: [1],
+      }),
+      { withCsrf: true, withAuth: true },
+    );
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({ insertId: mockedInsertId });
+  });
+
+  it("should add a new role successfully without scenes", async () => {
+    mockJwtVerify(mockedData.user[0].id.toString());
+
+    const response = await using(
+      api.post(`/api/plays/${mockedData.play[0].id}/roles`).send({
+        name: "Hamlet",
+        description: "The Prince of Denmark",
+        sceneIds: [],
       }),
       { withCsrf: true, withAuth: true },
     );

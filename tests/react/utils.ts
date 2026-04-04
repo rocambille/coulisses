@@ -54,6 +54,15 @@ export const mockedPlays: (Play & {
         scene_order: 2,
         is_active: false,
       },
+      {
+        id: 3,
+        title: "foo.3",
+        description: "foo ipsum",
+        duration: 3,
+        play_id: 1,
+        scene_order: 3,
+        is_active: true,
+      },
     ],
     preferences: [
       {
@@ -294,6 +303,16 @@ export const mockFetch = (
             }),
         );
       }
+      if (path.match(/\/api\/scenes\/\d+/) && method === "put") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 204 }),
+        );
+      }
+      if (path.match(/\/api\/scenes\/\d+/) && method === "delete") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 204 }),
+        );
+      }
       if (path.match(/\/api\/plays\/\d+\/preferences/) && method === "get") {
         return Promise.resolve().then(
           () =>
@@ -340,6 +359,21 @@ export const mockFetch = (
                 "Content-Type": "application/json",
               },
             }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+/) && method === "put") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 204 }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+/) && method === "delete") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 204 }),
+        );
+      }
+      if (path === "/api/404" && method === "get") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 404 }),
         );
       }
 
