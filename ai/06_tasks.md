@@ -62,9 +62,9 @@ Voici le plan de build progressif recommandé, découpé en tâches logiques, en
 ## ⭐️ Phase 5 : Parcours Acteur & Casting (Frontend)
 *Objectif : Rendre le casting collaboratif.*
 
-- [ ] **Tâche 5.1 : Expression des Préférences (Acteur)**
-  - Sur la page des scènes, afficher les petites pastilles actionnables ou un bouton "Mes Envies" permettant d'appeler `POST /api/scenes/:sceneId/preferences`.
-- [ ] **Tâche 5.2 : Matrice de Distribution (/plays/:id/casting)**
+- [x] **Tâche 5.1 : Expression des Préférences (Acteur)**
+  - Sur la page des scènes, afficher les petites pastilles actionnables ou un bouton "Mes Envies" permettant d'appeler `POST /api/scenes/:sceneId/preferences`. (Désormais visible par tous sur la ScenesPage).
+- [x] **Tâche 5.2 : Matrice de Distribution (/plays/:id/castings)**
   - Implémenter le composant `CastingMatrix` affichant qui veut jouer dans quelle scène.
   - Interface côté Professeur pour cliquer sur une cellule et valider un `Casting`.
 

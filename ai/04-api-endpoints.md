@@ -66,16 +66,23 @@ L'authentification repose sur l'envoi d'un email contenant un token, qui sera en
 
 ## ⭐️ 4. Casting & Préférences
 
-- `GET /api/plays/:playId/casting`
+- `GET /api/plays/:playId/castings`
   - **Action** : Endpoint agrégé pour le tableau de bord de la distribution. Retourne toutes les scènes + rôles + castings officiels + synthèses des préférences pour la pièce ciblée.
 
 - `POST /api/scenes/:sceneId/preferences` *(Comédien)*
   - **Body** : `{ level: PreferenceLevel }`
   - **Action** : Le comédien connecté crée ou met à jour sa préférence pour cette scène.
 
-- `POST /api/roles/:roleId/castings` *(Professeur)*
-  - **Body** : `{ userId: string }`
-  - **Action** : Le professeur assigne officiellement un rôle à un comédien (crée ou met à jour le `Casting`).
+- `GET /api/plays/:playId/preferences`
+  - **Action** : Récupère la liste de toutes les préférences des comédiens pour visualiser les intentions globales de la troupe sur cette pièce.
+
+- `POST /api/plays/:playId/castings` *(Professeur)*
+  - **Body** : `{ roleId: number, userId: number }`
+  - **Action** : Le professeur assigne officiellement un rôle à un comédien.
+
+- `DELETE /api/plays/:playId/castings` *(Professeur)*
+  - **Body** : `{ roleId: number, userId: number }`
+  - **Action** : Le professeur retire l'assignation d'un acteur à un rôle.
 
 ---
 
