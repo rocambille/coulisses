@@ -7,10 +7,12 @@
 import { use } from "react";
 import { NavLink } from "react-router";
 import { useAuth } from "./auth/AuthContext";
-import { cache, invalidateCache, mutate } from "./utils";
+import { useAction } from "./play/hooks";
+import { cache } from "./utils";
 
 function DashboardPage() {
   const { me } = useAuth();
+  const runAction = useAction();
 
   if (!me) throw new Error("User not authenticated");
 
@@ -21,14 +23,7 @@ function DashboardPage() {
 
     if (!title) throw new Error("Invalid form submission");
 
-    const response = await mutate("/api/plays", "post", {
-      title,
-    });
-
-    if (response.ok) {
-      invalidateCache("/api/plays");
-      location.reload();
-    }
+    await runAction("/api/plays", "post", { title }, ["/api/plays"]);
   };
 
   return (

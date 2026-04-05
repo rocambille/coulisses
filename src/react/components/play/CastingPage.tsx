@@ -6,38 +6,40 @@
 
 import { use } from "react";
 import { useParams } from "react-router";
-import { useAuth } from "../auth/AuthContext";
-import { cache, invalidateCache, mutate } from "../utils";
+import { cache } from "../utils";
+import { useAction, useMembership } from "./hooks";
 
 function CastingPage() {
   const { playId } = useParams();
-  const { me } = useAuth();
+  const runAction = useAction();
+  const { isTeacher, members } = useMembership(playId);
   const matrix: CastingMatrix = use(cache(`/api/plays/${playId}/castings`));
-  const members: (User & { role: string })[] = use(
-    cache(`/api/plays/${playId}/members`),
-  );
-
-  const isTeacher =
-    members.find((member) => member.id === me?.id)?.role === "TEACHER";
 
   const handleAssign = async (roleId: number, userId: number | string) => {
     if (userId === "") {
       const currentCasting = matrix.castings.find((c) => c.role_id === roleId);
       if (currentCasting) {
-        await mutate(`/api/plays/${playId}/castings`, "delete", {
-          roleId,
-          userId: currentCasting.user_id,
-        });
+        await runAction(
+          `/api/plays/${playId}/castings`,
+          "delete",
+          {
+            roleId,
+            userId: currentCasting.user_id,
+          },
+          [`/api/plays/${playId}/castings`],
+        );
       }
     } else {
-      await mutate(`/api/plays/${playId}/castings`, "post", {
-        roleId,
-        userId: Number(userId),
-      });
+      await runAction(
+        `/api/plays/${playId}/castings`,
+        "post",
+        {
+          roleId,
+          userId: Number(userId),
+        },
+        [`/api/plays/${playId}/castings`],
+      );
     }
-
-    invalidateCache(`/api/plays/${playId}/castings`);
-    location.reload();
   };
 
   const getPreferenceLevel = (userId: number, sceneId: number) => {

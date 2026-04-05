@@ -3,38 +3,38 @@ import userEvent from "@testing-library/user-event";
 import MembersPage from "../../src/react/components/play/MembersPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  mockCsrfToken,
+  mainPlay,
   mockedRandomUUID,
-  mockFetch,
-  mockWindowLocation,
-  renderAsync,
-  stubRoute,
-} from "./utils";
+  renderWithStub,
+  setupMocks,
+  teacherUser,
+} from "./mocks";
 
-beforeEach(() => {
-  mockCsrfToken();
-  mockFetch();
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-describe("<MembersPage />", () => {
+describe("React: MembersPage", () => {
   beforeEach(() => {
-    invalidateCache("/api/plays/1/members");
+    setupMocks();
+    invalidateCache(`/api/plays/${mainPlay.id}/members`);
   });
-  it("should mount successfully", async () => {
-    const Stub = stubRoute("/plays/:playId/members", MembersPage);
 
-    await renderAsync(<Stub initialEntries={["/plays/1/members"]} />);
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should mount successfully", async () => {
+    await renderWithStub(
+      "/plays/:playId/members",
+      MembersPage,
+      [`/plays/${mainPlay.id}/members`],
+      { user: teacherUser },
+    );
 
     await waitFor(() => screen.getByRole("heading", { level: 2 }));
+    expect(screen.getByText(/membres/i)).toBeDefined();
   });
 
   it("should display a message when the play has no members", async () => {
-    mockFetch((path, method) => {
-      if (path === "/api/plays/1/members" && method === "get") {
+    setupMocks((path, method) => {
+      if (path === `/api/plays/${mainPlay.id}/members` && method === "get") {
         return Promise.resolve().then(
           () =>
             new Response(JSON.stringify([]), {
@@ -45,19 +45,23 @@ describe("<MembersPage />", () => {
       }
     });
 
-    const Stub = stubRoute("/plays/:playId/members", MembersPage);
-
-    await renderAsync(<Stub initialEntries={["/plays/1/members"]} />);
+    await renderWithStub(
+      "/plays/:playId/members",
+      MembersPage,
+      [`/plays/${mainPlay.id}/members`],
+      { user: teacherUser },
+    );
 
     await waitFor(() => screen.getByText(/aucun membre/i));
   });
 
   it("should add a new member successfully", async () => {
-    const [location] = mockWindowLocation();
-
-    const Stub = stubRoute("/plays/:playId/members", MembersPage);
-
-    await renderAsync(<Stub initialEntries={["/plays/1/members"]} />);
+    await renderWithStub(
+      "/plays/:playId/members",
+      MembersPage,
+      [`/plays/${mainPlay.id}/members`],
+      { user: teacherUser },
+    );
 
     const user = userEvent.setup();
 
@@ -71,14 +75,16 @@ describe("<MembersPage />", () => {
       sameSite: "strict",
       value: mockedRandomUUID,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith("/api/plays/1/members", {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": mockedRandomUUID,
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `/api/plays/${mainPlay.id}/members`,
+      {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": mockedRandomUUID,
+        },
+        body: JSON.stringify({ email: "test@mail.com", role: "ACTOR" }),
       },
-      body: JSON.stringify({ email: "test@mail.com", role: "ACTOR" }),
-    });
-    expect(location.reload).toHaveBeenCalled();
+    );
   });
 });

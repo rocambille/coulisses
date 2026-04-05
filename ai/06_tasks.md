@@ -73,8 +73,22 @@ Voici le plan de build progressif recommandé, découpé en tâches logiques, en
 ## 📅 Phase 6 : Calendrier (Full-stack)
 *Objectif : Ajouter la dernière brique de l'agenda Fixe.*
 
-- [ ] **Tâche 6.1 : Backend** : Ajout du CRUD sur l'entité `events`.
-- [ ] **Tâche 6.2 : Frontend** : Vue de type liste simplifiée affichant les prochaines échéances `/plays/:id/calendar`.
+- [x] **Tâche 6.1 : Backend** : Ajout du CRUD sur l'entité `events`.
+- [x] **Tâche 6.2 : Frontend** : Vue Calendrier affichant les prochaines échéances `/plays/:id/calendar`.
+
+---
+
+## 🛠️ Phase 6.5 : Audit & Correction des Incohérences
+*Objectif : Fiabiliser le code et supprimer les workarounds (`location.reload`).*
+
+- [ ] **Tâche 6.5.1 : Backend - Correction SQL PUT**
+  - Utiliser une requête fixe avec `STR_TO_DATE` pour l'update des événements.
+- [ ] **Tâche 6.5.2 : Frontend - Système de rafraîchissement réactif**
+  - Créer `RefreshContext` et le brancher dans `routes.tsx`.
+  - Remplacer `location.reload()` par `refresh()` dans `CalendarPage`.
+- [ ] **Tâche 6.5.3 : Frontend - UI d'édition d'événement**
+  - Implémenter le mode édition dans la modale `selectedEvent`.
+  - Valider le workflow via tests React.
 
 ---
 

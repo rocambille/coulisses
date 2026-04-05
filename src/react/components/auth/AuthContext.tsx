@@ -45,12 +45,18 @@ const AuthContext = createContext<AuthContextType | null>(null);
 /* Provider                                                                 */
 /* ************************************************************************ */
 
-export function AuthProvider({ children }: PropsWithChildren) {
+export function AuthProvider({
+  children,
+  initialUser,
+}: PropsWithChildren<{ initialUser?: User | null }>) {
   /* ********************************************************************** */
   /* Initial session check                                                 */
   /* ********************************************************************** */
 
-  const [user, setUser] = useState<User | null>(use(cache("/api/me")));
+  const sessionUser = initialUser ?? use(cache("/api/me"));
+  const [user, setUser] = useState<User | null>(
+    initialUser !== undefined ? initialUser : sessionUser,
+  );
 
   /* ********************************************************************** */
   /* Actions                                                                */

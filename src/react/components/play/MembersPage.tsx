@@ -6,12 +6,15 @@
 
 import { use } from "react";
 import { useParams } from "react-router";
-import { cache, invalidateCache, mutate } from "../utils";
+import { cache } from "../utils";
+import { useAction, useMembership } from "./hooks";
 
 type Member = User & { role: string };
 
 function MembersPage() {
   const { playId } = useParams();
+  const runAction = useAction();
+  const { isTeacher } = useMembership(playId);
   const members: Member[] = use(cache(`/api/plays/${playId}/members`));
 
   const handleInvite = async (formData: FormData) => {
@@ -20,15 +23,15 @@ function MembersPage() {
 
     if (!email || !role) throw new Error("Invalid form submission");
 
-    const response = await mutate(`/api/plays/${playId}/members`, "post", {
-      email,
-      role,
-    });
-
-    if (response.ok) {
-      invalidateCache(`/api/plays/${playId}/members`);
-      location.reload();
-    }
+    await runAction(
+      `/api/plays/${playId}/members`,
+      "post",
+      {
+        email,
+        role,
+      },
+      [`/api/plays/${playId}/members`],
+    );
   };
 
   return (
@@ -58,23 +61,25 @@ function MembersPage() {
         </table>
       )}
 
-      <details>
-        <summary>Inviter un membre</summary>
-        <form action={handleInvite}>
-          <input
-            name="email"
-            type="email"
-            placeholder="son.adresse@mail.com"
-            aria-label="Email"
-            required
-          />
-          <select name="role" aria-label="Rôle" defaultValue="ACTOR">
-            <option value="ACTOR">Comédien</option>
-            <option value="TEACHER">Professeur</option>
-          </select>
-          <button type="submit">Inviter</button>
-        </form>
-      </details>
+      {isTeacher && (
+        <details>
+          <summary>Inviter un membre</summary>
+          <form action={handleInvite}>
+            <input
+              name="email"
+              type="email"
+              placeholder="son.adresse@mail.com"
+              aria-label="Email"
+              required
+            />
+            <select name="role" aria-label="Rôle" defaultValue="ACTOR">
+              <option value="ACTOR">Comédien</option>
+              <option value="TEACHER">Professeur</option>
+            </select>
+            <button type="submit">Inviter</button>
+          </form>
+        </details>
+      )}
     </>
   );
 }

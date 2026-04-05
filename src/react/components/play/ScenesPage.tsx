@@ -7,44 +7,39 @@
 import { use, useState } from "react";
 import { useParams } from "react-router";
 import { useAuth } from "../auth/AuthContext";
-import { cache, invalidateCache, mutate } from "../utils";
+import { cache } from "../utils";
+import { useAction, useMembership } from "./hooks";
 import PreferenceList from "./PreferenceList";
 import PreferenceSelector from "./PreferenceSelector";
 
 function ScenesPage() {
   const { me } = useAuth();
+  const { playId } = useParams();
+  const runAction = useAction();
+  const { isTeacher, isActor } = useMembership(playId);
 
   const [editing, setEditing] = useState<number | null>(null);
 
-  const { playId } = useParams();
   if (!playId) return null;
 
   const scenes: Scene[] = use(cache(`/api/plays/${playId}/scenes`));
-  const members: (User & { role: string })[] = use(
-    cache(`/api/plays/${playId}/members`),
-  );
   const preferences: PreferenceWithUser[] = use(
     cache(`/api/plays/${playId}/preferences`),
   );
 
-  const member = members.find((member) => member.id === me?.id);
-  const isTeacher = member?.role === "TEACHER";
-  const isActor = member?.role === "ACTOR";
-
   const handleAdd = async (formData: FormData) => {
     const title = formData.get("title")?.toString();
-
     if (!title) throw new Error("Invalid form submission");
 
-    const response = await mutate(`/api/plays/${playId}/scenes`, "post", {
-      title,
-      scene_order: scenes.length + 1,
-    });
-
-    if (response.ok) {
-      invalidateCache(`/api/plays/${playId}/scenes`);
-      location.reload();
-    }
+    await runAction(
+      `/api/plays/${playId}/scenes`,
+      "post",
+      {
+        title,
+        scene_order: scenes.length + 1,
+      },
+      [`/api/plays/${playId}/scenes`],
+    );
   };
 
   const handleEdit = async (sceneId: number, formData: FormData) => {
@@ -55,25 +50,25 @@ function ScenesPage() {
       throw new Error("Invalid form submission");
     }
 
-    const response = await mutate(`/api/scenes/${sceneId}`, "put", {
-      title,
-      scene_order,
-    });
+    const response = await runAction(
+      `/api/scenes/${sceneId}`,
+      "put",
+      {
+        title,
+        scene_order,
+      },
+      [`/api/plays/${playId}/scenes`],
+    );
 
     if (response.ok) {
-      invalidateCache(`/api/plays/${playId}/scenes`);
       setEditing(null);
-      location.reload();
     }
   };
 
   const handleDelete = async (sceneId: number) => {
-    const response = await mutate(`/api/scenes/${sceneId}`, "delete");
-
-    if (response.ok) {
-      invalidateCache(`/api/plays/${playId}/scenes`);
-      location.reload();
-    }
+    await runAction(`/api/scenes/${sceneId}`, "delete", undefined, [
+      `/api/plays/${playId}/scenes`,
+    ]);
   };
 
   return (

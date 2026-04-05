@@ -5,7 +5,7 @@
   Responsibilities:
   - Register global middlewares (cookies, CSRF protection, JSON parsing)
   - Expose a minimal health / sanity endpoint
-  - Compose feature modules (auth, items, users)
+  - Compose feature modules (auth, users, plays, etc.)
 
   Design notes:
   - This file contains no business logic

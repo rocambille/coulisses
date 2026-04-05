@@ -6,10 +6,14 @@
 
 import { use } from "react";
 import { useParams } from "react-router";
-import { cache, invalidateCache, mutate } from "../utils";
+import { cache } from "../utils";
+import { useAction, useMembership } from "./hooks";
 
 function RolesPage() {
   const { playId } = useParams();
+  const runAction = useAction();
+  const { isTeacher } = useMembership(playId);
+
   const roles: RoleWithScenes[] = use(cache(`/api/plays/${playId}/roles`));
   const scenes: Scene[] = use(cache(`/api/plays/${playId}/scenes`));
 
@@ -21,16 +25,16 @@ function RolesPage() {
     const description = formData.get("description")?.toString() || null;
     const sceneIds = formData.getAll("sceneIds").map(Number);
 
-    const response = await mutate(`/api/plays/${playId}/roles`, "post", {
-      name,
-      description,
-      sceneIds,
-    });
-
-    if (response.ok) {
-      invalidateCache(`/api/plays/${playId}/roles`);
-      location.reload();
-    }
+    await runAction(
+      `/api/plays/${playId}/roles`,
+      "post",
+      {
+        name,
+        description,
+        sceneIds,
+      },
+      [`/api/plays/${playId}/roles`],
+    );
   };
 
   return (
@@ -53,32 +57,34 @@ function RolesPage() {
         ))
       )}
 
-      <details>
-        <summary>Ajouter un rôle</summary>
-        <form action={handleAdd}>
-          <input
-            name="name"
-            placeholder="Nom du rôle"
-            aria-label="Nom du rôle"
-            required
-          />
-          <input
-            name="description"
-            placeholder="Description (optionnel)"
-            aria-label="Description du rôle"
-          />
-          <fieldset>
-            <legend>Scènes associées</legend>
-            {scenes.map((scene) => (
-              <label key={scene.id}>
-                <input type="checkbox" name="sceneIds" value={scene.id} />
-                {scene.title}
-              </label>
-            ))}
-          </fieldset>
-          <button type="submit">Ajouter</button>
-        </form>
-      </details>
+      {isTeacher && (
+        <details>
+          <summary>Ajouter un rôle</summary>
+          <form action={handleAdd}>
+            <input
+              name="name"
+              placeholder="Nom du rôle"
+              aria-label="Nom du rôle"
+              required
+            />
+            <input
+              name="description"
+              placeholder="Description (optionnel)"
+              aria-label="Description du rôle"
+            />
+            <fieldset>
+              <legend>Scènes associées</legend>
+              {scenes.map((scene) => (
+                <label key={scene.id}>
+                  <input type="checkbox" name="sceneIds" value={scene.id} />
+                  {scene.title}
+                </label>
+              ))}
+            </fieldset>
+            <button type="submit">Ajouter</button>
+          </form>
+        </details>
+      )}
     </>
   );
 }

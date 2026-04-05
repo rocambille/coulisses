@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as ReactRouter from "react-router";
 
@@ -11,46 +11,41 @@ import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
 import VerifyPage from "../../src/react/components/auth/VerifyPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  mockCsrfToken,
   mockedRandomUUID,
   mockFetch,
   mockUseAuth,
-  renderAsync,
   renderHookAsync,
-  stubRoute,
-} from "./utils";
-
-beforeEach(() => {
-  invalidateCache("/api/me");
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
+  renderWithStub,
+  setupMocks,
+} from "./mocks";
 
 describe("React auth components", () => {
+  beforeEach(() => {
+    invalidateCache("/api/me");
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
   describe("<AuthProvider />", () => {
     beforeEach(() => {
-      mockCsrfToken();
-      mockFetch();
+      setupMocks();
     });
     it("should render its children", async () => {
-      const Stub = stubRoute("/", () => (
-        <AuthProvider>hello, world!</AuthProvider>
-      ));
-
-      await renderAsync(<Stub initialEntries={["/"]} />);
-
+      await renderWithStub(
+        "/",
+        () => <AuthProvider>hello, world!</AuthProvider>,
+        ["/"],
+      );
       await waitFor(() => screen.getByText("hello, world!"));
     });
     it("should fetch /api/me on mount", async () => {
-      const Stub = stubRoute("/", () => (
-        <AuthProvider>hello, world!</AuthProvider>
-      ));
-
-      await renderAsync(<Stub initialEntries={["/"]} />);
-
+      await renderWithStub(
+        "/",
+        () => <AuthProvider>hello, world!</AuthProvider>,
+        ["/"],
+      );
       await waitFor(() =>
         expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
       );
@@ -58,8 +53,7 @@ describe("React auth components", () => {
   });
   describe("useAuth()", () => {
     beforeEach(() => {
-      mockCsrfToken();
-      mockFetch();
+      setupMocks();
     });
     it("should be used within <AuthProvider>", async () => {
       // Avoid exception noise in console
@@ -266,20 +260,12 @@ describe("React auth components", () => {
   describe("<MagicLinkForm />", () => {
     it("should mount successfully", async () => {
       mockUseAuth(null);
-
-      const Stub = stubRoute("/", MagicLinkForm);
-
-      render(<Stub initialEntries={["/"]} />);
-
+      await renderWithStub("/", MagicLinkForm, ["/"]);
       await waitFor(() => screen.getByRole("button"));
     });
     it("should submit email and show confirmation", async () => {
       const [auth] = mockUseAuth(null);
-
-      const Stub = stubRoute("/", MagicLinkForm);
-
-      render(<Stub initialEntries={["/"]} />);
-
+      await renderWithStub("/", MagicLinkForm, ["/"]);
       await waitFor(() => screen.getByRole("button"));
 
       const user = userEvent.setup();
@@ -293,20 +279,12 @@ describe("React auth components", () => {
   describe("<LogoutForm />", () => {
     it("should mount successfully", async () => {
       mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
-
-      const Stub = stubRoute("/", LogoutForm);
-
-      render(<Stub initialEntries={["/"]} />);
-
+      await renderWithStub("/", LogoutForm, ["/"]);
       await waitFor(() => screen.getByRole("button"));
     });
     it("should submit form logout", async () => {
       const [auth] = mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
-
-      const Stub = stubRoute("/", LogoutForm);
-
-      render(<Stub initialEntries={["/"]} />);
-
+      await renderWithStub("/", LogoutForm, ["/"]);
       await waitFor(() => screen.getByRole("button"));
 
       const user = userEvent.setup();
@@ -321,31 +299,24 @@ describe("React auth components", () => {
       mockUseAuth(null);
 
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
-
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
         () => mockedNavigate,
       );
 
-      const Stub = stubRoute("/verify", VerifyPage);
-
-      await renderAsync(<Stub initialEntries={["/verify?token=foo"]} />);
+      await renderWithStub("/verify", VerifyPage, ["/verify?token=foo"]);
 
       await waitFor(() => screen.getByText(/en cours/i));
     });
     it("should verify token and redirect to dashboard when valid", async () => {
       const [auth] = mockUseAuth(null);
-
       vi.spyOn(auth, "verifyMagicLink").mockImplementation(async () => {});
 
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
-
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
         () => mockedNavigate,
       );
 
-      const Stub = stubRoute("/verify", VerifyPage);
-
-      await renderAsync(<Stub initialEntries={["/verify?token=foo"]} />);
+      await renderWithStub("/verify", VerifyPage, ["/verify?token=foo"]);
 
       await waitFor(() =>
         expect(auth.verifyMagicLink).toHaveBeenCalledWith("foo"),
@@ -355,20 +326,16 @@ describe("React auth components", () => {
     });
     it("should display error when token is invalid", async () => {
       const [auth] = mockUseAuth(null);
-
       vi.spyOn(auth, "verifyMagicLink").mockImplementation(async () => {
         throw new Error("Invalid or expired magic link");
       });
 
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
-
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
         () => mockedNavigate,
       );
 
-      const Stub = stubRoute("/verify", VerifyPage);
-
-      await renderAsync(<Stub initialEntries={["/verify?token=foo"]} />);
+      await renderWithStub("/verify", VerifyPage, ["/verify?token=foo"]);
 
       await waitFor(() => screen.getByText(/invalide/i));
 
@@ -377,18 +344,14 @@ describe("React auth components", () => {
     });
     it("should display error when token is missing", async () => {
       const [auth] = mockUseAuth(null);
-
       vi.spyOn(auth, "verifyMagicLink").mockImplementation(async () => {});
 
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
-
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
         () => mockedNavigate,
       );
 
-      const Stub = stubRoute("/verify", VerifyPage);
-
-      await renderAsync(<Stub initialEntries={["/verify"]} />);
+      await renderWithStub("/verify", VerifyPage, ["/verify"]);
 
       await waitFor(() => screen.getByText(/invalide/i));
 

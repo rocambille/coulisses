@@ -1,126 +1,129 @@
 import {
+  actorUser,
   api,
-  mockDatabaseClient,
-  mockedData,
-  mockJwtVerify,
-  resetMockData,
+  guestUser,
+  mainPlay,
+  setupApiAuth,
+  setupApiMocks,
+  teacherUser,
   using,
-} from "./utils";
+} from "./mocks";
 
-beforeEach(() => {
-  resetMockData();
-  mockDatabaseClient();
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-describe("POST /api/plays/:playId/castings", () => {
-  it("should assign a role successfully when user is a teacher of the play", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
-
-    const response = await using(
-      api.post(`/api/plays/${mockedData.play[0].id}/castings`).send({
-        userId: 1,
-        roleId: 1,
-      }),
-      { withCsrf: true, withAuth: true },
-    );
-
-    expect(response.status).toBe(201);
+describe("Castings API", () => {
+  beforeEach(() => {
+    setupApiMocks();
   });
 
-  it("should fail when user is not a teacher of the play", async () => {
-    mockJwtVerify(mockedData.user[1].id.toString());
-
-    const response = await using(
-      api.post(`/api/plays/${mockedData.play[0].id}/castings`).send({
-        userId: 1,
-        roleId: 1,
-      }),
-      { withCsrf: true, withAuth: true },
-    );
-
-    expect(response.status).toBe(403);
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it("should fail on invalid request body", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+  describe("POST /api/plays/:playId/castings", () => {
+    it("should assign a role successfully when user is a teacher of the play", async () => {
+      setupApiAuth(teacherUser);
 
-    const response = await using(
-      api.post(`/api/plays/${mockedData.play[0].id}/castings`).send({}),
-      { withCsrf: true, withAuth: true },
-    );
+      const response = await using(
+        api.post(`/api/plays/${mainPlay.id}/castings`).send({
+          userId: teacherUser.id,
+          roleId: 1,
+        }),
+        { withCsrf: true, withAuth: true },
+      );
 
-    expect(response.status).toBe(400);
-  });
-});
+      expect(response.status).toBe(201);
+    });
 
-describe("DELETE /api/plays/:playId/castings", () => {
-  it("should unassign a role successfully when user is a teacher of the play", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+    it("should fail when user is not a teacher of the play", async () => {
+      setupApiAuth(actorUser);
 
-    const response = await using(
-      api.delete(`/api/plays/${mockedData.play[0].id}/castings`).send({
-        userId: 1,
-        roleId: 1,
-      }),
-      { withCsrf: true, withAuth: true },
-    );
+      const response = await using(
+        api.post(`/api/plays/${mainPlay.id}/castings`).send({
+          userId: teacherUser.id,
+          roleId: 1,
+        }),
+        { withCsrf: true, withAuth: true },
+      );
 
-    expect(response.status).toBe(204);
-  });
+      expect(response.status).toBe(403);
+    });
 
-  it("should fail when user is not a teacher of the play", async () => {
-    mockJwtVerify(mockedData.user[1].id.toString());
+    it("should fail on invalid request body", async () => {
+      setupApiAuth(teacherUser);
 
-    const response = await using(
-      api.delete(`/api/plays/${mockedData.play[0].id}/castings`).send({
-        userId: 1,
-        roleId: 1,
-      }),
-      { withCsrf: true, withAuth: true },
-    );
+      const response = await using(
+        api.post(`/api/plays/${mainPlay.id}/castings`).send({}),
+        { withCsrf: true, withAuth: true },
+      );
 
-    expect(response.status).toBe(403);
-  });
-
-  it("should fail on invalid request body", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
-
-    const response = await using(
-      api.delete(`/api/plays/${mockedData.play[0].id}/castings`).send({}),
-      { withCsrf: true, withAuth: true },
-    );
-
-    expect(response.status).toBe(400);
-  });
-});
-
-describe("GET /api/plays/:playId/castings", () => {
-  it("should fetch the full casting matrix successfully", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
-
-    const response = await using(
-      api.get(`/api/plays/${mockedData.play[0].id}/castings`),
-      { withCsrf: false, withAuth: true },
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("scenes");
-    expect(response.body).toHaveProperty("roles");
-    expect(response.body).toHaveProperty("preferences");
+      expect(response.status).toBe(400);
+    });
   });
 
-  it("should fail when user is not a member of the play", async () => {
-    mockJwtVerify(mockedData.user[2].id.toString());
+  describe("DELETE /api/plays/:playId/castings", () => {
+    it("should unassign a role successfully when user is a teacher of the play", async () => {
+      setupApiAuth(teacherUser);
 
-    const response = await using(
-      api.get(`/api/plays/${mockedData.play[0].id}/castings`),
-      { withCsrf: false, withAuth: true },
-    );
+      const response = await using(
+        api.delete(`/api/plays/${mainPlay.id}/castings`).send({
+          userId: teacherUser.id,
+          roleId: 1,
+        }),
+        { withCsrf: true, withAuth: true },
+      );
 
-    expect(response.status).toBe(403);
+      expect(response.status).toBe(204);
+    });
+
+    it("should fail when user is not a teacher of the play", async () => {
+      setupApiAuth(actorUser);
+
+      const response = await using(
+        api.delete(`/api/plays/${mainPlay.id}/castings`).send({
+          userId: teacherUser.id,
+          roleId: 1,
+        }),
+        { withCsrf: true, withAuth: true },
+      );
+
+      expect(response.status).toBe(403);
+    });
+
+    it("should fail on invalid request body", async () => {
+      setupApiAuth(teacherUser);
+
+      const response = await using(
+        api.delete(`/api/plays/${mainPlay.id}/castings`).send({}),
+        { withCsrf: true, withAuth: true },
+      );
+
+      expect(response.status).toBe(400);
+    });
+  });
+
+  describe("GET /api/plays/:playId/castings", () => {
+    it("should fetch the full casting matrix successfully", async () => {
+      setupApiAuth(teacherUser);
+
+      const response = await using(
+        api.get(`/api/plays/${mainPlay.id}/castings`),
+        { withCsrf: false, withAuth: true },
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty("scenes");
+      expect(response.body).toHaveProperty("roles");
+      expect(response.body).toHaveProperty("preferences");
+    });
+
+    it("should fail when user is not a member of the play", async () => {
+      setupApiAuth(guestUser);
+
+      const response = await using(
+        api.get(`/api/plays/${mainPlay.id}/castings`),
+        { withCsrf: false, withAuth: true },
+      );
+
+      expect(response.status).toBe(403);
+    });
   });
 });

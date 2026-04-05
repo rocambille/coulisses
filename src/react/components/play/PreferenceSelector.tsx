@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { useRefresh } from "../RefreshContext";
 import { invalidateCache, mutate } from "../utils";
 
 function PreferenceSelector({
@@ -11,6 +12,7 @@ function PreferenceSelector({
   currentLevel?: string;
 }) {
   const selectId = useId();
+  const { refresh } = useRefresh();
 
   const handleChange = async (level: string) => {
     const response = await mutate(
@@ -23,7 +25,7 @@ function PreferenceSelector({
 
     if (response.ok) {
       invalidateCache(`/api/plays/${playId}/preferences`);
-      location.reload();
+      refresh();
     }
   };
 

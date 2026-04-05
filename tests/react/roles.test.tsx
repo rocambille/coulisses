@@ -3,39 +3,38 @@ import userEvent from "@testing-library/user-event";
 import RolesPage from "../../src/react/components/play/RolesPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  mockCsrfToken,
+  mainPlay,
   mockedRandomUUID,
-  mockFetch,
-  mockWindowLocation,
-  renderAsync,
-  stubRoute,
-} from "./utils";
+  renderWithStub,
+  setupMocks,
+  teacherUser,
+} from "./mocks";
 
-beforeEach(() => {
-  mockCsrfToken();
-  mockFetch();
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-describe("<RolesPage />", () => {
+describe("React: RolesPage", () => {
   beforeEach(() => {
-    invalidateCache("/api/plays/1/roles");
+    setupMocks();
+    invalidateCache(`/api/plays/${mainPlay.id}/roles`);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("should mount successfully", async () => {
-    const Stub = stubRoute("/plays/:playId/roles", RolesPage);
-
-    await renderAsync(<Stub initialEntries={["/plays/1/roles"]} />);
+    await renderWithStub(
+      "/plays/:playId/roles",
+      RolesPage,
+      [`/plays/${mainPlay.id}/roles`],
+      { user: teacherUser },
+    );
 
     await waitFor(() => screen.getByRole("heading", { level: 2 }));
+    expect(screen.getByText(/rôles/i)).toBeDefined();
   });
 
   it("should display a message when the play has no roles", async () => {
-    mockFetch((path, method) => {
-      if (path === "/api/plays/1/roles" && method === "get") {
+    setupMocks((path, method) => {
+      if (path === `/api/plays/${mainPlay.id}/roles` && method === "get") {
         return Promise.resolve().then(
           () =>
             new Response(JSON.stringify([]), {
@@ -46,19 +45,23 @@ describe("<RolesPage />", () => {
       }
     });
 
-    const Stub = stubRoute("/plays/:playId/roles", RolesPage);
-
-    await renderAsync(<Stub initialEntries={["/plays/1/roles"]} />);
+    await renderWithStub(
+      "/plays/:playId/roles",
+      RolesPage,
+      [`/plays/${mainPlay.id}/roles`],
+      { user: teacherUser },
+    );
 
     await waitFor(() => screen.getByText(/aucun rôle/i));
   });
 
   it("should add a new role successfully", async () => {
-    const [location] = mockWindowLocation();
-
-    const Stub = stubRoute("/plays/:playId/roles", RolesPage);
-
-    await renderAsync(<Stub initialEntries={["/plays/1/roles"]} />);
+    await renderWithStub(
+      "/plays/:playId/roles",
+      RolesPage,
+      [`/plays/${mainPlay.id}/roles`],
+      { user: teacherUser },
+    );
 
     const user = userEvent.setup();
 
@@ -72,14 +75,16 @@ describe("<RolesPage />", () => {
       sameSite: "strict",
       value: mockedRandomUUID,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith("/api/plays/1/roles", {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": mockedRandomUUID,
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `/api/plays/${mainPlay.id}/roles`,
+      {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": mockedRandomUUID,
+        },
+        body: JSON.stringify({ name: "Test", description: null, sceneIds: [] }),
       },
-      body: JSON.stringify({ name: "Test", description: null, sceneIds: [] }),
-    });
-    expect(location.reload).toHaveBeenCalled();
+    );
   });
 });

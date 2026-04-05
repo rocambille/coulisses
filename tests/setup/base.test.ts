@@ -3,7 +3,7 @@ import fs from "fs-extra";
 
 import databaseClient, { type Rows } from "../../src/database/client";
 
-describe("Setup", () => {
+describe("System Setup", () => {
   describe(".env file", () => {
     it("should exist at project root", async () => {
       const envPath = path.resolve(__dirname, "../../.env");
@@ -16,6 +16,7 @@ describe("Setup", () => {
       expect(process.env.MYSQL_DATABASE).toBeDefined();
     });
   });
+
   describe("Database connection", () => {
     it("should connect successfully", async () => {
       const connection = await databaseClient.getConnection();
@@ -25,6 +26,7 @@ describe("Setup", () => {
       await connection.release();
     });
   });
+
   describe("Database schema", () => {
     it("should contain a 'user' table as defined in schema.sql", async () => {
       const [rows] = await databaseClient.query<Rows>(
@@ -34,8 +36,8 @@ describe("Setup", () => {
       expect(rows.length).toBe(1);
     });
   });
-});
 
-afterAll(async () => {
-  await databaseClient.end();
+  afterAll(async () => {
+    await databaseClient.end();
+  });
 });

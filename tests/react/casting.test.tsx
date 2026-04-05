@@ -2,48 +2,52 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CastingPage from "../../src/react/components/play/CastingPage";
 import {
-  mockCsrfToken,
+  actorUser,
+  mainPlay,
+  mainRoles,
   mockedRandomUUID,
-  mockedUsers,
-  mockFetch,
-  mockUseAuth,
-  mockWindowLocation,
-  renderAsync,
-  stubRoute,
-} from "./utils";
+  renderWithStub,
+  setupMocks,
+  teacherUser,
+} from "./mocks";
 
-beforeEach(() => {
-  mockCsrfToken();
-  mockFetch();
-});
+describe("React: CastingPage", () => {
+  beforeEach(() => {
+    setupMocks();
+  });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-describe("<CastingPage />", () => {
   it("should mount successfully", async () => {
-    mockUseAuth(mockedUsers[0]);
-
-    const Stub = stubRoute("/plays/:playId/casting", CastingPage);
-
-    await renderAsync(<Stub initialEntries={["/plays/1/casting"]} />);
+    await renderWithStub(
+      "/plays/:playId/casting",
+      CastingPage,
+      [`/plays/${mainPlay.id}/casting`],
+      { user: teacherUser },
+    );
 
     await waitFor(() => screen.getByRole("heading", { level: 2 }));
+    expect(screen.getByText(/casting/i)).toBeDefined();
   });
 
   it("should assign a role successfully (teacher)", async () => {
-    const [location] = mockWindowLocation();
-
-    mockUseAuth(mockedUsers[0]);
-
-    const Stub = stubRoute("/plays/:playId/casting", CastingPage);
-
-    await renderAsync(<Stub initialEntries={["/plays/1/casting"]} />);
+    await renderWithStub(
+      "/plays/:playId/casting",
+      CastingPage,
+      [`/plays/${mainPlay.id}/casting`],
+      { user: teacherUser },
+    );
 
     const user = userEvent.setup();
 
-    await user.selectOptions(screen.getByLabelText(/assigner/i), "2");
+    // Specific label matching the first role
+    const label = new RegExp(`assigner.*${mainRoles[0].name}`, "i");
+    await user.selectOptions(
+      screen.getByLabelText(label),
+      actorUser.id.toString(),
+    );
 
     expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
       expires: expect.any(Number),
@@ -52,29 +56,31 @@ describe("<CastingPage />", () => {
       sameSite: "strict",
       value: mockedRandomUUID,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith("/api/plays/1/castings", {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": mockedRandomUUID,
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `/api/plays/${mainPlay.id}/castings`,
+      {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": mockedRandomUUID,
+        },
+        body: JSON.stringify({ roleId: mainRoles[0].id, userId: actorUser.id }),
       },
-      body: JSON.stringify({ roleId: 1, userId: 2 }),
-    });
-    expect(location.reload).toHaveBeenCalled();
+    );
   });
 
   it("should unassign a role successfully (teacher)", async () => {
-    const [location] = mockWindowLocation();
-
-    mockUseAuth(mockedUsers[0]);
-
-    const Stub = stubRoute("/plays/:playId/casting", CastingPage);
-
-    await renderAsync(<Stub initialEntries={["/plays/1/casting"]} />);
+    await renderWithStub(
+      "/plays/:playId/casting",
+      CastingPage,
+      [`/plays/${mainPlay.id}/casting`],
+      { user: teacherUser },
+    );
 
     const user = userEvent.setup();
 
-    await user.selectOptions(screen.getByLabelText(/assigner/i), "");
+    const label = new RegExp(`assigner.*${mainRoles[0].name}`, "i");
+    await user.selectOptions(screen.getByLabelText(label), "");
 
     expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
       expires: expect.any(Number),
@@ -83,14 +89,16 @@ describe("<CastingPage />", () => {
       sameSite: "strict",
       value: mockedRandomUUID,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith("/api/plays/1/castings", {
-      method: "delete",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": mockedRandomUUID,
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `/api/plays/${mainPlay.id}/castings`,
+      {
+        method: "delete",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": mockedRandomUUID,
+        },
+        body: JSON.stringify({ roleId: mainRoles[0].id, userId: actorUser.id }),
       },
-      body: JSON.stringify({ roleId: 1, userId: 2 }),
-    });
-    expect(location.reload).toHaveBeenCalled();
+    );
   });
 });

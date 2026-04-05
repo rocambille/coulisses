@@ -5,122 +5,32 @@ import supertest, { type Test } from "supertest";
 
 import databaseClient from "../../src/database/client";
 import routes from "../../src/express/routes";
+import { initialMockedData, insertId } from "../mocks";
+
+export * from "../mocks";
 
 // -------------------------
 // Mocked DB content
 // -------------------------
-export const mockedData = {
-  user: [
-    { id: 1, email: "foo@mail.com", name: "foo" },
-    { id: 2, email: "bar@mail.com", name: "bar" },
-    { id: 3, email: "not-a-member@mail.com", name: "not-a-member" },
-  ],
-  play: [{ id: 1, title: "Play 1", description: "Desc 1" }],
-  play_member: [
-    { id: null, user_id: 1, play_id: 1, role: "TEACHER" },
-    { id: null, user_id: 2, play_id: 1, role: "MEMBER" },
-  ],
-  scene: [
-    {
-      id: 1,
-      play_id: 1,
-      title: "Scene 1",
-      description: null,
-      duration: 10,
-      scene_order: 1,
-      is_active: 1,
-    },
-  ],
-  role: [
-    {
-      id: 1,
-      play_id: 1,
-      name: "Role 1",
-      description: "With a scene",
-      scenes: "[]",
-    },
-    {
-      id: 2,
-      play_id: 1,
-      name: "Role 2",
-      description: "Without a scene",
-      scenes: "[]",
-    },
-  ],
-  scene_role: [{ id: null, scene_id: 1, role_id: 1 }],
-  preference: [{ id: 1, user_id: 1, scene_id: 1, level: "HIGH" }],
-  casting: [{ role_id: 1, user_id: 1 }],
-  event: [
-    {
-      id: 1,
-      play_id: 1,
-      type: "SHOW",
-      title: "Opening Night",
-      description: null,
-      location: "Main Stage",
-      start_time: "2026-06-01T20:00:00.000Z",
-      end_time: "2026-06-01T22:30:00.000Z",
-    },
-  ],
-};
+export const mockedData = { ...initialMockedData };
 
 // Allows a clean slate per test
 export const resetMockData = () => {
-  mockedData.user = [
-    { id: 1, email: "foo@mail.com", name: "foo" },
-    { id: 2, email: "bar@mail.com", name: "bar" },
-    { id: 3, email: "not-a-member@mail.com", name: "not-a-member" },
-  ];
-  mockedData.play = [{ id: 1, title: "Play 1", description: "Desc 1" }];
-  mockedData.play_member = [
-    { id: null, user_id: 1, play_id: 1, role: "TEACHER" },
-    { id: null, user_id: 2, play_id: 1, role: "MEMBER" },
-  ];
-  mockedData.scene = [
-    {
-      id: 1,
-      play_id: 1,
-      title: "Scene 1",
-      description: null,
-      duration: 10,
-      scene_order: 1,
-      is_active: 1,
-    },
-  ];
-  mockedData.role = [
-    {
-      id: 1,
-      play_id: 1,
-      name: "Role 1",
-      description: "With a scene",
-      scenes: "[]",
-    },
-    {
-      id: 2,
-      play_id: 1,
-      name: "Role 2",
-      description: "Without a scene",
-      scenes: "[]",
-    },
-  ];
-  mockedData.scene_role = [{ id: null, scene_id: 1, role_id: 1 }];
-  mockedData.preference = [{ id: 1, user_id: 1, scene_id: 1, level: "HIGH" }];
-  mockedData.casting = [{ role_id: 1, user_id: 1 }];
-  mockedData.event = [
-    {
-      id: 1,
-      play_id: 1,
-      type: "SHOW",
-      title: "Opening Night",
-      description: null,
-      location: "Main Stage",
-      start_time: "2026-06-01T20:00:00.000Z",
-      end_time: "2026-06-01T22:30:00.000Z",
-    },
-  ];
+  mockedData.user = [...initialMockedData.user];
+  mockedData.play = [...initialMockedData.play];
+  mockedData.play_member = [...initialMockedData.play_member];
+  mockedData.scene = [...initialMockedData.scene];
+  mockedData.role = [...initialMockedData.role];
+  mockedData.scene_role = [...initialMockedData.scene_role];
+  mockedData.preference = [...initialMockedData.preference];
+  mockedData.casting = [...initialMockedData.casting];
+  mockedData.event = [...initialMockedData.event];
 };
 
-export const mockedInsertId = 42;
+export const setupApiMocks = () => {
+  resetMockData();
+  mockDatabaseClient();
+};
 
 export const members = (play: { id: number }) =>
   mockedData.play_member
@@ -149,7 +59,7 @@ export const mockDatabaseClient = () => {
 
         // INSERT -----------------------------------
         if (/\binsert\b/i.test(sql)) {
-          return [{ insertId: mockedInsertId }, []];
+          return [{ insertId }, []];
         }
 
         // SELECT -----------------------------------
@@ -192,10 +102,14 @@ export const mockDatabaseClient = () => {
             const roles = mockedData.role
               .filter((r) => r.play_id === playId)
               .map((r) => {
-                const sceneIds = mockedData.scene_role
-                  .filter((sr) => sr.role_id === r.id)
-                  .map((sr) => sr.scene_id);
-                return { ...r, sceneIds };
+                const roleId = (r as { id: number }).id;
+                const scenes = mockedData.scene_role
+                  .filter((sr) => sr.role_id === roleId)
+                  .map((sr) =>
+                    mockedData.scene.find((s) => s.id === sr.scene_id),
+                  )
+                  .filter(Boolean);
+                return { ...r, scenes: JSON.stringify(scenes) };
               });
 
             return [roles, []];
@@ -340,6 +254,10 @@ export const mockJwtVerify = (sub: string | null) => {
 
     return { sub };
   });
+};
+
+export const setupApiAuth = (user: { id: number } | null) => {
+  mockJwtVerify(user ? user.id.toString() : null);
 };
 
 // -------------------------

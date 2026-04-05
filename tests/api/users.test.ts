@@ -1,143 +1,145 @@
 import {
+  actorUser,
   api,
-  mockDatabaseClient,
   mockedData,
-  mockJwtVerify,
-  resetMockData,
+  setupApiAuth,
+  setupApiMocks,
+  teacherUser,
   using,
-} from "./utils";
+} from "./mocks";
 
-beforeEach(() => {
-  resetMockData();
-  mockDatabaseClient();
-});
+describe("Users API", () => {
+  beforeEach(() => {
+    setupApiMocks();
+  });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-describe("GET /api/users", () => {
-  it("should fetch users successfully", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+  describe("GET /api/users", () => {
+    it("should fetch users successfully", async () => {
+      setupApiAuth(teacherUser);
 
-    const response = await using(api.get("/api/users"), {
-      withCsrf: false,
-      withAuth: true,
+      const response = await using(api.get("/api/users"), {
+        withCsrf: false,
+        withAuth: true,
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockedData.user);
+    });
+  });
+
+  describe("GET /api/users/:id", () => {
+    it("should fetch a single user successfully", async () => {
+      setupApiAuth(teacherUser);
+
+      const response = await using(api.get(`/api/users/${teacherUser.id}`), {
+        withCsrf: false,
+        withAuth: true,
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(teacherUser);
     });
 
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual(mockedData.user);
-  });
-});
+    it("should fail on invalid id", async () => {
+      setupApiAuth(teacherUser);
 
-describe("GET /api/users/:id", () => {
-  it("should fetch a single user successfully", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+      const response = await using(api.get("/api/users/not-a-number"), {
+        withCsrf: false,
+        withAuth: true,
+      });
 
-    const response = await using(
-      api.get(`/api/users/${mockedData.user[0].id}`),
-      { withCsrf: false, withAuth: true },
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual(mockedData.user[0]);
+      expect(response.status).toBe(404);
+    });
   });
 
-  it("should fail on invalid id", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+  describe("PUT /api/users/:id", () => {
+    it("should update an existing user successfully", async () => {
+      setupApiAuth(teacherUser);
 
-    const response = await using(api.get("/api/users/not-a-number"), {
-      withCsrf: false,
-      withAuth: true,
+      const response = await using(
+        api
+          .put(`/api/users/${teacherUser.id}`)
+          .send({ email: "updated@mail.com", name: "Updated" }),
+        { withCsrf: true, withAuth: true },
+      );
+
+      expect(response.status).toBe(204);
     });
 
-    expect(response.status).toBe(404);
-  });
-});
+    it("should fail on invalid id", async () => {
+      setupApiAuth(teacherUser);
 
-describe("PUT /api/users/:id", () => {
-  it("should update an existing user successfully", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+      const response = await using(
+        api
+          .put("/api/users/not-a-number")
+          .send({ email: "updated@mail.com", name: "Updated" }),
+        { withCsrf: true, withAuth: true },
+      );
 
-    const response = await using(
-      api
-        .put(`/api/users/${mockedData.user[0].id}`)
-        .send({ email: "updated@mail.com", name: "Updated" }),
-      { withCsrf: true, withAuth: true },
-    );
-
-    expect(response.status).toBe(204);
-  });
-
-  it("should fail on invalid id", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
-
-    const response = await using(
-      api
-        .put("/api/users/not-a-number")
-        .send({ email: "updated@mail.com", name: "Updated" }),
-      { withCsrf: true, withAuth: true },
-    );
-
-    expect(response.status).toBe(404);
-  });
-
-  it("should fail on invalid authorization", async () => {
-    mockJwtVerify(mockedData.user[1].id.toString()); // Not the same user id
-
-    const response = await using(
-      api
-        .put(`/api/users/${mockedData.user[0].id}`)
-        .send({ email: "updated@mail.com", name: "Updated" }),
-      { withCsrf: true, withAuth: true },
-    );
-
-    expect(response.status).toBe(403);
-  });
-
-  it("should fail on invalid request body", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
-
-    const response = await using(
-      api.put(`/api/users/${mockedData.user[0].id}`).send({}),
-      { withCsrf: true, withAuth: true },
-    );
-
-    expect(response.status).toBe(400);
-  });
-});
-
-describe("DELETE /api/users/:id", () => {
-  it("should delete an existing user successfully", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
-
-    const response = await using(
-      api.delete(`/api/users/${mockedData.user[0].id}`),
-      { withCsrf: true, withAuth: true },
-    );
-
-    expect(response.status).toBe(204);
-  });
-
-  it("should not fail on invalid id", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
-
-    const response = await using(api.delete("/api/users/not-a-number"), {
-      withCsrf: true,
-      withAuth: true,
+      expect(response.status).toBe(404);
     });
 
-    expect(response.status).toBe(204);
+    it("should fail on invalid authorization", async () => {
+      setupApiAuth(actorUser); // Not the same user id
+
+      const response = await using(
+        api
+          .put(`/api/users/${teacherUser.id}`)
+          .send({ email: "updated@mail.com", name: "Updated" }),
+        { withCsrf: true, withAuth: true },
+      );
+
+      expect(response.status).toBe(403);
+    });
+
+    it("should fail on invalid request body", async () => {
+      setupApiAuth(teacherUser);
+
+      const response = await using(
+        api.put(`/api/users/${teacherUser.id}`).send({}),
+        { withCsrf: true, withAuth: true },
+      );
+
+      expect(response.status).toBe(400);
+    });
   });
 
-  it("should fail on invalid authorization", async () => {
-    mockJwtVerify(mockedData.user[1].id.toString());
+  describe("DELETE /api/users/:id", () => {
+    it("should delete an existing user successfully", async () => {
+      setupApiAuth(teacherUser);
 
-    const response = await using(
-      api.delete(`/api/users/${mockedData.user[0].id}`),
-      { withCsrf: true, withAuth: true },
-    );
+      const response = await using(api.delete(`/api/users/${teacherUser.id}`), {
+        withCsrf: true,
+        withAuth: true,
+      });
 
-    expect(response.status).toBe(403);
+      expect(response.status).toBe(204);
+    });
+
+    it("should not fail on invalid id", async () => {
+      setupApiAuth(teacherUser);
+
+      const response = await using(api.delete("/api/users/not-a-number"), {
+        withCsrf: true,
+        withAuth: true,
+      });
+
+      expect(response.status).toBe(204);
+    });
+
+    it("should fail on invalid authorization", async () => {
+      setupApiAuth(actorUser);
+
+      const response = await using(api.delete(`/api/users/${teacherUser.id}`), {
+        withCsrf: true,
+        withAuth: true,
+      });
+
+      expect(response.status).toBe(403);
+    });
   });
 });

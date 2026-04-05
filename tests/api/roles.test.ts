@@ -1,144 +1,143 @@
 import {
+  actorUser,
   api,
-  mockDatabaseClient,
-  mockedData,
-  mockedInsertId,
-  mockJwtVerify,
-  resetMockData,
+  guestUser,
+  insertId,
+  mainPlay,
+  mainRoles,
+  mainScenes,
+  setupApiAuth,
+  setupApiMocks,
+  teacherUser,
   using,
-} from "./utils";
+} from "./mocks";
 
-beforeEach(() => {
-  resetMockData();
-  mockDatabaseClient();
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-describe("GET /api/plays/:id/roles", () => {
-  it("should fetch roles successfully for a play member", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
-
-    const response = await using(
-      api.get(`/api/plays/${mockedData.play[0].id}/roles`),
-      { withCsrf: false, withAuth: true },
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual([
-      {
-        id: mockedData.role[0].id,
-        name: mockedData.role[0].name,
-        description: mockedData.role[0].description,
-        play_id: mockedData.role[0].play_id,
-        scenes: [],
-      },
-      {
-        id: mockedData.role[1].id,
-        name: mockedData.role[1].name,
-        description: mockedData.role[1].description,
-        play_id: mockedData.role[1].play_id,
-        scenes: [],
-      },
-    ]);
+describe("Roles API", () => {
+  beforeEach(() => {
+    setupApiMocks();
   });
 
-  it("should fail when user is not a member of the play", async () => {
-    mockJwtVerify(mockedData.user[2].id.toString());
-
-    const response = await using(
-      api.get(`/api/plays/${mockedData.play[0].id}/roles`),
-      { withCsrf: false, withAuth: true },
-    );
-
-    expect(response.status).toBe(403);
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it("should fail when play does not exist", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+  describe("GET /api/plays/:id/roles", () => {
+    it("should fetch roles successfully for a play member", async () => {
+      setupApiAuth(teacherUser);
 
-    const response = await using(api.get(`/api/plays/not-a-play/roles`), {
-      withCsrf: false,
-      withAuth: true,
+      const response = await using(api.get(`/api/plays/${mainPlay.id}/roles`), {
+        withCsrf: false,
+        withAuth: true,
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([
+        {
+          ...mainRoles[0],
+          scenes: [mainScenes[0]],
+        },
+        {
+          ...mainRoles[1],
+          scenes: [],
+        },
+      ]);
     });
 
-    expect(response.status).toBe(404);
-  });
-});
+    it("should fail when user is not a member of the play", async () => {
+      setupApiAuth(guestUser);
 
-describe("POST /api/plays/:id/roles", () => {
-  it("should add a new role successfully with scenes", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+      const response = await using(api.get(`/api/plays/${mainPlay.id}/roles`), {
+        withCsrf: false,
+        withAuth: true,
+      });
 
-    const response = await using(
-      api.post(`/api/plays/${mockedData.play[0].id}/roles`).send({
-        name: "Hamlet",
-        description: "The Prince of Denmark",
-        sceneIds: [1],
-      }),
-      { withCsrf: true, withAuth: true },
-    );
+      expect(response.status).toBe(403);
+    });
 
-    expect(response.status).toBe(201);
-    expect(response.body).toEqual({ insertId: mockedInsertId });
-  });
+    it("should fail when play does not exist", async () => {
+      setupApiAuth(teacherUser);
 
-  it("should add a new role successfully without scenes", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+      const response = await using(api.get(`/api/plays/999/roles`), {
+        withCsrf: false,
+        withAuth: true,
+      });
 
-    const response = await using(
-      api.post(`/api/plays/${mockedData.play[0].id}/roles`).send({
-        name: "Hamlet",
-        description: "The Prince of Denmark",
-        sceneIds: [],
-      }),
-      { withCsrf: true, withAuth: true },
-    );
-
-    expect(response.status).toBe(201);
-    expect(response.body).toEqual({ insertId: mockedInsertId });
+      expect(response.status).toBe(404);
+    });
   });
 
-  it("should fail when user is not a teacher of the play", async () => {
-    mockJwtVerify(mockedData.user[1].id.toString());
+  describe("POST /api/plays/:id/roles", () => {
+    it("should add a new role successfully with scenes", async () => {
+      setupApiAuth(teacherUser);
 
-    const response = await using(
-      api.post(`/api/plays/${mockedData.play[0].id}/roles`).send({
-        name: "Hamlet",
-        description: "The Prince of Denmark",
-        sceneIds: [1],
-      }),
-      { withCsrf: true, withAuth: true },
-    );
+      const response = await using(
+        api.post(`/api/plays/${mainPlay.id}/roles`).send({
+          name: "Hamlet",
+          description: "The Prince of Denmark",
+          sceneIds: [mainScenes[0].id],
+        }),
+        { withCsrf: true, withAuth: true },
+      );
 
-    expect(response.status).toBe(403);
-  });
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({ insertId });
+    });
 
-  it("should fail on invalid missing payload", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+    it("should add a new role successfully without scenes", async () => {
+      setupApiAuth(teacherUser);
 
-    const response = await using(
-      api.post(`/api/plays/${mockedData.play[0].id}/roles`).send({}),
-      { withCsrf: true, withAuth: true },
-    );
+      const response = await using(
+        api.post(`/api/plays/${mainPlay.id}/roles`).send({
+          name: "Hamlet",
+          description: "The Prince of Denmark",
+          sceneIds: [],
+        }),
+        { withCsrf: true, withAuth: true },
+      );
 
-    expect(response.status).toBe(400);
-  });
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({ insertId });
+    });
 
-  it("should fail when play does not exist", async () => {
-    mockJwtVerify(mockedData.user[0].id.toString());
+    it("should fail when user is not a teacher of the play", async () => {
+      setupApiAuth(actorUser);
 
-    const response = await using(
-      api.post(`/api/plays/not-a-play/roles`).send({
-        name: "Hamlet",
-        description: "The Prince of Denmark",
-        sceneIds: [1],
-      }),
-      { withCsrf: true, withAuth: true },
-    );
+      const response = await using(
+        api.post(`/api/plays/${mainPlay.id}/roles`).send({
+          name: "Hamlet",
+          description: "The Prince of Denmark",
+          sceneIds: [mainScenes[0].id],
+        }),
+        { withCsrf: true, withAuth: true },
+      );
 
-    expect(response.status).toBe(404);
+      expect(response.status).toBe(403);
+    });
+
+    it("should fail on invalid missing payload", async () => {
+      setupApiAuth(teacherUser);
+
+      const response = await using(
+        api.post(`/api/plays/${mainPlay.id}/roles`).send({}),
+        { withCsrf: true, withAuth: true },
+      );
+
+      expect(response.status).toBe(400);
+    });
+
+    it("should fail when play does not exist", async () => {
+      setupApiAuth(teacherUser);
+
+      const response = await using(
+        api.post(`/api/plays/999/roles`).send({
+          name: "Hamlet",
+          description: "The Prince of Denmark",
+          sceneIds: [mainScenes[0].id],
+        }),
+        { withCsrf: true, withAuth: true },
+      );
+
+      expect(response.status).toBe(404);
+    });
   });
 });

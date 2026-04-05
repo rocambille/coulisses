@@ -2,21 +2,18 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CalendarPage from "../../src/react/components/play/CalendarPage";
 import {
-  mockCsrfToken,
-  mockedPlays,
+  actorUser,
+  mainPlay,
   mockedRandomUUID,
-  mockedUsers,
-  mockFetch,
-  mockUseAuth,
-  mockWindowLocation,
-  renderAsync,
-  stubRoute,
-} from "./utils";
+  openingNightEvent,
+  renderWithStub,
+  setupMocks,
+  teacherUser,
+} from "./mocks";
 
-describe("CalendarPage", () => {
+describe("React: CalendarPage", () => {
   beforeEach(() => {
-    mockCsrfToken();
-    mockFetch();
+    setupMocks();
   });
 
   afterEach(() => {
@@ -25,15 +22,14 @@ describe("CalendarPage", () => {
   });
 
   it("should mount successfully", async () => {
-    mockUseAuth(mockedUsers[1]);
-
-    const Stub = stubRoute("/plays/:playId/calendar", CalendarPage);
-
-    await renderAsync(
-      <Stub initialEntries={[`/plays/${mockedPlays[0].id}/calendar`]} />,
+    await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { user: actorUser },
     );
 
-    await waitFor(() => expect(screen.getByRole("heading", { level: 2 })));
+    await waitFor(() => screen.getByRole("heading", { level: 2 }));
 
     expect(screen.queryByLabelText(/ajouter.*28T/i)).toBeNull();
   });
@@ -41,47 +37,41 @@ describe("CalendarPage", () => {
   it("should allow user to navigate between months", async () => {
     vi.setSystemTime(new Date("2026-05-05T12:00:00Z"));
 
-    mockUseAuth(mockedUsers[0]);
-
-    const Stub = stubRoute("/plays/:playId/calendar", CalendarPage);
-
-    await renderAsync(
-      <Stub initialEntries={[`/plays/${mockedPlays[0].id}/calendar`]} />,
+    await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { user: teacherUser },
     );
 
     const user = userEvent.setup();
 
     await user.click(screen.getByRole("button", { name: /</i }));
-    await waitFor(() => expect(screen.getByText("Avril 2026")));
+    await waitFor(() => screen.getByText("Avril 2026"));
 
     await user.click(screen.getByRole("button", { name: />/i }));
-    await waitFor(() => expect(screen.getByText("Mai 2026")));
-
-    vi.useRealTimers();
+    await waitFor(() => screen.getByText("Mai 2026"));
   });
 
   it("should display 'add' button for teachers", async () => {
-    mockUseAuth(mockedUsers[0]);
-
-    const Stub = stubRoute("/plays/:playId/calendar", CalendarPage);
-
-    await renderAsync(
-      <Stub initialEntries={[`/plays/${mockedPlays[0].id}/calendar`]} />,
+    await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { user: teacherUser },
     );
 
-    await waitFor(() => expect(screen.getByLabelText(/ajouter.*28T/i)));
+    await waitFor(() => screen.getByLabelText(/ajouter.*28T/i));
   });
 
   it("should open form to create on a date a new event", async () => {
     vi.setSystemTime(new Date("2026-06-05T12:00:00Z"));
 
-    mockUseAuth(mockedUsers[0]);
-    mockWindowLocation();
-
-    const Stub = stubRoute("/plays/:playId/calendar", CalendarPage);
-
-    await renderAsync(
-      <Stub initialEntries={[`/plays/${mockedPlays[0].id}/calendar`]} />,
+    await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { user: teacherUser },
     );
 
     const user = userEvent.setup();
@@ -99,33 +89,33 @@ describe("CalendarPage", () => {
       sameSite: "strict",
       value: mockedRandomUUID,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith("/api/plays/1/events", {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": mockedRandomUUID,
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `/api/plays/${mainPlay.id}/events`,
+      {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": mockedRandomUUID,
+        },
+        body: JSON.stringify({
+          title: "New Rehearsal",
+          type: "SHOW",
+          start_time: "2026-06-28T17:00:00.000Z",
+          end_time: "2026-06-28T19:00:00.000Z",
+          location: "",
+          description: "",
+        }),
       },
-      body: JSON.stringify({
-        title: "New Rehearsal",
-        type: "SHOW",
-        start_time: "2026-06-28T17:00:00.000Z",
-        end_time: "2026-06-28T19:00:00.000Z",
-        location: "",
-        description: "",
-      }),
-    });
-    expect(location.reload).toHaveBeenCalled();
-
-    vi.useRealTimers();
+    );
+    await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
   });
 
   it("should open form to create a new event on a date and close it", async () => {
-    mockUseAuth(mockedUsers[0]);
-
-    const Stub = stubRoute("/plays/:playId/calendar", CalendarPage);
-
-    await renderAsync(
-      <Stub initialEntries={[`/plays/${mockedPlays[0].id}/calendar`]} />,
+    await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { user: teacherUser },
     );
 
     const user = userEvent.setup();
@@ -140,48 +130,94 @@ describe("CalendarPage", () => {
   });
 
   it("should open and close event details", async () => {
-    vi.setSystemTime(new Date(mockedPlays[0].events[0].start_time));
+    vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    mockUseAuth(mockedUsers[0]);
-
-    const Stub = stubRoute("/plays/:playId/calendar", CalendarPage);
-
-    await renderAsync(
-      <Stub initialEntries={[`/plays/${mockedPlays[0].id}/calendar`]} />,
+    await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { user: teacherUser },
     );
 
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: /opening night/i }));
+    await user.click(
+      screen.getByRole("button", {
+        name: new RegExp(openingNightEvent.title, "i"),
+      }),
+    );
 
-    await waitFor(() => expect(screen.getByText(/opening night description/i)));
+    await waitFor(() =>
+      screen.getByText(new RegExp(openingNightEvent.description, "i")),
+    );
 
     await user.click(screen.getByRole("button", { name: /fermer/i }));
 
     await waitFor(() =>
-      expect(screen.queryByText(/opening night description/i)).toBeNull(),
+      expect(
+        screen.queryByText(new RegExp(openingNightEvent.description, "i")),
+      ).toBeNull(),
     );
-
-    vi.useRealTimers();
   });
 
-  it("should allow teacher to delete an event", async () => {
-    const [location] = mockWindowLocation();
+  it("should allow teacher to edit an event", async () => {
+    vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    vi.setSystemTime(new Date(mockedPlays[0].events[0].start_time));
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-
-    mockUseAuth(mockedUsers[0]);
-
-    const Stub = stubRoute("/plays/:playId/calendar", CalendarPage);
-
-    await renderAsync(
-      <Stub initialEntries={[`/plays/${mockedPlays[0].id}/calendar`]} />,
+    await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { user: teacherUser },
     );
 
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: /opening night/i }));
+    await user.click(
+      screen.getByRole("button", {
+        name: new RegExp(openingNightEvent.title, "i"),
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: /modifier/i }));
+
+    const titleInput = screen.getByLabelText(/titre/i);
+    await user.clear(titleInput);
+    await user.type(titleInput, "Updated Night");
+
+    await user.click(screen.getByRole("button", { name: /enregistrer/i }));
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `/api/events/${openingNightEvent.id}`,
+      {
+        method: "put",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": mockedRandomUUID,
+        },
+        body: expect.stringMatching(/"title":"Updated Night"/),
+      },
+    );
+
+    await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
+  });
+
+  it("should allow teacher to delete an event", async () => {
+    vi.setSystemTime(new Date(openingNightEvent.start_time));
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { user: teacherUser },
+    );
+
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: new RegExp(openingNightEvent.title, "i"),
+      }),
+    );
     await user.click(screen.getByRole("button", { name: /supprimer/i }));
 
     expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
@@ -191,14 +227,17 @@ describe("CalendarPage", () => {
       sameSite: "strict",
       value: mockedRandomUUID,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith("/api/events/1", {
-      method: "delete",
-      headers: {
-        "X-CSRF-Token": mockedRandomUUID,
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `/api/events/${openingNightEvent.id}`,
+      {
+        method: "delete",
+        headers: {
+          "X-CSRF-Token": mockedRandomUUID,
+        },
       },
-    });
-    expect(location.reload).toHaveBeenCalled();
-
-    vi.useRealTimers();
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /supprimer/i })).toBeNull(),
+    );
   });
 });

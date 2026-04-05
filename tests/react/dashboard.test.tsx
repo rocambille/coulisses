@@ -3,44 +3,29 @@ import userEvent from "@testing-library/user-event";
 import DashboardPage from "../../src/react/components/DashboardPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  mockCsrfToken,
+  guestUser,
   mockedRandomUUID,
-  mockedUsers,
-  mockFetch,
-  mockUseAuth,
-  mockWindowLocation,
-  renderAsync,
-  stubRoute,
-} from "./utils";
-
-beforeEach(() => {
-  mockCsrfToken();
-  mockFetch();
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+  renderWithStub,
+  setupMocks,
+  teacherUser,
+} from "./mocks";
 
 describe("<DashboardPage />", () => {
   beforeEach(() => {
+    setupMocks();
     invalidateCache("/api/plays");
   });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
   it("should throw when not authenticated", async () => {
-    mockUseAuth(null);
-
-    const Stub = stubRoute("/", DashboardPage);
-
-    await expect(renderAsync(<Stub initialEntries={["/"]} />)).rejects.toThrow(
-      "User not authenticated",
-    );
+    await expect(
+      renderWithStub("/", DashboardPage, ["/"], { user: null }),
+    ).rejects.toThrow("User not authenticated");
   });
   it("should mount successfully", async () => {
-    mockUseAuth(mockedUsers[0]);
-
-    const Stub = stubRoute("/", DashboardPage);
-
-    await renderAsync(<Stub initialEntries={["/"]} />);
+    await renderWithStub("/", DashboardPage, ["/"], { user: teacherUser });
 
     await waitFor(() =>
       screen.getByRole("heading", { level: 1, name: /mes pièces/i }),
@@ -48,8 +33,7 @@ describe("<DashboardPage />", () => {
   });
 
   it("should display a message when the user has no plays", async () => {
-    mockUseAuth(mockedUsers[2]);
-    mockFetch((path, method) => {
+    setupMocks((path, method) => {
       if (path === "/api/plays" && method === "get") {
         return Promise.resolve().then(
           () =>
@@ -61,20 +45,13 @@ describe("<DashboardPage />", () => {
       }
     });
 
-    const Stub = stubRoute("/", DashboardPage);
-
-    await renderAsync(<Stub initialEntries={["/"]} />);
+    await renderWithStub("/", DashboardPage, ["/"], { user: guestUser });
 
     await waitFor(() => screen.getByText(/aucune pièce/i));
   });
 
   it("should add a play", async () => {
-    mockUseAuth(mockedUsers[0]);
-    const [location] = mockWindowLocation();
-
-    const Stub = stubRoute("/", DashboardPage);
-
-    await renderAsync(<Stub initialEntries={["/"]} />);
+    await renderWithStub("/", DashboardPage, ["/"], { user: teacherUser });
 
     const user = userEvent.setup();
 
@@ -98,6 +75,5 @@ describe("<DashboardPage />", () => {
         title: "Test",
       }),
     });
-    expect(location.reload).toHaveBeenCalled();
   });
 });

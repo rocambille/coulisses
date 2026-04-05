@@ -16,9 +16,9 @@ import { AuthProvider } from "./components/auth/AuthContext";
 import LogoutForm from "./components/auth/LogoutForm";
 import VerifyPage from "./components/auth/VerifyPage";
 import DashboardPage from "./components/DashboardPage";
-import { itemRoutes } from "./components/item/index";
 import Layout from "./components/Layout";
 import { playRoutes } from "./components/play/index";
+import { RefreshProvider } from "./components/RefreshContext";
 
 import "./index.css";
 
@@ -30,9 +30,11 @@ const routes: RouteObject[] = [
   {
     element: (
       <AuthProvider>
-        <Layout>
-          <Outlet />
-        </Layout>
+        <RefreshProvider>
+          <Layout>
+            <Outlet />
+          </Layout>
+        </RefreshProvider>
       </AuthProvider>
     ),
     children: [
@@ -48,7 +50,6 @@ const routes: RouteObject[] = [
         path: "verify",
         element: <VerifyPage />,
       },
-      ...itemRoutes,
       ...playRoutes,
     ],
   },

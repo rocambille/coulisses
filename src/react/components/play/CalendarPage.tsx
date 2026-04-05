@@ -6,8 +6,8 @@
 
 import { use, useState } from "react";
 import { useParams } from "react-router";
-import { useAuth } from "../auth/AuthContext";
-import { cache, invalidateCache, mutate } from "../utils";
+import { cache } from "../utils";
+import { useAction, useMembership } from "./hooks";
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -35,19 +35,16 @@ const MONTHS = [
 
 function CalendarPage() {
   const { playId } = useParams();
+  const runAction = useAction();
+  const { isTeacher } = useMembership(playId);
 
-  const { me } = useAuth();
-  const members: (User & { role: string })[] = use(
-    cache(`/api/plays/${playId}/members`),
-  );
   const events: EventData[] = use(cache(`/api/plays/${playId}/events`));
-
-  const isTeacher = members.find((m) => m.id === me?.id)?.role === "TEACHER";
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -85,29 +82,75 @@ function CalendarPage() {
     const start_time = new Date(`${startDate}T${startTime}`).toISOString();
     const end_time = new Date(`${endDate}T${endTime}`).toISOString();
 
-    const response = await mutate(`/api/plays/${playId}/events`, "post", {
-      title,
-      type,
-      start_time,
-      end_time,
-      location,
-      description,
-    });
+    const response = await runAction(
+      `/api/plays/${playId}/events`,
+      "post",
+      {
+        title,
+        type,
+        start_time,
+        end_time,
+        location,
+        description,
+      },
+      [`/api/plays/${playId}/events`],
+    );
 
     if (response.ok) {
-      invalidateCache(`/api/plays/${playId}/events`);
       setShowAddModal(false);
-      window.location.reload();
+    }
+  };
+
+  const handleEdit = async (formData: FormData) => {
+    if (!selectedEvent) return;
+
+    const title = formData.get("title")?.toString();
+    const type = formData.get("type")?.toString();
+    const startDate = formData.get("start_date")?.toString();
+    const startTime = formData.get("start_time")?.toString();
+    const endDate = formData.get("end_date")?.toString();
+    const endTime = formData.get("end_time")?.toString();
+    const location = formData.get("location")?.toString();
+    const description = formData.get("description")?.toString();
+
+    if (!title || !type || !startDate || !startTime || !endDate || !endTime) {
+      throw new Error("Invalid form submission");
+    }
+
+    const start_time = new Date(`${startDate}T${startTime}`).toISOString();
+    const end_time = new Date(`${endDate}T${endTime}`).toISOString();
+
+    const response = await runAction(
+      `/api/events/${selectedEvent.id}`,
+      "put",
+      {
+        type,
+        title,
+        description,
+        location,
+        start_time,
+        end_time,
+      },
+      [`/api/plays/${playId}/events`],
+    );
+
+    if (response.ok) {
+      setSelectedEvent(null);
+      setIsEditing(false);
     }
   };
 
   const handleDelete = async (eventId: number) => {
     if (!confirm("Delete this event?")) return;
-    const response = await mutate(`/api/events/${eventId}`, "delete");
+    const response = await runAction(
+      `/api/events/${eventId}`,
+      "delete",
+      undefined,
+      [`/api/plays/${playId}/events`],
+    );
+
     if (response.ok) {
-      invalidateCache(`/api/plays/${playId}/events`);
       setSelectedEvent(null);
-      window.location.reload();
     }
   };
 
@@ -391,45 +434,157 @@ function CalendarPage() {
                 type="button"
                 rel="prev"
                 aria-label="Fermer"
-                onClick={() => setSelectedEvent(null)}
+                onClick={() => {
+                  setSelectedEvent(null);
+                  setIsEditing(false);
+                }}
               ></button>
-              {selectedEvent.title}
+              {isEditing ? "Modifier l'événement" : selectedEvent.title}
             </header>
-            <p>
-              <strong>Type:</strong>{" "}
-              {selectedEvent.type === "SHOW"
-                ? "🎭 Représentation"
-                : "📅 Répétition"}
-              <br />
-              <strong>Début:</strong>{" "}
-              {new Date(selectedEvent.start_time).toLocaleString()}
-              <br />
-              <strong>Fin:</strong>{" "}
-              {new Date(selectedEvent.end_time).toLocaleString()}
-              <br />
-              {selectedEvent.location && (
-                <>
-                  <strong>Lieu:</strong> {selectedEvent.location}
+            {isEditing ? (
+              <form action={handleEdit}>
+                <label>
+                  Titre
+                  <input
+                    name="title"
+                    defaultValue={selectedEvent.title}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Type
+                  <select
+                    name="type"
+                    defaultValue={selectedEvent.type}
+                    required
+                  >
+                    <option value="SHOW">Représentation</option>
+                    <option value="FIXED_REHEARSAL">Répétition</option>
+                  </select>
+                </label>
+
+                <div className="grid">
+                  <label>
+                    Date de début
+                    <input
+                      name="start_date"
+                      type="date"
+                      defaultValue={selectedEvent.start_time.split("T")[0]}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Heure
+                    <input
+                      name="start_time"
+                      type="time"
+                      defaultValue={selectedEvent.start_time
+                        .split("T")[1]
+                        .slice(0, 5)}
+                      required
+                    />
+                  </label>
+                </div>
+
+                <div className="grid">
+                  <label>
+                    Date de fin
+                    <input
+                      name="end_date"
+                      type="date"
+                      defaultValue={selectedEvent.end_time.split("T")[0]}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Heure
+                    <input
+                      name="end_time"
+                      type="time"
+                      defaultValue={selectedEvent.end_time
+                        .split("T")[1]
+                        .slice(0, 5)}
+                      required
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  Lieu
+                  <input
+                    name="location"
+                    defaultValue={selectedEvent.location}
+                  />
+                </label>
+
+                <label>
+                  Description
+                  <textarea
+                    name="description"
+                    defaultValue={selectedEvent.description}
+                  />
+                </label>
+
+                <footer>
+                  <button
+                    type="button"
+                    className="secondary outline"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    Annuler
+                  </button>
+                  <button type="submit">Enregistrer</button>
+                </footer>
+              </form>
+            ) : (
+              <>
+                <p>
+                  <strong>Type:</strong>{" "}
+                  {selectedEvent.type === "SHOW"
+                    ? "🎭 Représentation"
+                    : "📅 Répétition"}
                   <br />
-                </>
-              )}
-              {selectedEvent.description && (
-                <>
-                  <strong>Description:</strong> {selectedEvent.description}
-                </>
-              )}
-            </p>
-            <footer>
-              {isTeacher && (
-                <button
-                  type="button"
-                  className="contrast"
-                  onClick={() => handleDelete(selectedEvent.id)}
-                >
-                  Supprimer
-                </button>
-              )}
-            </footer>
+                  <strong>Début:</strong>{" "}
+                  {new Date(selectedEvent.start_time).toLocaleString()}
+                  <br />
+                  <strong>Fin:</strong>{" "}
+                  {new Date(selectedEvent.end_time).toLocaleString()}
+                  <br />
+                  {selectedEvent.location && (
+                    <>
+                      <strong>Lieu:</strong> {selectedEvent.location}
+                      <br />
+                    </>
+                  )}
+                  {selectedEvent.description && (
+                    <>
+                      <strong>Description:</strong> {selectedEvent.description}
+                    </>
+                  )}
+                </p>
+                <footer>
+                  {isTeacher && (
+                    <div className="grid">
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        type="button"
+                        className="contrast"
+                        onClick={() => handleDelete(selectedEvent.id)}
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
+                </footer>
+              </>
+            )}
           </article>
         </dialog>
       )}

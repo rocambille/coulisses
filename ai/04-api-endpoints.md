@@ -89,11 +89,17 @@ L'authentification repose sur l'envoi d'un email contenant un token, qui sera en
 ## 📅 5. Calendrier (Événements)
 
 - `GET /api/plays/:playId/events`
-  - **Query param** : `?month=YYYY-MM` (optionnel)
   - **Action** : Récupère les répétitions et représentations liées à la pièce.
 
 - `POST /api/plays/:playId/events` *(Professeur)*
-  - **Body** : `{ title: string, type: EventType, startTime: Date, endTime: Date, location?: string }`
-  - **Action** : Crée un évènement de type `SHOW` ou `FIXED_REHEARSAL`.
+  - **Body** : `{ title: string, type: 'SHOW' | 'FIXED_REHEARSAL' | 'AUTO_REHEARSAL', start_time: string, end_time: string, location?: string, description?: string }`
+  - **Action** : Crée un évènement.
 
-*(Les endpoints concernant la planification des répétitions autonomes `AUTO_REHEARSAL` et les disponibilités `Availability` sont mis en attente pour la v2).*
+- `PUT /api/events/:eventId` *(Professeur)*
+  - **Body** : Full `EventData` entity (type, title, description, location, start_time, end_time).
+  - **Action** : Met à jour un évènement existant.
+
+- `DELETE /api/events/:eventId` *(Professeur)*
+  - **Action** : Supprime un évènement.
+
+*(Les endpoints concernant la planification des répétitions autonomes `AUTO_REHEARSAL` et les disponibilités `Availability` sont mis en attente pour une éventuelle phase post-MVP).*

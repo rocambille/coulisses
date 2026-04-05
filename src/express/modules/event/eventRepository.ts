@@ -55,24 +55,28 @@ class EventRepository {
     return result.insertId;
   }
 
-  async update(eventId: number, event: Partial<EventData>): Promise<boolean> {
-    const fields: string[] = [];
-    const values: unknown[] = [];
-
-    for (const [key, value] of Object.entries(event)) {
-      if (key !== "id" && key !== "play_id" && value !== undefined) {
-        fields.push(`${key} = ?`);
-        values.push(value);
-      }
-    }
-
-    if (fields.length === 0) return false;
-
-    values.push(eventId);
-
+  async update(
+    eventId: number,
+    event: Omit<EventData, "id" | "play_id">,
+  ): Promise<boolean> {
     const [result] = await databaseClient.query<Result>(
-      `update event set ${fields.join(", ")} where id = ?`,
-      values,
+      `update event set 
+        type = ?, 
+        title = ?, 
+        description = ?, 
+        location = ?, 
+        start_time = STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%s.%fZ'), 
+        end_time = STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%s.%fZ') 
+       where id = ?`,
+      [
+        event.type,
+        event.title,
+        event.description,
+        event.location,
+        event.start_time,
+        event.end_time,
+        eventId,
+      ],
     );
 
     return result.affectedRows > 0;
