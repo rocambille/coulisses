@@ -1,4 +1,5 @@
 import { Navigate, type RouteObject } from "react-router";
+import CalendarPage from "./CalendarPage";
 import CastingPage from "./CastingPage";
 import MembersPage from "./MembersPage";
 import PlayLayout from "./PlayLayout";
@@ -29,6 +30,10 @@ export const playRoutes: RouteObject[] = [
       {
         path: "members",
         element: <MembersPage />,
+      },
+      {
+        path: "calendar",
+        element: <CalendarPage />,
       },
     ],
   },

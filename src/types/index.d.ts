@@ -66,3 +66,14 @@ type CastingMatrix = {
   castings: { user_id: number; role_id: number }[];
   preferences: { user_id: number; scene_id: number; level: string }[];
 };
+
+type EventData = {
+  id: number;
+  play_id: number;
+  type: "SHOW" | "FIXED_REHEARSAL" | "AUTO_REHEARSAL";
+  title: string;
+  description?: string;
+  location?: string;
+  start_time: string;
+  end_time: string;
+};

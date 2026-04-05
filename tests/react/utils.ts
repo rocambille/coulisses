@@ -25,6 +25,7 @@ export const mockedPlays: (Play & {
   scenes: Scene[];
   preferences: PreferenceWithUser[];
   matrix: CastingMatrix;
+  events: EventData[];
 })[] = [
   {
     id: 1,
@@ -101,6 +102,18 @@ export const mockedPlays: (Play & {
       castings: [],
       preferences: [],
     },
+    events: [
+      {
+        id: 1,
+        title: "Opening Night",
+        description: "Opening Night description",
+        location: "Opéra de Reims",
+        start_time: "2022-01-01T00:00:00.000Z",
+        end_time: "2022-01-01T00:00:00.000Z",
+        play_id: 1,
+        type: "SHOW",
+      },
+    ],
   },
 ];
 
@@ -346,6 +359,25 @@ export const mockFetch = (
         );
       }
       if (path.match(/\/api\/plays\/\d+\/castings/) && method === "delete") {
+        return Promise.resolve().then(
+          () => new Response(null, { status: 204 }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/events/) && method === "get") {
+        return Promise.resolve().then(
+          () =>
+            new Response(JSON.stringify(mockedPlays[0].events), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+        );
+      }
+      if (path.match(/\/api\/plays\/\d+\/events/) && method === "post") {
+        return Promise.resolve().then(
+          () => new Response(JSON.stringify({ insertId: 1 }), { status: 201 }),
+        );
+      }
+      if (path.match(/\/api\/events\/\d+/) && method === "delete") {
         return Promise.resolve().then(
           () => new Response(null, { status: 204 }),
         );

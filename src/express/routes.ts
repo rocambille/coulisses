@@ -88,6 +88,7 @@ const importAndUse = async (path: string) =>
 */
 await importAndUse("./modules/auth/authRoutes");
 await importAndUse("./modules/casting/castingRoutes");
+await importAndUse("./modules/event/eventRoutes");
 await importAndUse("./modules/play/playRoutes");
 await importAndUse("./modules/preference/preferenceRoutes");
 await importAndUse("./modules/role/roleRoutes");
