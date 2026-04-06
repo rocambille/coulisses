@@ -1,3 +1,4 @@
+import { contracts } from "../contracts";
 import { api } from "./mocks";
 
 describe("Base API", () => {
@@ -5,8 +6,8 @@ describe("Base API", () => {
     it("should return successfully", async () => {
       const response = await api.get("/api");
 
-      expect(response.status).toBe(200);
-      expect(response.text).toBe("hello, world!");
+      expect(response.status).toBe(contracts.health.status.status);
+      expect(response.text).toBe(contracts.health.status.body.status);
     });
   });
 });

@@ -7,13 +7,13 @@ import {
   mainScenes,
   mockedRandomUUID,
   renderWithStub,
-  setupMocks,
+  setupApiMocks,
   teacherUser,
 } from "./mocks";
 
 describe("React: ScenesPage", () => {
   beforeEach(() => {
-    setupMocks();
+    setupApiMocks();
   });
 
   afterEach(() => {

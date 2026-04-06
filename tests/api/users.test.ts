@@ -1,16 +1,16 @@
+import { contracts } from "../contracts";
 import {
   actorUser,
   api,
-  mockedData,
   setupApiAuth,
-  setupApiMocks,
+  setupDatabaseMocks,
   teacherUser,
   using,
 } from "./mocks";
 
 describe("Users API", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupDatabaseMocks();
   });
 
   afterEach(() => {
@@ -26,8 +26,8 @@ describe("Users API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockedData.user);
+      expect(response.status).toBe(contracts.users.browse.status);
+      expect(response.body).toEqual(contracts.users.browse.body);
     });
   });
 
@@ -40,8 +40,8 @@ describe("Users API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(teacherUser);
+      expect(response.status).toBe(contracts.users.get.status);
+      expect(response.body).toEqual(contracts.users.get.body);
     });
 
     it("should fail on invalid id", async () => {
@@ -52,7 +52,7 @@ describe("Users API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(contracts.errors.notFound.status);
     });
   });
 
@@ -67,7 +67,8 @@ describe("Users API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.users.update.status);
+      expect(response.body).toEqual(contracts.users.update.body);
     });
 
     it("should fail on invalid id", async () => {
@@ -80,7 +81,7 @@ describe("Users API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(contracts.errors.notFound.status);
     });
 
     it("should fail on invalid authorization", async () => {
@@ -93,7 +94,7 @@ describe("Users API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid request body", async () => {
@@ -104,7 +105,7 @@ describe("Users API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
   });
 
@@ -117,7 +118,8 @@ describe("Users API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.users.delete.status);
+      expect(response.body).toEqual(contracts.users.delete.body);
     });
 
     it("should not fail on invalid id", async () => {
@@ -128,7 +130,8 @@ describe("Users API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.users.delete.status);
+      expect(response.body).toEqual(contracts.users.delete.body);
     });
 
     it("should fail on invalid authorization", async () => {
@@ -139,7 +142,7 @@ describe("Users API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
   });
 });

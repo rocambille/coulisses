@@ -1,10 +1,10 @@
 import { screen, waitFor } from "@testing-library/react";
 import PlayLayout from "../../src/react/components/play/PlayLayout";
-import { renderWithStub, setupMocks, teacherUser } from "./mocks";
+import { renderWithStub, setupApiMocks, teacherUser } from "./mocks";
 
 describe("<PlayLayout />", () => {
   beforeEach(() => {
-    setupMocks();
+    setupApiMocks();
   });
 
   afterEach(() => {

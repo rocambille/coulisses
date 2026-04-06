@@ -52,7 +52,7 @@ export const allPlays: Play[] = [
 
 export const mainPlay = allPlays[0];
 
-export const mainPlayMembers = [
+export const mainPlayMembers: (User & { role: "TEACHER" | "ACTOR" })[] = [
   { ...teacherUser, role: "TEACHER" },
   { ...actorUser, role: "ACTOR" },
 ];
@@ -75,7 +75,7 @@ export const playMembersDb: PlayMember[] = [
 // ---------------------------------------------------------
 // Scenes & Roles
 // ---------------------------------------------------------
-export const mainScenes = [
+export const mainScenes: Scene[] = [
   {
     id: 1,
     play_id: mainPlay.id,
@@ -105,7 +105,7 @@ export const mainScenes = [
   },
 ];
 
-export const mainRoles = [
+export const mainRoles: RoleWithScenes[] = [
   {
     id: 1,
     play_id: mainPlay.id,
@@ -122,14 +122,15 @@ export const mainRoles = [
   },
 ];
 
-export const sceneRolesDb = [{ id: null, scene_id: 1, role_id: 1 }];
+export const sceneRolesDb: { scene_id: number; role_id: number }[] = [
+  { scene_id: 1, role_id: 1 },
+];
 
 // ---------------------------------------------------------
 // Other data
 // ---------------------------------------------------------
-export const mainPreferences = [
+export const mainPreferences: PreferenceWithUser[] = [
   {
-    id: 1,
     user_id: teacherUser.id,
     name: teacherUser.name,
     email: teacherUser.email,
@@ -137,7 +138,6 @@ export const mainPreferences = [
     level: "HIGH" as const,
   },
   {
-    id: 2,
     user_id: actorUser.id,
     name: actorUser.name,
     email: actorUser.email,
@@ -146,7 +146,7 @@ export const mainPreferences = [
   },
 ];
 
-export const mainCastings = [{ id: 1, role_id: 1, user_id: actorUser.id }];
+export const mainCastings: Casting[] = [{ role_id: 1, user_id: actorUser.id }];
 
 export const openingNightEvent = {
   id: 1,
@@ -161,13 +161,14 @@ export const openingNightEvent = {
 
 export const mainMatrix: CastingMatrix = {
   scenes: [...mainScenes],
-  roles: mainRoles.map((r) => ({
-    ...r,
-    scenes: r.id === 1 ? [mainScenes[0]] : [],
-  })),
+  roles: mainRoles.map(({ scenes, ...r }) => ({ ...r })),
   sceneRoles: [{ scene_id: 1, role_id: 1 }],
   castings: [...mainCastings],
-  preferences: [...mainPreferences],
+  preferences: mainPreferences.map(({ user_id, scene_id, level }) => ({
+    user_id,
+    scene_id,
+    level,
+  })),
 };
 
 export const insertId = 42;

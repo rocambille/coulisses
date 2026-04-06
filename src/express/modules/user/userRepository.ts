@@ -44,7 +44,7 @@ class UserRepository {
     return { id, email, name };
   }
 
-  async findOrCreateByEmail(email: string, name?: string) {
+  async findOrCreateByEmail(email: string, name?: string): Promise<User> {
     const user = await this.findByEmail(email);
     if (user) return user;
 

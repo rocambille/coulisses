@@ -1,20 +1,19 @@
+import { contracts } from "../contracts";
 import {
   actorUser,
   api,
   guestUser,
-  insertId,
   mainPlay,
   mainScenes,
-  mockedData,
   setupApiAuth,
-  setupApiMocks,
+  setupDatabaseMocks,
   teacherUser,
   using,
 } from "./mocks";
 
 describe("Scenes API", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupDatabaseMocks();
   });
 
   afterEach(() => {
@@ -33,8 +32,8 @@ describe("Scenes API", () => {
         },
       );
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockedData.scene);
+      expect(response.status).toBe(contracts.plays.scenes.browse.status);
+      expect(response.body).toEqual(contracts.plays.scenes.browse.body);
     });
 
     it("should fail when user is not a member of the play", async () => {
@@ -48,7 +47,7 @@ describe("Scenes API", () => {
         },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
   });
 
@@ -64,8 +63,8 @@ describe("Scenes API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual({ insertId });
+      expect(response.status).toBe(contracts.plays.scenes.create.status);
+      expect(response.body).toEqual(contracts.plays.scenes.create.body);
     });
 
     it("should fail when user is not a teacher of the play", async () => {
@@ -79,7 +78,7 @@ describe("Scenes API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid request body", async () => {
@@ -90,7 +89,7 @@ describe("Scenes API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
   });
 
@@ -103,8 +102,8 @@ describe("Scenes API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(mainScenes[0]);
+      expect(response.status).toBe(contracts.scenes.get.status);
+      expect(response.body).toEqual(contracts.scenes.get.body);
     });
 
     it("should fail when user is not a member of the play", async () => {
@@ -115,7 +114,7 @@ describe("Scenes API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
   });
 
@@ -131,7 +130,8 @@ describe("Scenes API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.scenes.update.status);
+      expect(response.body).toEqual(contracts.scenes.update.body);
     });
 
     it("should fail when user is not a teacher of the play", async () => {
@@ -145,7 +145,7 @@ describe("Scenes API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
   });
 
@@ -158,7 +158,8 @@ describe("Scenes API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.scenes.delete.status);
+      expect(response.body).toEqual(contracts.scenes.delete.body);
     });
 
     it("should not fail when sceneId is not found", async () => {
@@ -169,7 +170,8 @@ describe("Scenes API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.scenes.delete.status);
+      expect(response.body).toEqual(contracts.scenes.delete.body);
     });
 
     it("should fail when user is not a teacher of the play", async () => {
@@ -180,7 +182,7 @@ describe("Scenes API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
   });
 });

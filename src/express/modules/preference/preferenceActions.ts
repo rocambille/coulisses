@@ -11,7 +11,7 @@ const upsert: RequestHandler = async (req, res) => {
 
   await preferenceRepository.upsert(req.me.id, req.scene.id, level);
 
-  res.sendStatus(204); // Upsert successful
+  res.sendStatus(204);
 };
 
 const browseByPlay: RequestHandler = async (req, res) => {

@@ -7,13 +7,13 @@ import {
   mockedRandomUUID,
   renderHookAsync,
   renderWithStub,
-  setupMocks,
+  setupApiMocks,
   teacherUser,
 } from "./mocks";
 
 describe("React: Base Components & Utilities", () => {
   beforeEach(() => {
-    setupMocks();
+    setupApiMocks();
   });
 
   afterEach(() => {

@@ -1,20 +1,18 @@
+import { contracts } from "../contracts";
 import {
   actorUser,
   api,
   guestUser,
-  insertId,
   mainPlay,
-  members,
-  mockedData,
   setupApiAuth,
-  setupApiMocks,
+  setupDatabaseMocks,
   teacherUser,
   using,
 } from "./mocks";
 
 describe("Plays API", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupDatabaseMocks();
   });
 
   afterEach(() => {
@@ -30,8 +28,8 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockedData.play);
+      expect(response.status).toBe(contracts.plays.browse.status);
+      expect(response.body).toEqual(contracts.plays.browse.body);
     });
 
     it("should fail without access token", async () => {
@@ -40,7 +38,7 @@ describe("Plays API", () => {
         withAuth: false,
       });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(contracts.errors.unauthorized.status);
     });
   });
 
@@ -53,8 +51,8 @@ describe("Plays API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual({ insertId });
+      expect(response.status).toBe(contracts.plays.create.status);
+      expect(response.body).toEqual(contracts.plays.create.body);
     });
 
     it("should fail on invalid request body", async () => {
@@ -65,7 +63,7 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
 
     it("should fail without CSRF token", async () => {
@@ -76,7 +74,7 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(contracts.errors.unauthorized.status);
     });
   });
 
@@ -89,8 +87,8 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(mainPlay);
+      expect(response.status).toBe(contracts.plays.get.status);
+      expect(response.body).toEqual(contracts.plays.get.body);
     });
 
     it("should fail when user is not a member of the play", async () => {
@@ -101,7 +99,7 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid playId", async () => {
@@ -112,7 +110,7 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(contracts.errors.notFound.status);
     });
   });
 
@@ -128,7 +126,8 @@ describe("Plays API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.plays.update.status);
+      expect(response.body).toEqual(contracts.plays.update.body);
     });
 
     it("should fail when user is not a teacher of the play", async () => {
@@ -142,7 +141,7 @@ describe("Plays API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid request body", async () => {
@@ -153,7 +152,7 @@ describe("Plays API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
   });
 
@@ -166,7 +165,8 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.plays.delete.status);
+      expect(response.body).toEqual(contracts.plays.delete.body);
     });
 
     it("should fail when user is not a teacher of the play", async () => {
@@ -177,7 +177,7 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should not fail on invalid playId", async () => {
@@ -188,7 +188,8 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.plays.delete.status);
+      expect(response.body).toEqual(contracts.plays.delete.body);
     });
   });
 
@@ -201,8 +202,8 @@ describe("Plays API", () => {
         { withCsrf: false, withAuth: true },
       );
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(members(mainPlay));
+      expect(response.status).toBe(contracts.plays.members.browse.status);
+      expect(response.body).toEqual(contracts.plays.members.browse.body);
     });
 
     it("should fail when user is not a member of the play", async () => {
@@ -213,7 +214,7 @@ describe("Plays API", () => {
         { withCsrf: false, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid playId", async () => {
@@ -224,7 +225,7 @@ describe("Plays API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(contracts.errors.notFound.status);
     });
   });
 
@@ -240,7 +241,8 @@ describe("Plays API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.plays.members.invite.status);
+      expect(response.body).toEqual(contracts.plays.members.invite.body);
     });
 
     it("should fail on invalid request body", async () => {
@@ -251,7 +253,7 @@ describe("Plays API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
   });
 });

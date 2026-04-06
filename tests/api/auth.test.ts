@@ -1,9 +1,16 @@
 import jwt from "jsonwebtoken";
-import { api, setupApiAuth, setupApiMocks, teacherUser, using } from "./mocks";
+import { contracts } from "../contracts";
+import {
+  api,
+  setupApiAuth,
+  setupDatabaseMocks,
+  teacherUser,
+  using,
+} from "./mocks";
 
 describe("Auth API", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupDatabaseMocks();
     vi.spyOn(jwt, "sign").mockImplementation(() => "fake_jwt_token");
   });
 
@@ -18,7 +25,8 @@ describe("Auth API", () => {
         { withCsrf: true, withAuth: false },
       );
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(contracts.auth.magicLink.status);
+      expect(response.body).toEqual(contracts.auth.magicLink.body);
     });
 
     it("should fail without email", async () => {
@@ -27,34 +35,40 @@ describe("Auth API", () => {
         withAuth: false,
       });
 
-      expect(response.status).toBeGreaterThanOrEqual(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
   });
 
   describe("POST /api/auth/verify", () => {
     it("should verify magic link and return cookie", async () => {
-      setupApiAuth({ id: teacherUser.id });
+      setupApiAuth({ email: teacherUser.email });
 
       const response = await using(
         api.post("/api/auth/verify").send({ token: "magic_token" }),
         { withCsrf: true, withAuth: false },
       );
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(contracts.auth.verifySuccess.status);
+      expect(response.body).toEqual(contracts.auth.verifySuccess.body);
       const cookies = response.headers["set-cookie"]?.toString();
       expect(cookies).toBeDefined();
       expect(cookies.includes("__Host-auth=")).toBe(true);
     });
 
     it("should create a new user if not exists", async () => {
-      setupApiAuth({ id: 999 }); // New user ID
+      setupApiAuth({ email: "new_user@mail.com" });
 
       const response = await using(
         api.post("/api/auth/verify").send({ token: "magic_token" }),
         { withCsrf: true, withAuth: false },
       );
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(contracts.auth.verifySuccess.status);
+      expect(response.body).toEqual({
+        id: expect.any(Number),
+        email: "new_user@mail.com",
+        name: "new_user",
+      });
       const cookies = response.headers["set-cookie"]?.toString();
       expect(cookies).toBeDefined();
       expect(cookies.includes("__Host-auth=")).toBe(true);
@@ -66,7 +80,7 @@ describe("Auth API", () => {
         withAuth: false,
       });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
 
     it("should fail on invalid token", async () => {
@@ -77,7 +91,7 @@ describe("Auth API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(contracts.errors.unauthorized.status);
     });
   });
 
@@ -88,7 +102,7 @@ describe("Auth API", () => {
         withAuth: false,
       });
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.auth.logout.status);
       const cookies = response.headers["set-cookie"]?.toString();
       expect(cookies).toBeDefined();
       expect(cookies.includes("__Host-auth=;")).toBe(true);
@@ -104,8 +118,8 @@ describe("Auth API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(teacherUser);
+      expect(response.status).toBe(contracts.auth.me.status);
+      expect(response.body).toEqual(contracts.auth.me.body);
     });
 
     it("should fail without access token", async () => {
@@ -114,7 +128,7 @@ describe("Auth API", () => {
         withAuth: false,
       });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(contracts.errors.unauthorized.status);
     });
 
     it("should fail when user does not exist", async () => {
@@ -125,7 +139,7 @@ describe("Auth API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(contracts.errors.unauthorized.status);
     });
   });
 });

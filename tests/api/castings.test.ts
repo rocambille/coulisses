@@ -1,17 +1,18 @@
+import { contracts } from "../contracts";
 import {
   actorUser,
   api,
   guestUser,
   mainPlay,
   setupApiAuth,
-  setupApiMocks,
+  setupDatabaseMocks,
   teacherUser,
   using,
 } from "./mocks";
 
 describe("Castings API", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupDatabaseMocks();
   });
 
   afterEach(() => {
@@ -30,7 +31,8 @@ describe("Castings API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(contracts.plays.castings.assign.status);
+      expect(response.body).toEqual(contracts.plays.castings.assign.body);
     });
 
     it("should fail when user is not a teacher of the play", async () => {
@@ -44,7 +46,7 @@ describe("Castings API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid request body", async () => {
@@ -55,7 +57,7 @@ describe("Castings API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
   });
 
@@ -71,7 +73,8 @@ describe("Castings API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.plays.castings.unassign.status);
+      expect(response.body).toEqual(contracts.plays.castings.unassign.body);
     });
 
     it("should fail when user is not a teacher of the play", async () => {
@@ -85,7 +88,7 @@ describe("Castings API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid request body", async () => {
@@ -96,7 +99,7 @@ describe("Castings API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
   });
 
@@ -109,10 +112,8 @@ describe("Castings API", () => {
         { withCsrf: false, withAuth: true },
       );
 
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty("scenes");
-      expect(response.body).toHaveProperty("roles");
-      expect(response.body).toHaveProperty("preferences");
+      expect(response.status).toBe(contracts.plays.castings.browse.status);
+      expect(response.body).toEqual(contracts.plays.castings.browse.body);
     });
 
     it("should fail when user is not a member of the play", async () => {
@@ -123,7 +124,7 @@ describe("Castings API", () => {
         { withCsrf: false, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
   });
 });

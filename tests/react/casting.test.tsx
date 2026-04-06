@@ -7,13 +7,13 @@ import {
   mainRoles,
   mockedRandomUUID,
   renderWithStub,
-  setupMocks,
+  setupApiMocks,
   teacherUser,
 } from "./mocks";
 
 describe("React: CastingPage", () => {
   beforeEach(() => {
-    setupMocks();
+    setupApiMocks();
   });
 
   afterEach(() => {

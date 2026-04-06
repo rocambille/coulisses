@@ -6,13 +6,13 @@ import {
   guestUser,
   mockedRandomUUID,
   renderWithStub,
-  setupMocks,
+  setupApiMocks,
   teacherUser,
 } from "./mocks";
 
 describe("<DashboardPage />", () => {
   beforeEach(() => {
-    setupMocks();
+    setupApiMocks();
     invalidateCache("/api/plays");
   });
 
@@ -33,7 +33,7 @@ describe("<DashboardPage />", () => {
   });
 
   it("should display a message when the user has no plays", async () => {
-    setupMocks((path, method) => {
+    setupApiMocks((path, method) => {
       if (path === "/api/plays" && method === "get") {
         return Promise.resolve().then(
           () =>

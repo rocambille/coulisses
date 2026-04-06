@@ -1,20 +1,19 @@
+import { contracts } from "../contracts";
 import {
   actorUser,
   api,
   guestUser,
-  insertId,
   mainPlay,
-  mainRoles,
   mainScenes,
   setupApiAuth,
-  setupApiMocks,
+  setupDatabaseMocks,
   teacherUser,
   using,
 } from "./mocks";
 
 describe("Roles API", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupDatabaseMocks();
   });
 
   afterEach(() => {
@@ -30,17 +29,8 @@ describe("Roles API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual([
-        {
-          ...mainRoles[0],
-          scenes: [mainScenes[0]],
-        },
-        {
-          ...mainRoles[1],
-          scenes: [],
-        },
-      ]);
+      expect(response.status).toBe(contracts.plays.roles.browse.status);
+      expect(response.body).toEqual(contracts.plays.roles.browse.body);
     });
 
     it("should fail when user is not a member of the play", async () => {
@@ -51,7 +41,7 @@ describe("Roles API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail when play does not exist", async () => {
@@ -62,7 +52,7 @@ describe("Roles API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(contracts.errors.notFound.status);
     });
   });
 
@@ -79,8 +69,8 @@ describe("Roles API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual({ insertId });
+      expect(response.status).toBe(contracts.plays.roles.create.status);
+      expect(response.body).toEqual(contracts.plays.roles.create.body);
     });
 
     it("should add a new role successfully without scenes", async () => {
@@ -95,8 +85,8 @@ describe("Roles API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual({ insertId });
+      expect(response.status).toBe(contracts.plays.roles.create.status);
+      expect(response.body).toEqual(contracts.plays.roles.create.body);
     });
 
     it("should fail when user is not a teacher of the play", async () => {
@@ -111,7 +101,7 @@ describe("Roles API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid missing payload", async () => {
@@ -122,7 +112,7 @@ describe("Roles API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
 
     it("should fail when play does not exist", async () => {
@@ -137,7 +127,7 @@ describe("Roles API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(contracts.errors.notFound.status);
     });
   });
 });

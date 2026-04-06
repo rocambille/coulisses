@@ -13,10 +13,9 @@ import { invalidateCache } from "../../src/react/components/utils";
 import {
   mockedRandomUUID,
   mockFetch,
-  mockUseAuth,
   renderHookAsync,
   renderWithStub,
-  setupMocks,
+  setupApiMocks,
 } from "./mocks";
 
 describe("React auth components", () => {
@@ -30,7 +29,7 @@ describe("React auth components", () => {
   });
   describe("<AuthProvider />", () => {
     beforeEach(() => {
-      setupMocks();
+      setupApiMocks();
     });
     it("should render its children", async () => {
       await renderWithStub(
@@ -53,7 +52,7 @@ describe("React auth components", () => {
   });
   describe("useAuth()", () => {
     beforeEach(() => {
-      setupMocks();
+      setupApiMocks();
     });
     it("should be used within <AuthProvider>", async () => {
       // Avoid exception noise in console
@@ -258,13 +257,14 @@ describe("React auth components", () => {
     });
   });
   describe("<MagicLinkForm />", () => {
+    beforeEach(() => {
+      setupApiMocks();
+    });
     it("should mount successfully", async () => {
-      mockUseAuth(null);
       await renderWithStub("/", MagicLinkForm, ["/"]);
       await waitFor(() => screen.getByRole("button"));
     });
     it("should submit email and show confirmation", async () => {
-      const [auth] = mockUseAuth(null);
       await renderWithStub("/", MagicLinkForm, ["/"]);
       await waitFor(() => screen.getByRole("button"));
 
@@ -273,31 +273,51 @@ describe("React auth components", () => {
       await user.type(screen.getByLabelText(/^email$/i), "foo@mail.com");
       await user.click(screen.getByRole("button"));
 
-      expect(auth.sendMagicLink).toHaveBeenCalledWith("foo@mail.com");
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/auth/magic-link",
+        expect.objectContaining({
+          method: "post",
+          body: JSON.stringify({ email: "foo@mail.com" }),
+        }),
+      );
     });
   });
   describe("<LogoutForm />", () => {
+    beforeEach(() => {
+      setupApiMocks();
+    });
     it("should mount successfully", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
-      await renderWithStub("/", LogoutForm, ["/"]);
+      await renderWithStub("/", LogoutForm, ["/"], {
+        user: { id: 1, email: "foo@mail.com", name: "foo" },
+      });
       await waitFor(() => screen.getByRole("button"));
     });
     it("should submit form logout", async () => {
-      const [auth] = mockUseAuth({ id: 1, email: "foo@mail.com", name: "foo" });
-      await renderWithStub("/", LogoutForm, ["/"]);
+      await renderWithStub("/", LogoutForm, ["/"], {
+        user: { id: 1, email: "foo@mail.com", name: "foo" },
+      });
       await waitFor(() => screen.getByRole("button"));
 
       const user = userEvent.setup();
 
       await user.click(screen.getByRole("button"));
 
-      expect(auth.logout).toHaveBeenCalled();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/auth/logout",
+        expect.objectContaining({
+          method: "post",
+          headers: {
+            "X-CSRF-Token": mockedRandomUUID,
+          },
+        }),
+      );
     });
   });
   describe("<VerifyPage />", () => {
+    beforeEach(() => {
+      setupApiMocks();
+    });
     it("should mount successfully", async () => {
-      mockUseAuth(null);
-
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
         () => mockedNavigate,
@@ -308,9 +328,6 @@ describe("React auth components", () => {
       await waitFor(() => screen.getByText(/en cours/i));
     });
     it("should verify token and redirect to dashboard when valid", async () => {
-      const [auth] = mockUseAuth(null);
-      vi.spyOn(auth, "verifyMagicLink").mockImplementation(async () => {});
-
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
         () => mockedNavigate,
@@ -319,17 +336,28 @@ describe("React auth components", () => {
       await renderWithStub("/verify", VerifyPage, ["/verify?token=foo"]);
 
       await waitFor(() =>
-        expect(auth.verifyMagicLink).toHaveBeenCalledWith("foo"),
+        expect(globalThis.fetch).toHaveBeenCalledWith(
+          "/api/auth/verify",
+          expect.objectContaining({
+            method: "post",
+            body: JSON.stringify({ token: "foo" }),
+          }),
+        ),
       );
 
       expect(mockedNavigate).toHaveBeenCalledWith("/", { replace: true });
     });
     it("should display error when token is invalid", async () => {
-      const [auth] = mockUseAuth(null);
-      vi.spyOn(auth, "verifyMagicLink").mockImplementation(async () => {
-        throw new Error("Invalid or expired magic link");
+      mockFetch((path, method) => {
+        if (path === "/api/auth/verify" && method === "post") {
+          return Promise.resolve().then(
+            () =>
+              new Response(null, {
+                status: 401,
+              }),
+          );
+        }
       });
-
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
         () => mockedNavigate,
@@ -339,13 +367,16 @@ describe("React auth components", () => {
 
       await waitFor(() => screen.getByText(/invalide/i));
 
-      expect(auth.verifyMagicLink).toHaveBeenCalledWith("foo");
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/auth/verify",
+        expect.objectContaining({
+          method: "post",
+          body: JSON.stringify({ token: "foo" }),
+        }),
+      );
       expect(mockedNavigate).not.toHaveBeenCalled();
     });
     it("should display error when token is missing", async () => {
-      const [auth] = mockUseAuth(null);
-      vi.spyOn(auth, "verifyMagicLink").mockImplementation(async () => {});
-
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
         () => mockedNavigate,
@@ -355,7 +386,10 @@ describe("React auth components", () => {
 
       await waitFor(() => screen.getByText(/invalide/i));
 
-      expect(auth.verifyMagicLink).not.toHaveBeenCalled();
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(
+        "/api/auth/verify",
+        expect.anything(),
+      );
       expect(mockedNavigate).not.toHaveBeenCalled();
     });
   });

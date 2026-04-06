@@ -1,3 +1,4 @@
+import { contracts } from "../contracts";
 import {
   actorUser,
   api,
@@ -5,14 +6,14 @@ import {
   mainPlay,
   openingNightEvent,
   setupApiAuth,
-  setupApiMocks,
+  setupDatabaseMocks,
   teacherUser,
   using,
 } from "./mocks";
 
 describe("Events API", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupDatabaseMocks();
   });
 
   afterEach(() => {
@@ -28,8 +29,8 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: false },
       );
 
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.status).toBe(contracts.plays.events.browse.status);
+      expect(response.body).toEqual(contracts.plays.events.browse.body);
     });
 
     it("should fail when user is not a member of the play", async () => {
@@ -40,7 +41,7 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: false },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
   });
 
@@ -58,8 +59,8 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: true },
       );
 
-      expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty("insertId");
+      expect(response.status).toBe(contracts.plays.events.create.status);
+      expect(response.body).toEqual(contracts.plays.events.create.body);
     });
 
     it("should fail when user is not a teacher (e.g. actor)", async () => {
@@ -75,7 +76,7 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid request body", async () => {
@@ -86,7 +87,7 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
   });
 
@@ -104,7 +105,8 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: true },
       );
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.events.update.status);
+      expect(response.body).toEqual(contracts.events.update.body);
     });
 
     it("should fail to update if not a teacher", async () => {
@@ -120,7 +122,7 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail on invalid request body", async () => {
@@ -131,7 +133,7 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
 
     it("should not fail on invalid eventId", async () => {
@@ -147,7 +149,7 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: true },
       );
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(contracts.errors.notFound.status);
     });
   });
 
@@ -160,7 +162,8 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: true },
       );
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.events.delete.status);
+      expect(response.body).toEqual(contracts.events.delete.body);
     });
 
     it("should fail to delete if not a teacher", async () => {
@@ -171,7 +174,7 @@ describe("Events API", () => {
         { withAuth: true, withCsrf: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should not fail on invalid eventId", async () => {
@@ -182,7 +185,8 @@ describe("Events API", () => {
         withAuth: true,
       });
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.events.delete.status);
+      expect(response.body).toEqual(contracts.events.delete.body);
     });
   });
 });

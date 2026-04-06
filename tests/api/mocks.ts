@@ -27,7 +27,7 @@ export const resetMockData = () => {
   mockedData.event = [...initialMockedData.event];
 };
 
-export const setupApiMocks = () => {
+export const setupDatabaseMocks = () => {
   resetMockData();
   mockDatabaseClient();
 };
@@ -43,6 +43,14 @@ export const members = (play: { id: number }) =>
 // -------------------------
 // DB mock
 // -------------------------
+
+/**
+ * Normalizes SQL queries by collapsing whitespace and newlines.
+ * This ensures robustness against formatting changes while remaining
+ * sensitive to structural SQL changes.
+ */
+const normalize = (sql: string) => sql.replace(/\s+/g, " ").trim();
+
 export const mockDatabaseClient = () => {
   databaseClient.query = vi
     .fn()
@@ -51,109 +59,134 @@ export const mockDatabaseClient = () => {
         let sql =
           typeof sqlOrOptions === "string" ? sqlOrOptions : sqlOrOptions.sql;
 
+        // Interpolate ? placeholders with actual values for strict matching
         if (Array.isArray(values)) {
-          for (const value of values as unknown[]) {
-            sql = sql.replace(/\?/, new Object(value).toString());
+          for (const value of values) {
+            if (typeof value === "string") {
+              sql = sql.replace(/\?/, `'${value}'`);
+            } else {
+              sql = sql.replace(/\?/, String(value));
+            }
           }
         }
 
-        // INSERT -----------------------------------
-        if (/\binsert\b/i.test(sql)) {
+        const normalizedSql = normalize(sql);
+
+        // --- INSERT / UPDATE / DELETE (Generic handlers) ---
+
+        if (/^insert\b/i.test(normalizedSql)) {
           return [{ insertId }, []];
         }
 
-        // SELECT -----------------------------------
-        if (/\bselect\b/i.test(sql)) {
-          // Custom handler for playRepository.getMembers
-          if (
-            /\bjoin\s+play_member\s+pm\b/i.test(sql) &&
-            /\bfrom\s+user\s+u\b/i.test(sql)
-          ) {
-            const playIdMatch = sql.match(/pm\.play_id\s*=\s*([^\s]+)/i);
-            const playId = playIdMatch ? Number(playIdMatch[1]) : NaN;
+        if (/^update\b/i.test(normalizedSql)) {
+          return [{ affectedRows: 1 }, []];
+        }
 
-            return [members({ id: playId }), []];
-          }
+        if (/^delete\b/i.test(normalizedSql)) {
+          return [{ affectedRows: 1 }, []];
+        }
 
-          // Custom handler for playRepository.browseForUser
-          if (
-            /\bjoin\s+play_member\s+pm\b/i.test(sql) &&
-            /\bfrom\s+play\s+p\b/i.test(sql)
-          ) {
-            const userIdMatch = sql.match(/pm\.user_id\s*=\s*([^\s]+)/i);
-            const userId = userIdMatch ? Number(userIdMatch[1]) : null;
+        // --- SELECT (Strict Registry) ---
 
-            const plays = mockedData.play_member
-              .filter((pm) => pm.user_id === userId)
-              .map((pm) => mockedData.play.find((p) => p.id === pm.play_id))
-              .filter(Boolean);
+        // playRepository.findByUser
+        if (
+          /select p\.id, p\.title, p\.description from play p join play_member pm on p\.id = pm\.play_id where pm\.user_id =/i.test(
+            normalizedSql,
+          )
+        ) {
+          const userId = Number(
+            normalizedSql.match(/user_id\s*=\s*([^\s]+)/i)?.[1],
+          );
+          const plays = mockedData.play_member
+            .filter((pm) => pm.user_id === userId)
+            .map((pm) => mockedData.play.find((p) => p.id === pm.play_id))
+            .filter(Boolean);
+          return [plays, []];
+        }
 
-            return [plays, []];
-          }
+        // playRepository.getMembers
+        if (
+          /select u\.id, u\.email, pm\.role, u\.name from user u join play_member pm on u\.id = pm\.user_id where pm\.play_id =/i.test(
+            normalizedSql,
+          )
+        ) {
+          const playId = Number(
+            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
+          );
+          return [members({ id: playId }), []];
+        }
 
-          // Custom handler for roleRepository.browseByPlay
-          if (
-            /\bjoin\s+scene_role\s+sr\b/i.test(sql) &&
-            /\bfrom\s+role\s+r\b/i.test(sql)
-          ) {
-            const playIdMatch = sql.match(/r\.play_id\s*=\s*([^\s]+)/i);
-            const playId = playIdMatch ? Number(playIdMatch[1]) : null;
+        // roleRepository.findByPlay (Role with stringified scenes)
+        if (
+          /select r\.id, r\.name, r\.description, r\.play_id, json_arrayagg\(json_object\(/i.test(
+            normalizedSql,
+          )
+        ) {
+          const playId = Number(
+            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
+          );
+          const roles = mockedData.role
+            .filter((r) => r.play_id === playId)
+            .map((r) => {
+              const roleId = (r as { id: number }).id;
+              const scenes = mockedData.scene_role
+                .filter((sr) => sr.role_id === roleId)
+                .map((sr) => mockedData.scene.find((s) => s.id === sr.scene_id))
+                .filter(Boolean);
+              return { ...r, scenes: JSON.stringify(scenes) };
+            });
+          return [roles, []];
+        }
 
-            const roles = mockedData.role
-              .filter((r) => r.play_id === playId)
-              .map((r) => {
-                const roleId = (r as { id: number }).id;
-                const scenes = mockedData.scene_role
-                  .filter((sr) => sr.role_id === roleId)
-                  .map((sr) =>
-                    mockedData.scene.find((s) => s.id === sr.scene_id),
-                  )
-                  .filter(Boolean);
-                return { ...r, scenes: JSON.stringify(scenes) };
-              });
+        // castingRepository.getPlayCastingMatrix (Multiple queries for matrix)
+        if (/select \* from scene where play_id =/i.test(normalizedSql)) {
+          return [mockedData.scene, []];
+        }
+        if (/select \* from role where play_id =/i.test(normalizedSql)) {
+          return [mockedData.role, []];
+        }
+        if (
+          /select scene_id, role_id from scene_role where role_id in/i.test(
+            normalizedSql,
+          )
+        ) {
+          return [mockedData.scene_role, []];
+        }
+        if (
+          /select role_id, user_id from casting where role_id in/i.test(
+            normalizedSql,
+          )
+        ) {
+          return [mockedData.casting, []];
+        }
+        if (
+          /select p\.* from preference p join scene s on p\.scene_id = s\.id where s\.play_id =/i.test(
+            normalizedSql,
+          )
+        ) {
+          return [mockedData.preference, []];
+        }
 
-            return [roles, []];
-          }
+        // Generic Table Selects (Single Table, e.g., browse, findById)
+        const tableMatch = normalizedSql.match(/\bfrom\s+(\w+)\b/i);
+        const table = tableMatch?.[1] as keyof typeof mockedData;
 
-          const mayBeTableMatch = sql.match(/\bfrom\s+(\w+)/i);
-          const mayBeTable = mayBeTableMatch ? mayBeTableMatch[1] : null;
-
-          if (!mayBeTable || !Object.hasOwn(mockedData, mayBeTable)) {
-            throw new Error(`Unrecognized table in query: ${sql}`);
-          }
-
-          const table: keyof typeof mockedData =
-            mayBeTable as keyof typeof mockedData;
-
+        if (table && Object.hasOwn(mockedData, table)) {
           // WHERE id = ?
-          if (/\bwhere\s+id\s*=/i.test(sql)) {
-            const id = sql.match(/\s+id\s*=\s*([^\s]+)/)?.at(1);
-
-            if (table === "casting") {
-              return [
-                mockedData[table].filter((row) => row.role_id === Number(id)),
-                [],
-              ];
-            }
-
+          if (/\bwhere id =/i.test(normalizedSql)) {
+            const id = Number(normalizedSql.match(/where id = ([^\s]+)/i)?.[1]);
             return [
-              mockedData[table].filter((row) => row.id === Number(id)),
+              mockedData[table].filter((row) => "id" in row && row.id === id),
               [],
             ];
           }
 
-          // WHERE email = ?
-          if (/\bwhere\s+email\s*=/i.test(sql)) {
-            const email = sql.match(/\s+email\s*=\s*([^\s]+)/)?.at(1);
-
+          // WHERE email = ? (for auth)
+          if (/\bwhere email =/i.test(normalizedSql)) {
+            const email = normalizedSql.match(/where email = '([^']+)'/i)?.[1];
             return [
               mockedData[table].filter(
-                (row) =>
-                  ((
-                    row as {
-                      email?: string;
-                    }
-                  ).email ?? "") === email,
+                (row) => "email" in row && row.email === email,
               ),
               [],
             ];
@@ -162,83 +195,7 @@ export const mockDatabaseClient = () => {
           return [mockedData[table], []];
         }
 
-        // UPDATE -----------------------------------
-        if (/\bupdate\b/i.test(sql)) {
-          const mayBeTable = sql.match(/\bupdate\s+(\w+)/i)?.[1];
-
-          if (!mayBeTable || !Object.hasOwn(mockedData, mayBeTable)) {
-            throw new Error(`Unrecognized table in query: ${sql}`);
-          }
-
-          const table: keyof typeof mockedData =
-            mayBeTable as keyof typeof mockedData;
-
-          const id = sql.match(/\s+id\s*=\s*([^\s]+)/)?.at(1);
-
-          if (table === "casting") {
-            return [
-              {
-                affectedRows: mockedData[table].some(
-                  (row) => row.role_id === Number(id),
-                )
-                  ? 1
-                  : 0,
-              },
-              [],
-            ];
-          }
-
-          return [
-            {
-              affectedRows: mockedData[table].some(
-                (row) => row.id === Number(id),
-              )
-                ? 1
-                : 0,
-            },
-            [],
-          ];
-        }
-
-        // DELETE -----------------------------------
-        if (/\bdelete\b/i.test(sql)) {
-          const mayBeTable = sql.match(/\bfrom\s+(\w+)/i)?.[1];
-
-          if (!mayBeTable || !Object.hasOwn(mockedData, mayBeTable)) {
-            throw new Error(`Unrecognized table in query: ${sql}`);
-          }
-
-          const table: keyof typeof mockedData =
-            mayBeTable as keyof typeof mockedData;
-
-          const id = sql.match(/\s+id\s*=\s*([^\s]+)/)?.at(1);
-
-          if (table === "casting") {
-            return [
-              {
-                affectedRows: mockedData[table].some(
-                  (row) => row.role_id === Number(id),
-                )
-                  ? 1
-                  : 0,
-              },
-              [],
-            ];
-          }
-
-          return [
-            {
-              affectedRows: mockedData[table].some(
-                (row) => row.id === Number(id),
-              )
-                ? 1
-                : 0,
-            },
-            [],
-          ];
-        }
-
-        throw new Error(`Unhandled SQL query: ${sql}`);
+        throw new Error(`[Strict Mock] Unhandled SQL query: ${normalizedSql}`);
       },
     );
 };
@@ -246,18 +203,21 @@ export const mockDatabaseClient = () => {
 // -------------------------
 // JWT.verify mock
 // -------------------------
-export const mockJwtVerify = (sub: string | null) => {
-  return vi.spyOn(jwt, "verify").mockImplementation((): JwtPayload => {
-    if (sub == null) {
+
+export const setupApiAuth = (
+  user: { id: number } | { email: string } | null,
+) => {
+  vi.spyOn(jwt, "verify").mockImplementation((): JwtPayload => {
+    if (user == null) {
       throw new Error("Invalid token");
     }
 
-    return { sub };
-  });
-};
+    if ("id" in user) {
+      return { sub: user.id.toString() };
+    }
 
-export const setupApiAuth = (user: { id: number } | null) => {
-  mockJwtVerify(user ? user.id.toString() : null);
+    return { sub: user.email };
+  });
 };
 
 // -------------------------

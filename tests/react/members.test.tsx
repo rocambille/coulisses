@@ -6,13 +6,13 @@ import {
   mainPlay,
   mockedRandomUUID,
   renderWithStub,
-  setupMocks,
+  setupApiMocks,
   teacherUser,
 } from "./mocks";
 
 describe("React: MembersPage", () => {
   beforeEach(() => {
-    setupMocks();
+    setupApiMocks();
     invalidateCache(`/api/plays/${mainPlay.id}/members`);
   });
 
@@ -33,7 +33,7 @@ describe("React: MembersPage", () => {
   });
 
   it("should display a message when the play has no members", async () => {
-    setupMocks((path, method) => {
+    setupApiMocks((path, method) => {
       if (path === `/api/plays/${mainPlay.id}/members` && method === "get") {
         return Promise.resolve().then(
           () =>

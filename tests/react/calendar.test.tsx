@@ -7,13 +7,13 @@ import {
   mockedRandomUUID,
   openingNightEvent,
   renderWithStub,
-  setupMocks,
+  setupApiMocks,
   teacherUser,
 } from "./mocks";
 
 describe("React: CalendarPage", () => {
   beforeEach(() => {
-    setupMocks();
+    setupApiMocks();
   });
 
   afterEach(() => {

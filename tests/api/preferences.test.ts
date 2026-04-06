@@ -1,17 +1,18 @@
+import { contracts } from "../contracts";
 import {
   api,
   guestUser,
   mainPlay,
   mainScenes,
   setupApiAuth,
-  setupApiMocks,
+  setupDatabaseMocks,
   teacherUser,
   using,
 } from "./mocks";
 
 describe("Preferences API", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupDatabaseMocks();
   });
 
   afterEach(() => {
@@ -29,7 +30,8 @@ describe("Preferences API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(contracts.scenes.preferences.upsert.status);
+      expect(response.body).toEqual(contracts.scenes.preferences.upsert.body);
     });
 
     it("should fail when user is not a member of the play", async () => {
@@ -42,7 +44,7 @@ describe("Preferences API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
 
     it("should fail when sceneId is not found", async () => {
@@ -55,7 +57,7 @@ describe("Preferences API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(contracts.errors.notFound.status);
     });
 
     it("should fail when payload level is invalid", async () => {
@@ -68,7 +70,7 @@ describe("Preferences API", () => {
         { withCsrf: true, withAuth: true },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(contracts.errors.badRequest.status);
     });
   });
 
@@ -81,11 +83,8 @@ describe("Preferences API", () => {
         { withAuth: true, withCsrf: false },
       );
 
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      if (response.body.length > 0) {
-        expect(response.body[0]).toHaveProperty("level");
-      }
+      expect(response.status).toBe(contracts.plays.preferences.browse.status);
+      expect(response.body).toEqual(contracts.plays.preferences.browse.body);
     });
 
     it("should fail when user is not a member of the play", async () => {
@@ -96,7 +95,7 @@ describe("Preferences API", () => {
         { withAuth: true, withCsrf: false },
       );
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(contracts.errors.forbidden.status);
     });
   });
 });
