@@ -12,7 +12,7 @@
     but does not own business logic.
   - Authentication context is provided at this level so all
     routed pages can access it.
-  - UI elements such as NavBar and BurgerMenu are always present,
+  - UI elements such as NavBar are always present,
     regardless of the active route.
 */
 
