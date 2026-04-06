@@ -3,9 +3,10 @@ import userEvent from "@testing-library/user-event";
 import CastingPage from "../../src/react/components/play/CastingPage";
 import {
   actorUser,
+  expectCsrfCookie,
+  expectFetch,
   mainPlay,
   mainRoles,
-  mockedRandomUUID,
   renderWithStub,
   setupApiMocks,
   teacherUser,
@@ -49,24 +50,11 @@ describe("React: CastingPage", () => {
       actorUser.id.toString(),
     );
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
+    expectCsrfCookie();
+    expectFetch(`/api/plays/${mainPlay.id}/castings`, "post", {
+      roleId: mainRoles[0].id,
+      userId: actorUser.id,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/plays/${mainPlay.id}/castings`,
-      {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-        body: JSON.stringify({ roleId: mainRoles[0].id, userId: actorUser.id }),
-      },
-    );
   });
 
   it("should unassign a role successfully (teacher)", async () => {
@@ -82,23 +70,10 @@ describe("React: CastingPage", () => {
     const label = new RegExp(`assigner.*${mainRoles[0].name}`, "i");
     await user.selectOptions(screen.getByLabelText(label), "");
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
+    expectCsrfCookie();
+    expectFetch(`/api/plays/${mainPlay.id}/castings`, "delete", {
+      roleId: mainRoles[0].id,
+      userId: actorUser.id,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/plays/${mainPlay.id}/castings`,
-      {
-        method: "delete",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-        body: JSON.stringify({ roleId: mainRoles[0].id, userId: actorUser.id }),
-      },
-    );
   });
 });

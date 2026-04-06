@@ -3,8 +3,9 @@ import userEvent from "@testing-library/user-event";
 import DashboardPage from "../../src/react/components/DashboardPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
+  expectCsrfCookie,
+  expectFetch,
   guestUser,
-  mockedRandomUUID,
   renderWithStub,
   setupApiMocks,
   teacherUser,
@@ -58,22 +59,7 @@ describe("<DashboardPage />", () => {
     await user.type(screen.getByLabelText(/titre/i), "Test");
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
-    });
-    expect(globalThis.fetch).toHaveBeenCalledWith("/api/plays", {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": mockedRandomUUID,
-      },
-      body: JSON.stringify({
-        title: "Test",
-      }),
-    });
+    expectCsrfCookie();
+    expectFetch("/api/plays", "post", { title: "Test" });
   });
 });

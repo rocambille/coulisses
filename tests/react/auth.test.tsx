@@ -11,7 +11,9 @@ import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
 import VerifyPage from "../../src/react/components/auth/VerifyPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  mockedRandomUUID,
+  expectCsrfCookie,
+  expectFetch,
+  expectNoFetch,
   mockFetch,
   renderHookAsync,
   renderWithStub,
@@ -45,9 +47,7 @@ describe("React auth components", () => {
         () => <AuthProvider>hello, world!</AuthProvider>,
         ["/"],
       );
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      await waitFor(() => expectFetch("/api/me", "get"));
     });
   });
   describe("useAuth()", () => {
@@ -67,9 +67,7 @@ describe("React auth components", () => {
         wrapper: AuthProvider,
       });
 
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      await waitFor(() => expectFetch("/api/me", "get"));
 
       const auth = result.current;
 
@@ -80,9 +78,7 @@ describe("React auth components", () => {
         wrapper: AuthProvider,
       });
 
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      await waitFor(() => expectFetch("/api/me", "get"));
 
       const auth = result.current;
 
@@ -95,9 +91,7 @@ describe("React auth components", () => {
         wrapper: AuthProvider,
       });
 
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      await waitFor(() => expectFetch("/api/me", "get"));
 
       const auth = result.current;
 
@@ -105,33 +99,15 @@ describe("React auth components", () => {
 
       await act(async () => await auth.sendMagicLink("foo@mail.com"));
 
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/auth/magic-link",
-        expect.objectContaining({
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-          body: JSON.stringify({ email: "foo@mail.com" }),
-        }),
-      );
+      expectCsrfCookie();
+      expectFetch("/api/auth/magic-link", "post", { email: "foo@mail.com" });
     });
     it("should return a verifyMagicLink function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
         wrapper: AuthProvider,
       });
 
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      await waitFor(() => expectFetch("/api/me", "get"));
 
       const auth = result.current;
 
@@ -139,24 +115,8 @@ describe("React auth components", () => {
 
       await act(async () => await auth.verifyMagicLink("token"));
 
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/auth/verify",
-        expect.objectContaining({
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-          body: JSON.stringify({ token: "token" }),
-        }),
-      );
+      expectCsrfCookie();
+      expectFetch("/api/auth/verify", "post", { token: "token" });
 
       /* test behaviour when sending an invalid token */
       mockFetch((path, method) => {
@@ -174,33 +134,15 @@ describe("React auth components", () => {
         /invalid/i,
       );
 
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/auth/verify",
-        expect.objectContaining({
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-          body: JSON.stringify({ token: "invalid-token" }),
-        }),
-      );
+      expectCsrfCookie();
+      expectFetch("/api/auth/verify", "post", { token: "invalid-token" });
     });
     it("should return a logout function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
         wrapper: AuthProvider,
       });
 
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      await waitFor(() => expectFetch("/api/me", "get"));
 
       const auth = result.current;
 
@@ -208,22 +150,24 @@ describe("React auth components", () => {
 
       await act(async () => await auth.logout());
 
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
+      expectCsrfCookie();
+      expectFetch("/api/auth/logout", "post");
+    });
+    it("should return a logout function", async () => {
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
       });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/auth/logout",
-        expect.objectContaining({
-          method: "post",
-          headers: {
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-        }),
-      );
+
+      await waitFor(() => expectFetch("/api/me", "get"));
+
+      const auth = result.current;
+
+      expect(typeof auth.logout).toBe("function");
+
+      await act(async () => await auth.logout());
+
+      expectCsrfCookie();
+      expectFetch("/api/auth/logout", "post");
 
       mockFetch((path, method) => {
         if (path === "/api/auth/logout" && method === "post") {
@@ -238,22 +182,8 @@ describe("React auth components", () => {
 
       await expect(auth.logout()).rejects.toThrow(/logout/i);
 
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/auth/logout",
-        expect.objectContaining({
-          method: "post",
-          headers: {
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-        }),
-      );
+      expectCsrfCookie();
+      expectFetch("/api/auth/logout", "post");
     });
   });
   describe("<MagicLinkForm />", () => {
@@ -273,13 +203,7 @@ describe("React auth components", () => {
       await user.type(screen.getByLabelText(/^email$/i), "foo@mail.com");
       await user.click(screen.getByRole("button"));
 
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/auth/magic-link",
-        expect.objectContaining({
-          method: "post",
-          body: JSON.stringify({ email: "foo@mail.com" }),
-        }),
-      );
+      expectFetch("/api/auth/magic-link", "post", { email: "foo@mail.com" });
     });
   });
   describe("<LogoutForm />", () => {
@@ -302,15 +226,7 @@ describe("React auth components", () => {
 
       await user.click(screen.getByRole("button"));
 
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/auth/logout",
-        expect.objectContaining({
-          method: "post",
-          headers: {
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-        }),
-      );
+      expectFetch("/api/auth/logout", "post");
     });
   });
   describe("<VerifyPage />", () => {
@@ -336,13 +252,7 @@ describe("React auth components", () => {
       await renderWithStub("/verify", VerifyPage, ["/verify?token=foo"]);
 
       await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith(
-          "/api/auth/verify",
-          expect.objectContaining({
-            method: "post",
-            body: JSON.stringify({ token: "foo" }),
-          }),
-        ),
+        expectFetch("/api/auth/verify", "post", { token: "foo" }),
       );
 
       expect(mockedNavigate).toHaveBeenCalledWith("/", { replace: true });
@@ -367,13 +277,7 @@ describe("React auth components", () => {
 
       await waitFor(() => screen.getByText(/invalide/i));
 
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/auth/verify",
-        expect.objectContaining({
-          method: "post",
-          body: JSON.stringify({ token: "foo" }),
-        }),
-      );
+      expectFetch("/api/auth/verify", "post", { token: "foo" });
       expect(mockedNavigate).not.toHaveBeenCalled();
     });
     it("should display error when token is missing", async () => {
@@ -386,10 +290,7 @@ describe("React auth components", () => {
 
       await waitFor(() => screen.getByText(/invalide/i));
 
-      expect(globalThis.fetch).not.toHaveBeenCalledWith(
-        "/api/auth/verify",
-        expect.anything(),
-      );
+      expectNoFetch("/api/auth/verify", "post");
       expect(mockedNavigate).not.toHaveBeenCalled();
     });
   });

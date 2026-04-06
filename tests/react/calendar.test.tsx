@@ -3,8 +3,9 @@ import userEvent from "@testing-library/user-event";
 import CalendarPage from "../../src/react/components/play/CalendarPage";
 import {
   actorUser,
+  expectCsrfCookie,
+  expectFetch,
   mainPlay,
-  mockedRandomUUID,
   openingNightEvent,
   renderWithStub,
   setupApiMocks,
@@ -82,31 +83,15 @@ describe("React: CalendarPage", () => {
 
     await user.click(screen.getByRole("button", { name: /^ajouter$/i }));
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
+    expectCsrfCookie();
+    expectFetch(`/api/plays/${mainPlay.id}/events`, "post", {
+      title: "New Rehearsal",
+      type: "SHOW",
+      start_time: "2026-06-28T17:00:00.000Z",
+      end_time: "2026-06-28T19:00:00.000Z",
+      location: "",
+      description: "",
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/plays/${mainPlay.id}/events`,
-      {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-        body: JSON.stringify({
-          title: "New Rehearsal",
-          type: "SHOW",
-          start_time: "2026-06-28T17:00:00.000Z",
-          end_time: "2026-06-28T19:00:00.000Z",
-          location: "",
-          description: "",
-        }),
-      },
-    );
     await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
   });
 
@@ -185,17 +170,13 @@ describe("React: CalendarPage", () => {
 
     await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/events/${openingNightEvent.id}`,
-      {
-        method: "put",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-        body: expect.stringMatching(/"title":"Updated Night"/),
-      },
-    );
+    expectCsrfCookie();
+    expectFetch(`/api/events/${openingNightEvent.id}`, "put", {
+      ...openingNightEvent,
+      id: undefined,
+      play_id: undefined,
+      title: "Updated Night",
+    });
 
     await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
   });
@@ -248,22 +229,8 @@ describe("React: CalendarPage", () => {
     );
     await user.click(screen.getByRole("button", { name: /supprimer/i }));
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
-    });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/events/${openingNightEvent.id}`,
-      {
-        method: "delete",
-        headers: {
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-      },
-    );
+    expectCsrfCookie();
+    expectFetch(`/api/events/${openingNightEvent.id}`, "delete");
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: /supprimer/i })).toBeNull(),
     );

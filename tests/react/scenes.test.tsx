@@ -3,9 +3,10 @@ import userEvent from "@testing-library/user-event";
 import ScenesPage from "../../src/react/components/play/ScenesPage";
 import {
   actorUser,
+  expectCsrfCookie,
+  expectFetch,
   mainPlay,
   mainScenes,
-  mockedRandomUUID,
   renderWithStub,
   setupApiMocks,
   teacherUser,
@@ -47,27 +48,11 @@ describe("React: ScenesPage", () => {
     await user.type(screen.getByLabelText(/titre/i), "Test");
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
+    expectCsrfCookie();
+    expectFetch(`/api/plays/${mainPlay.id}/scenes`, "post", {
+      title: "Test",
+      scene_order: mainScenes.length + 1,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/plays/${mainPlay.id}/scenes`,
-      {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-        body: JSON.stringify({
-          title: "Test",
-          scene_order: mainScenes.length + 1,
-        }),
-      },
-    );
   });
 
   it("should add a new preference successfully (actor)", async () => {
@@ -85,24 +70,10 @@ describe("React: ScenesPage", () => {
       "HIGH",
     );
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
+    expectCsrfCookie();
+    expectFetch(`/api/scenes/${mainScenes[0].id}/preferences`, "post", {
+      level: "HIGH",
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/scenes/${mainScenes[0].id}/preferences`,
-      {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-        body: JSON.stringify({ level: "HIGH" }),
-      },
-    );
   });
 
   it("should display edit form when clicking on edit button", async () => {
@@ -197,27 +168,11 @@ describe("React: ScenesPage", () => {
       ),
     );
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
+    expectCsrfCookie();
+    expectFetch(`/api/scenes/${mainScenes[0].id}`, "put", {
+      title: "updated",
+      scene_order: mainScenes[0].scene_order,
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/scenes/${mainScenes[0].id}`,
-      {
-        method: "put",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-        body: JSON.stringify({
-          title: "updated",
-          scene_order: mainScenes[0].scene_order,
-        }),
-      },
-    );
   });
 
   it("should delete a scene successfully (teacher)", async () => {
@@ -236,22 +191,8 @@ describe("React: ScenesPage", () => {
       ),
     );
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
-    });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/scenes/${mainScenes[0].id}`,
-      {
-        method: "delete",
-        headers: {
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-      },
-    );
+    expectCsrfCookie();
+    expectFetch(`/api/scenes/${mainScenes[0].id}`, "delete");
   });
 
   it("should select no preference when user has no preference", async () => {

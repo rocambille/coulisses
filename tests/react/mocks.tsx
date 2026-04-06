@@ -69,26 +69,6 @@ export const mockFetch = (
         return fromContract(contracts.plays.create);
 
       // --- Play sub-resources (must be matched before /api/plays/:id) ---
-      if (path.match(/\/api\/plays\/\d+\/members/) && method === "get")
-        return fromContract(contracts.plays.members.browse);
-      if (path.match(/\/api\/plays\/\d+\/members/) && method === "post")
-        return fromContract(contracts.plays.members.invite);
-
-      if (path.match(/\/api\/plays\/\d+\/roles/) && method === "get")
-        return fromContract(contracts.plays.roles.browse);
-      if (path.match(/\/api\/plays\/\d+\/roles/) && method === "post")
-        return fromContract(contracts.plays.roles.create);
-
-      if (path.match(/\/api\/plays\/\d+\/scenes/) && method === "get")
-        return fromContract(contracts.plays.scenes.browse);
-      if (path.match(/\/api\/plays\/\d+\/scenes/) && method === "post")
-        return fromContract(contracts.plays.scenes.create);
-
-      if (path.match(/\/api\/plays\/\d+\/preferences/) && method === "get")
-        return fromContract(contracts.plays.preferences.browse);
-      if (path.match(/\/api\/scenes\/\d+\/preferences/) && method === "post")
-        return fromContract(contracts.scenes.preferences.upsert);
-
       if (path.match(/\/api\/plays\/\d+\/castings/) && method === "get")
         return fromContract(contracts.plays.castings.browse);
       if (path.match(/\/api\/plays\/\d+\/castings/) && method === "post")
@@ -101,18 +81,38 @@ export const mockFetch = (
       if (path.match(/\/api\/plays\/\d+\/events/) && method === "post")
         return fromContract(contracts.plays.events.create);
 
-      // --- Standalone resources ---
-      if (path.match(/\/api\/scenes\/\d+/) && method === "put")
-        return fromContract(contracts.scenes.update);
-      if (path.match(/\/api\/scenes\/\d+/) && method === "delete")
-        return fromContract(contracts.scenes.delete);
-      if (path.match(/\/api\/scenes\/\d+/) && method === "get")
-        return fromContract(contracts.scenes.get);
+      if (path.match(/\/api\/plays\/\d+\/members/) && method === "get")
+        return fromContract(contracts.plays.members.browse);
+      if (path.match(/\/api\/plays\/\d+\/members/) && method === "post")
+        return fromContract(contracts.plays.members.invite);
 
+      if (path.match(/\/api\/plays\/\d+\/preferences/) && method === "get")
+        return fromContract(contracts.plays.preferences.browse);
+      if (path.match(/\/api\/scenes\/\d+\/preferences/) && method === "post")
+        return fromContract(contracts.scenes.preferences.upsert);
+
+      if (path.match(/\/api\/plays\/\d+\/roles/) && method === "get")
+        return fromContract(contracts.plays.roles.browse);
+      if (path.match(/\/api\/plays\/\d+\/roles/) && method === "post")
+        return fromContract(contracts.plays.roles.create);
+
+      if (path.match(/\/api\/plays\/\d+\/scenes/) && method === "get")
+        return fromContract(contracts.plays.scenes.browse);
+      if (path.match(/\/api\/plays\/\d+\/scenes/) && method === "post")
+        return fromContract(contracts.plays.scenes.create);
+
+      // --- Standalone resources ---
       if (path.match(/\/api\/events\/\d+/) && method === "put")
         return fromContract(contracts.events.update);
       if (path.match(/\/api\/events\/\d+/) && method === "delete")
         return fromContract(contracts.events.delete);
+
+      if (path.match(/\/api\/scenes\/\d+/) && method === "get")
+        return fromContract(contracts.scenes.get);
+      if (path.match(/\/api\/scenes\/\d+/) && method === "put")
+        return fromContract(contracts.scenes.update);
+      if (path.match(/\/api\/scenes\/\d+/) && method === "delete")
+        return fromContract(contracts.scenes.delete);
 
       if (path.match(/\/api\/users\/\d+/) && method === "get")
         return fromContract(contracts.users.get);
@@ -194,5 +194,47 @@ export const renderWithStub = async (
   const Stub = stubRoute(path, Component, options);
   return await act(async () =>
     render(<Stub initialEntries={initialEntries} />),
+  );
+};
+
+export const expectCsrfCookie = () => {
+  expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
+    expires: expect.any(Number),
+    name: "__Host-x-csrf-token",
+    path: "/",
+    sameSite: "strict",
+    value: mockedRandomUUID,
+  });
+};
+
+export const expectFetch = (path: string, method: string, body?: unknown) => {
+  const headers: Record<string, string> = {};
+
+  if (method !== "get") {
+    headers["X-CSRF-Token"] = mockedRandomUUID;
+  }
+  if (body) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const fetchArgs: Parameters<typeof globalThis.fetch> = [path];
+
+  if (Object.keys(headers).length > 0 || method !== "get" || body) {
+    fetchArgs.push({
+      ...(method !== "get" ? { method } : {}),
+      ...(Object.keys(headers).length > 0 ? { headers } : {}),
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+  }
+
+  expect(globalThis.fetch).toHaveBeenCalledWith(...fetchArgs);
+};
+
+export const expectNoFetch = (path: string, method: string) => {
+  expect(globalThis.fetch).not.toHaveBeenCalledWith(
+    path,
+    expect.objectContaining({
+      method,
+    }),
   );
 };

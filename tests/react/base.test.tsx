@@ -3,8 +3,9 @@ import Layout from "../../src/react/components/Layout";
 import { useRefresh } from "../../src/react/components/RefreshContext";
 import { cache, mutate } from "../../src/react/components/utils";
 import {
+  expectCsrfCookie,
+  expectFetch,
   mainPlay,
-  mockedRandomUUID,
   renderHookAsync,
   renderWithStub,
   setupApiMocks,
@@ -59,40 +60,16 @@ describe("React: Base Components & Utilities", () => {
     it("should send a mutation request with a body", async () => {
       const data = await mutate("/api/plays/1", "put", {});
 
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(global.fetch).toHaveBeenCalledWith("/api/plays/1", {
-        method: "put",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-        body: JSON.stringify({}),
-      });
+      expectCsrfCookie();
+      expectFetch("/api/plays/1", "put", {});
       expect(data).toEqual(new Response(null, { status: 204 }));
     });
 
     it("should send a mutation request without a body", async () => {
       const data = await mutate("/api/plays/1", "delete");
 
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(global.fetch).toHaveBeenCalledWith("/api/plays/1", {
-        method: "delete",
-        headers: {
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-      });
+      expectCsrfCookie();
+      expectFetch("/api/plays/1", "delete");
       expect(data).toEqual(new Response(null, { status: 204 }));
     });
   });

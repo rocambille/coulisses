@@ -3,8 +3,9 @@ import userEvent from "@testing-library/user-event";
 import MembersPage from "../../src/react/components/play/MembersPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
+  expectCsrfCookie,
+  expectFetch,
   mainPlay,
-  mockedRandomUUID,
   renderWithStub,
   setupApiMocks,
   teacherUser,
@@ -68,23 +69,10 @@ describe("React: MembersPage", () => {
     await user.type(screen.getByLabelText(/email/i), "test@mail.com");
     await user.click(screen.getByRole("button", { name: /inviter/i }));
 
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
+    expectCsrfCookie();
+    expectFetch(`/api/plays/${mainPlay.id}/members`, "post", {
+      email: "test@mail.com",
+      role: "ACTOR",
     });
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      `/api/plays/${mainPlay.id}/members`,
-      {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": mockedRandomUUID,
-        },
-        body: JSON.stringify({ email: "test@mail.com", role: "ACTOR" }),
-      },
-    );
   });
 });

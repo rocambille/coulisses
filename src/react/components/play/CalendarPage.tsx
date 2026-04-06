@@ -117,8 +117,8 @@ function CalendarPage() {
       throw new Error("Invalid form submission");
     }
 
-    const start_time = new Date(`${startDate}T${startTime}`).toISOString();
-    const end_time = new Date(`${endDate}T${endTime}`).toISOString();
+    const start_time = `${startDate}T${startTime}:00.000Z`;
+    const end_time = `${endDate}T${endTime}:00.000Z`;
 
     const response = await runAction(
       `/api/events/${selectedEvent.id}`,
