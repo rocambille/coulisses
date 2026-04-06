@@ -200,6 +200,34 @@ describe("React: CalendarPage", () => {
     await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
   });
 
+  it("should allow teacher to edit an event and close the form", async () => {
+    vi.setSystemTime(new Date(openingNightEvent.start_time));
+
+    await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { user: teacherUser },
+    );
+
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: new RegExp(openingNightEvent.title, "i"),
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: /modifier/i }));
+
+    const titleInput = screen.getByLabelText(/titre/i);
+    await user.clear(titleInput);
+    await user.type(titleInput, "Updated Night");
+
+    await user.click(screen.getByRole("button", { name: /annuler/i }));
+
+    await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
+  });
+
   it("should allow teacher to delete an event", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
     vi.spyOn(window, "confirm").mockReturnValue(true);

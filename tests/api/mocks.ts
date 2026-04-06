@@ -5,31 +5,35 @@ import supertest, { type Test } from "supertest";
 
 import databaseClient from "../../src/database/client";
 import routes from "../../src/express/routes";
-import { initialMockedData, insertId } from "../mocks";
+import {
+  allUsers,
+  insertId,
+  mainCastings,
+  mainPlay,
+  mainPreferences,
+  mainRoles,
+  mainScenes,
+  openingNightEvent,
+  playMembersDb,
+  sceneRolesDb,
+} from "../mocks";
 
 export * from "../mocks";
 
 // -------------------------
 // Mocked DB content
 // -------------------------
-export const mockedData = { ...initialMockedData };
 
-// Allows a clean slate per test
-export const resetMockData = () => {
-  mockedData.user = [...initialMockedData.user];
-  mockedData.play = [...initialMockedData.play];
-  mockedData.play_member = [...initialMockedData.play_member];
-  mockedData.scene = [...initialMockedData.scene];
-  mockedData.role = [...initialMockedData.role];
-  mockedData.scene_role = [...initialMockedData.scene_role];
-  mockedData.preference = [...initialMockedData.preference];
-  mockedData.casting = [...initialMockedData.casting];
-  mockedData.event = [...initialMockedData.event];
-};
-
-export const setupDatabaseMocks = () => {
-  resetMockData();
-  mockDatabaseClient();
+const mockedData = {
+  user: allUsers,
+  play: [mainPlay],
+  play_member: playMembersDb,
+  scene: mainScenes,
+  role: mainRoles,
+  scene_role: sceneRolesDb,
+  preference: mainPreferences,
+  casting: mainCastings,
+  event: [openingNightEvent],
 };
 
 export const members = (play: { id: number }) =>
@@ -128,7 +132,7 @@ export const mockDatabaseClient = () => {
           const roles = mockedData.role
             .filter((r) => r.play_id === playId)
             .map((r) => {
-              const roleId = (r as { id: number }).id;
+              const roleId = r.id;
               const scenes = mockedData.scene_role
                 .filter((sr) => sr.role_id === roleId)
                 .map((sr) => mockedData.scene.find((s) => s.id === sr.scene_id))
@@ -168,36 +172,36 @@ export const mockDatabaseClient = () => {
         }
 
         // Generic Table Selects (Single Table, e.g., browse, findById)
-        const tableMatch = normalizedSql.match(/\bfrom\s+(\w+)\b/i);
-        const table = tableMatch?.[1] as keyof typeof mockedData;
+        const table = normalizedSql.match(/\bfrom\s+(\w+)\b/i)?.[1];
 
         if (table && Object.hasOwn(mockedData, table)) {
+          const rows = mockedData[table as keyof typeof mockedData];
+
           // WHERE id = ?
           if (/\bwhere id =/i.test(normalizedSql)) {
             const id = Number(normalizedSql.match(/where id = ([^\s]+)/i)?.[1]);
-            return [
-              mockedData[table].filter((row) => "id" in row && row.id === id),
-              [],
-            ];
+            return [rows.filter((row) => "id" in row && row.id === id), []];
           }
 
           // WHERE email = ? (for auth)
           if (/\bwhere email =/i.test(normalizedSql)) {
             const email = normalizedSql.match(/where email = '([^']+)'/i)?.[1];
             return [
-              mockedData[table].filter(
-                (row) => "email" in row && row.email === email,
-              ),
+              rows.filter((row) => "email" in row && row.email === email),
               [],
             ];
           }
 
-          return [mockedData[table], []];
+          return [rows, []];
         }
 
         throw new Error(`[Strict Mock] Unhandled SQL query: ${normalizedSql}`);
       },
     );
+};
+
+export const setupDatabaseMocks = () => {
+  mockDatabaseClient();
 };
 
 // -------------------------

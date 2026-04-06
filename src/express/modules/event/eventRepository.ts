@@ -96,7 +96,30 @@ class EventRepository {
       `select * from event where id = ?`,
       [eventId],
     );
-    return (rows[0] as EventData) || null;
+
+    if (rows.length === 0) return null;
+
+    const {
+      id,
+      play_id,
+      type,
+      title,
+      description,
+      location,
+      start_time,
+      end_time,
+    } = rows[0];
+
+    return {
+      id,
+      play_id,
+      type,
+      title,
+      description,
+      location,
+      start_time,
+      end_time,
+    };
   }
 }
 

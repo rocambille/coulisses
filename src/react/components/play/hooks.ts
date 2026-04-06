@@ -30,7 +30,7 @@ export function useMembership(playId: string | undefined) {
 
   // If no playId, we can't be a member
   if (!playId) {
-    return { isTeacher: false, isActor: false, member: null, members: [] };
+    throw new Error("No playId provided");
   }
 
   const members: (User & { role: string })[] = use(

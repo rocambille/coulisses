@@ -144,6 +144,20 @@ export const mainPreferences: PreferenceWithUser[] = [
     scene_id: 1,
     level: "MEDIUM" as const,
   },
+  {
+    user_id: teacherUser.id,
+    name: teacherUser.name,
+    email: teacherUser.email,
+    scene_id: 2,
+    level: "LOW" as const,
+  },
+  {
+    user_id: teacherUser.id,
+    name: teacherUser.name,
+    email: teacherUser.email,
+    scene_id: 3,
+    level: "NOT_INTERESTED" as const,
+  },
 ];
 
 export const mainCastings: Casting[] = [{ role_id: 1, user_id: actorUser.id }];
@@ -172,18 +186,3 @@ export const mainMatrix: CastingMatrix = {
 };
 
 export const insertId = 42;
-
-// ---------------------------------------------------------
-// Shared mockedData structure (API-style)
-// ---------------------------------------------------------
-export const initialMockedData = {
-  user: [...allUsers],
-  play: [mainPlay],
-  play_member: [...playMembersDb],
-  scene: [...mainScenes],
-  role: [...mainRoles],
-  scene_role: [...sceneRolesDb],
-  preference: [...mainPreferences],
-  casting: [...mainCastings],
-  event: [openingNightEvent],
-};
