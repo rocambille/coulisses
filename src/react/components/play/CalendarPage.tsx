@@ -44,7 +44,6 @@ function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
 
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -136,7 +135,6 @@ function CalendarPage() {
 
     if (response.ok) {
       setSelectedEvent(null);
-      setIsEditing(false);
     }
   };
 
@@ -152,12 +150,6 @@ function CalendarPage() {
     if (response.ok) {
       setSelectedEvent(null);
     }
-  };
-
-  const openAddModal = (day: number) => {
-    if (!isTeacher) return;
-    setSelectedDate(new Date(currentYear, currentMonth, day));
-    setShowAddModal(true);
   };
 
   return (
@@ -260,7 +252,10 @@ function CalendarPage() {
                 <button
                   type="button"
                   aria-label={`Ajouter un événement le ${currentDayDate.toISOString()}`}
-                  onClick={() => openAddModal(day)}
+                  onClick={() => {
+                    setSelectedDate(new Date(currentYear, currentMonth, day));
+                    setShowAddModal(true);
+                  }}
                   style={{
                     position: "absolute",
                     inset: 0,
@@ -436,12 +431,10 @@ function CalendarPage() {
                 aria-label="Fermer"
                 onClick={() => {
                   setSelectedEvent(null);
-                  setIsEditing(false);
                 }}
               ></button>
-              {isEditing ? "Modifier l'événement" : selectedEvent.title}
             </header>
-            {isEditing ? (
+            {isTeacher ? (
               <form action={handleEdit}>
                 <label>
                   Titre
@@ -529,61 +522,39 @@ function CalendarPage() {
                 <footer>
                   <button
                     type="button"
-                    className="secondary outline"
-                    onClick={() => setIsEditing(false)}
+                    className="contrast"
+                    onClick={() => handleDelete(selectedEvent.id)}
                   >
-                    Annuler
+                    Supprimer
                   </button>
                   <button type="submit">Enregistrer</button>
                 </footer>
               </form>
             ) : (
-              <>
-                <p>
-                  <strong>Type:</strong>{" "}
-                  {selectedEvent.type === "SHOW"
-                    ? "🎭 Représentation"
-                    : "📅 Répétition"}
-                  <br />
-                  <strong>Début:</strong>{" "}
-                  {new Date(selectedEvent.start_time).toLocaleString()}
-                  <br />
-                  <strong>Fin:</strong>{" "}
-                  {new Date(selectedEvent.end_time).toLocaleString()}
-                  <br />
-                  {selectedEvent.location && (
-                    <>
-                      <strong>Lieu:</strong> {selectedEvent.location}
-                      <br />
-                    </>
-                  )}
-                  {selectedEvent.description && (
-                    <>
-                      <strong>Description:</strong> {selectedEvent.description}
-                    </>
-                  )}
-                </p>
-                <footer>
-                  {isTeacher && (
-                    <div className="grid">
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => setIsEditing(true)}
-                      >
-                        Modifier
-                      </button>
-                      <button
-                        type="button"
-                        className="contrast"
-                        onClick={() => handleDelete(selectedEvent.id)}
-                      >
-                        Supprimer
-                      </button>
-                    </div>
-                  )}
-                </footer>
-              </>
+              <p>
+                <strong>Type:</strong>{" "}
+                {selectedEvent.type === "SHOW"
+                  ? "🎭 Représentation"
+                  : "📅 Répétition"}
+                <br />
+                <strong>Début:</strong>{" "}
+                {new Date(selectedEvent.start_time).toLocaleString()}
+                <br />
+                <strong>Fin:</strong>{" "}
+                {new Date(selectedEvent.end_time).toLocaleString()}
+                <br />
+                {selectedEvent.location && (
+                  <>
+                    <strong>Lieu:</strong> {selectedEvent.location}
+                    <br />
+                  </>
+                )}
+                {selectedEvent.description && (
+                  <>
+                    <strong>Description:</strong> {selectedEvent.description}
+                  </>
+                )}
+              </p>
             )}
           </article>
         </dialog>

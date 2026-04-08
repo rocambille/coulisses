@@ -7,8 +7,6 @@ import { contracts } from "../contracts";
 
 export * from "../mocks";
 
-export const mockedRandomUUID = "a-b-c-d-e";
-
 // -------------------------
 // Fetch mock (contract-based)
 // -------------------------
@@ -145,14 +143,6 @@ export const renderHookAsync = async <
   options?: RenderHookParameters[1],
 ) => await act(async () => renderHook<Result, Props>(render, options));
 
-export const setupApiMocks = (
-  customFetch?: (path: string, method: string) => Promise<Response> | undefined,
-) => {
-  vi.stubGlobal("cookieStore", { get: vi.fn(), set: vi.fn() });
-  vi.spyOn(crypto, "randomUUID").mockImplementation(() => mockedRandomUUID);
-  mockFetch(customFetch);
-};
-
 type StubRouteObject = Parameters<typeof createRoutesStub>[0][number];
 
 const stubRoute = (
@@ -195,6 +185,16 @@ export const renderWithStub = async (
   return await act(async () =>
     render(<Stub initialEntries={initialEntries} />),
   );
+};
+
+const mockedRandomUUID = "a-b-c-d-e";
+
+export const setupApiMocks = (
+  customFetch?: (path: string, method: string) => Promise<Response> | undefined,
+) => {
+  vi.stubGlobal("cookieStore", { get: vi.fn(), set: vi.fn() });
+  vi.spyOn(crypto, "randomUUID").mockImplementation(() => mockedRandomUUID);
+  mockFetch(customFetch);
 };
 
 export const expectCsrfCookie = () => {
