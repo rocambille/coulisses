@@ -1,13 +1,29 @@
 import { contracts } from "../contracts";
-import { api } from "./mocks";
+import { api, using } from "./mocks";
 
 describe("Base API", () => {
   describe("GET /api", () => {
     it("should return successfully", async () => {
-      const response = await api.get("/api");
+      const response = await using(api.get("/api"));
 
-      expect(response.status).toBe(contracts.health.status.status);
-      expect(response.text).toBe(contracts.health.status.body.status);
+      expect(response.status).toBe(contracts.health.get.status);
+      expect(response.text).toBe(contracts.health.get.body);
+    });
+  });
+  describe("POST /api", () => {
+    it("should return successfully", async () => {
+      const response = await using(api.post("/api").send({ hello: "world" }));
+
+      expect(response.status).toBe(contracts.health.post.status);
+      expect(response.text).toBe(contracts.health.post.body);
+    });
+
+    it("should fail when CSRF token is missing", async () => {
+      const response = await using(api.post("/api").send({ hello: "world" }), {
+        withCsrf: false,
+      });
+
+      expect(response.status).toBe(contracts.errors.unauthorized.status);
     });
   });
 });

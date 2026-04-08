@@ -28,7 +28,6 @@ describe("Castings API", () => {
           userId: teacherUser.id,
           roleId: 1,
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.castings.assign.status);
@@ -43,7 +42,6 @@ describe("Castings API", () => {
           userId: teacherUser.id,
           roleId: 1,
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -54,7 +52,6 @@ describe("Castings API", () => {
 
       const response = await using(
         api.post(`/api/plays/${mainPlay.id}/castings`).send({}),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.badRequest.status);
@@ -70,7 +67,6 @@ describe("Castings API", () => {
           userId: teacherUser.id,
           roleId: 1,
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.castings.unassign.status);
@@ -85,7 +81,6 @@ describe("Castings API", () => {
           userId: teacherUser.id,
           roleId: 1,
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -96,7 +91,6 @@ describe("Castings API", () => {
 
       const response = await using(
         api.delete(`/api/plays/${mainPlay.id}/castings`).send({}),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.badRequest.status);
@@ -109,7 +103,6 @@ describe("Castings API", () => {
 
       const response = await using(
         api.get(`/api/plays/${mainPlay.id}/castings`),
-        { withCsrf: false, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.castings.browse.status);
@@ -121,7 +114,6 @@ describe("Castings API", () => {
 
       const response = await using(
         api.get(`/api/plays/${mainPlay.id}/castings`),
-        { withCsrf: false, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);

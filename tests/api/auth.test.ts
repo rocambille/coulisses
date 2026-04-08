@@ -22,7 +22,7 @@ describe("Auth API", () => {
     it("should send a magic link successfully", async () => {
       const response = await using(
         api.post("/api/auth/magic-link").send({ email: teacherUser.email }),
-        { withCsrf: true, withAuth: false },
+        { withAuth: false },
       );
 
       expect(response.status).toBe(contracts.auth.magicLink.status);
@@ -31,7 +31,6 @@ describe("Auth API", () => {
 
     it("should fail without email", async () => {
       const response = await using(api.post("/api/auth/magic-link").send({}), {
-        withCsrf: true,
         withAuth: false,
       });
 
@@ -45,7 +44,7 @@ describe("Auth API", () => {
 
       const response = await using(
         api.post("/api/auth/verify").send({ token: "magic_token" }),
-        { withCsrf: true, withAuth: false },
+        { withAuth: false },
       );
 
       expect(response.status).toBe(contracts.auth.verifySuccess.status);
@@ -60,7 +59,7 @@ describe("Auth API", () => {
 
       const response = await using(
         api.post("/api/auth/verify").send({ token: "magic_token" }),
-        { withCsrf: true, withAuth: false },
+        { withAuth: false },
       );
 
       expect(response.status).toBe(contracts.auth.verifySuccess.status);
@@ -76,7 +75,6 @@ describe("Auth API", () => {
 
     it("should fail on missing token", async () => {
       const response = await using(api.post("/api/auth/verify").send({}), {
-        withCsrf: true,
         withAuth: false,
       });
 
@@ -88,7 +86,6 @@ describe("Auth API", () => {
 
       const response = await using(
         api.post("/api/auth/verify").send({ token: "invalid_token" }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.unauthorized.status);
@@ -98,7 +95,6 @@ describe("Auth API", () => {
   describe("POST /api/auth/logout", () => {
     it("should clear the cookie", async () => {
       const response = await using(api.post("/api/auth/logout"), {
-        withCsrf: true,
         withAuth: false,
       });
 
@@ -113,10 +109,7 @@ describe("Auth API", () => {
     it("should return the logged user", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.get("/api/me"), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get("/api/me"));
 
       expect(response.status).toBe(contracts.auth.me.status);
       expect(response.body).toEqual(contracts.auth.me.body);
@@ -124,7 +117,6 @@ describe("Auth API", () => {
 
     it("should fail without access token", async () => {
       const response = await using(api.get("/api/me"), {
-        withCsrf: false,
         withAuth: false,
       });
 
@@ -134,10 +126,7 @@ describe("Auth API", () => {
     it("should fail when user does not exist", async () => {
       setupApiAuth({ id: 999 });
 
-      const response = await using(api.get("/api/me"), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get("/api/me"));
 
       expect(response.status).toBe(contracts.errors.unauthorized.status);
     });

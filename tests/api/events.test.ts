@@ -24,10 +24,7 @@ describe("Events API", () => {
     it("should fetch all events for the play successfully when user is member", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(
-        api.get(`/api/plays/${mainPlay.id}/events`),
-        { withAuth: true, withCsrf: false },
-      );
+      const response = await using(api.get(`/api/plays/${mainPlay.id}/events`));
 
       expect(response.status).toBe(contracts.plays.events.browse.status);
       expect(response.body).toEqual(contracts.plays.events.browse.body);
@@ -36,10 +33,7 @@ describe("Events API", () => {
     it("should fail when user is not a member of the play", async () => {
       setupApiAuth(guestUser);
 
-      const response = await using(
-        api.get(`/api/plays/${mainPlay.id}/events`),
-        { withAuth: true, withCsrf: false },
-      );
+      const response = await using(api.get(`/api/plays/${mainPlay.id}/events`));
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
     });
@@ -56,7 +50,6 @@ describe("Events API", () => {
           start_time: "2026-05-01T10:00:00Z",
           end_time: "2026-05-01T12:00:00Z",
         }),
-        { withAuth: true, withCsrf: true },
       );
 
       expect(response.status).toBe(contracts.plays.events.create.status);
@@ -73,7 +66,6 @@ describe("Events API", () => {
           start_time: "2026-05-01T10:00:00Z",
           end_time: "2026-05-01T12:00:00Z",
         }),
-        { withAuth: true, withCsrf: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -84,7 +76,6 @@ describe("Events API", () => {
 
       const response = await using(
         api.post(`/api/plays/${mainPlay.id}/events`).send({}),
-        { withAuth: true, withCsrf: true },
       );
 
       expect(response.status).toBe(contracts.errors.badRequest.status);
@@ -102,7 +93,6 @@ describe("Events API", () => {
           start_time: "2026-05-01T10:00:00Z",
           end_time: "2026-05-01T12:00:00Z",
         }),
-        { withAuth: true, withCsrf: true },
       );
 
       expect(response.status).toBe(contracts.events.update.status);
@@ -119,7 +109,6 @@ describe("Events API", () => {
           start_time: "2026-05-01T10:00:00Z",
           end_time: "2026-05-01T12:00:00Z",
         }),
-        { withAuth: true, withCsrf: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -130,7 +119,6 @@ describe("Events API", () => {
 
       const response = await using(
         api.put(`/api/events/${openingNightEvent.id}`).send({}),
-        { withAuth: true, withCsrf: true },
       );
 
       expect(response.status).toBe(contracts.errors.badRequest.status);
@@ -146,7 +134,6 @@ describe("Events API", () => {
           start_time: "2026-05-01T10:00:00Z",
           end_time: "2026-05-01T12:00:00Z",
         }),
-        { withAuth: true, withCsrf: true },
       );
 
       expect(response.status).toBe(contracts.errors.notFound.status);
@@ -159,7 +146,6 @@ describe("Events API", () => {
 
       const response = await using(
         api.delete(`/api/events/${openingNightEvent.id}`),
-        { withAuth: true, withCsrf: true },
       );
 
       expect(response.status).toBe(contracts.events.delete.status);
@@ -171,7 +157,6 @@ describe("Events API", () => {
 
       const response = await using(
         api.delete(`/api/events/${openingNightEvent.id}`),
-        { withAuth: true, withCsrf: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -180,10 +165,7 @@ describe("Events API", () => {
     it("should not fail on invalid eventId", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.delete("/api/events/not-a-number"), {
-        withCsrf: true,
-        withAuth: true,
-      });
+      const response = await using(api.delete("/api/events/not-a-number"));
 
       expect(response.status).toBe(contracts.events.delete.status);
       expect(response.body).toEqual(contracts.events.delete.body);

@@ -23,10 +23,7 @@ describe("Plays API", () => {
     it("should fetch plays successfully for an authenticated member", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.get("/api/plays"), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get("/api/plays"));
 
       expect(response.status).toBe(contracts.plays.browse.status);
       expect(response.body).toEqual(contracts.plays.browse.body);
@@ -34,7 +31,6 @@ describe("Plays API", () => {
 
     it("should fail without access token", async () => {
       const response = await using(api.get("/api/plays"), {
-        withCsrf: false,
         withAuth: false,
       });
 
@@ -48,7 +44,6 @@ describe("Plays API", () => {
 
       const response = await using(
         api.post("/api/plays").send({ title: "New Play" }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.create.status);
@@ -58,23 +53,9 @@ describe("Plays API", () => {
     it("should fail on invalid request body", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.post("/api/plays").send({}), {
-        withCsrf: true,
-        withAuth: true,
-      });
+      const response = await using(api.post("/api/plays").send({}));
 
       expect(response.status).toBe(contracts.errors.badRequest.status);
-    });
-
-    it("should fail without CSRF token", async () => {
-      setupApiAuth(teacherUser);
-
-      const response = await using(api.post("/api/plays").send({}), {
-        withCsrf: false,
-        withAuth: true,
-      });
-
-      expect(response.status).toBe(contracts.errors.unauthorized.status);
     });
   });
 
@@ -82,10 +63,7 @@ describe("Plays API", () => {
     it("should fetch a single play successfully", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.get(`/api/plays/${mainPlay.id}`), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get(`/api/plays/${mainPlay.id}`));
 
       expect(response.status).toBe(contracts.plays.get.status);
       expect(response.body).toEqual(contracts.plays.get.body);
@@ -94,10 +72,7 @@ describe("Plays API", () => {
     it("should fail when user is not a member of the play", async () => {
       setupApiAuth(guestUser);
 
-      const response = await using(api.get(`/api/plays/${mainPlay.id}`), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get(`/api/plays/${mainPlay.id}`));
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
     });
@@ -105,10 +80,7 @@ describe("Plays API", () => {
     it("should fail on invalid playId", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.get("/api/plays/not-a-number"), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get("/api/plays/not-a-number"));
 
       expect(response.status).toBe(contracts.errors.notFound.status);
     });
@@ -123,7 +95,6 @@ describe("Plays API", () => {
           title: "Updated Play",
           description: "Updated Description",
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.update.status);
@@ -138,7 +109,6 @@ describe("Plays API", () => {
           title: "Updated Play",
           description: "Updated Description",
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -149,7 +119,6 @@ describe("Plays API", () => {
 
       const response = await using(
         api.put(`/api/plays/${mainPlay.id}`).send({}),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.badRequest.status);
@@ -160,10 +129,7 @@ describe("Plays API", () => {
     it("should delete a play successfully", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.delete(`/api/plays/${mainPlay.id}`), {
-        withCsrf: true,
-        withAuth: true,
-      });
+      const response = await using(api.delete(`/api/plays/${mainPlay.id}`));
 
       expect(response.status).toBe(contracts.plays.delete.status);
       expect(response.body).toEqual(contracts.plays.delete.body);
@@ -172,10 +138,7 @@ describe("Plays API", () => {
     it("should fail when user is not a teacher of the play", async () => {
       setupApiAuth(actorUser);
 
-      const response = await using(api.delete(`/api/plays/${mainPlay.id}`), {
-        withCsrf: true,
-        withAuth: true,
-      });
+      const response = await using(api.delete(`/api/plays/${mainPlay.id}`));
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
     });
@@ -183,10 +146,7 @@ describe("Plays API", () => {
     it("should not fail on invalid playId", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.delete("/api/plays/not-a-number"), {
-        withCsrf: true,
-        withAuth: true,
-      });
+      const response = await using(api.delete("/api/plays/not-a-number"));
 
       expect(response.status).toBe(contracts.plays.delete.status);
       expect(response.body).toEqual(contracts.plays.delete.body);
@@ -199,7 +159,6 @@ describe("Plays API", () => {
 
       const response = await using(
         api.get(`/api/plays/${mainPlay.id}/members`),
-        { withCsrf: false, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.members.browse.status);
@@ -211,7 +170,6 @@ describe("Plays API", () => {
 
       const response = await using(
         api.get(`/api/plays/${mainPlay.id}/members`),
-        { withCsrf: false, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -220,10 +178,7 @@ describe("Plays API", () => {
     it("should fail on invalid playId", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.get("/api/plays/not-a-number/members"), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get("/api/plays/not-a-number/members"));
 
       expect(response.status).toBe(contracts.errors.notFound.status);
     });
@@ -238,7 +193,6 @@ describe("Plays API", () => {
           email: actorUser.email,
           role: "ACTOR",
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.members.invite.status);
@@ -250,7 +204,6 @@ describe("Plays API", () => {
 
       const response = await using(
         api.post(`/api/plays/${mainPlay.id}/members`).send({}),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.badRequest.status);

@@ -24,13 +24,7 @@ describe("Scenes API", () => {
     it("should fetch scenes successfully", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(
-        api.get(`/api/plays/${mainPlay.id}/scenes`),
-        {
-          withCsrf: false,
-          withAuth: true,
-        },
-      );
+      const response = await using(api.get(`/api/plays/${mainPlay.id}/scenes`));
 
       expect(response.status).toBe(contracts.plays.scenes.browse.status);
       expect(response.body).toEqual(contracts.plays.scenes.browse.body);
@@ -39,13 +33,7 @@ describe("Scenes API", () => {
     it("should fail when user is not a member of the play", async () => {
       setupApiAuth(guestUser);
 
-      const response = await using(
-        api.get(`/api/plays/${mainPlay.id}/scenes`),
-        {
-          withCsrf: false,
-          withAuth: true,
-        },
-      );
+      const response = await using(api.get(`/api/plays/${mainPlay.id}/scenes`));
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
     });
@@ -60,7 +48,6 @@ describe("Scenes API", () => {
           title: "New Scene",
           scene_order: 2,
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.scenes.create.status);
@@ -75,7 +62,6 @@ describe("Scenes API", () => {
           title: "New Scene",
           scene_order: 2,
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -86,7 +72,6 @@ describe("Scenes API", () => {
 
       const response = await using(
         api.post(`/api/plays/${mainPlay.id}/scenes`).send({}),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.badRequest.status);
@@ -97,10 +82,7 @@ describe("Scenes API", () => {
     it("should fetch a scene successfully", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.get(`/api/scenes/${mainScenes[0].id}`), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get(`/api/scenes/${mainScenes[0].id}`));
 
       expect(response.status).toBe(contracts.scenes.get.status);
       expect(response.body).toEqual(contracts.scenes.get.body);
@@ -109,10 +91,7 @@ describe("Scenes API", () => {
     it("should fail when user is not a member of the play", async () => {
       setupApiAuth(guestUser);
 
-      const response = await using(api.get(`/api/scenes/${mainScenes[0].id}`), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get(`/api/scenes/${mainScenes[0].id}`));
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
     });
@@ -127,7 +106,6 @@ describe("Scenes API", () => {
           title: "Updated Scene",
           scene_order: 1,
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.scenes.update.status);
@@ -142,7 +120,6 @@ describe("Scenes API", () => {
           title: "Updated Scene",
           scene_order: 1,
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -155,7 +132,6 @@ describe("Scenes API", () => {
 
       const response = await using(
         api.delete(`/api/scenes/${mainScenes[0].id}`),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.scenes.delete.status);
@@ -165,10 +141,7 @@ describe("Scenes API", () => {
     it("should not fail when sceneId is not found", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.delete(`/api/scenes/not-a-number`), {
-        withCsrf: true,
-        withAuth: true,
-      });
+      const response = await using(api.delete(`/api/scenes/not-a-number`));
 
       expect(response.status).toBe(contracts.scenes.delete.status);
       expect(response.body).toEqual(contracts.scenes.delete.body);
@@ -179,7 +152,6 @@ describe("Scenes API", () => {
 
       const response = await using(
         api.delete(`/api/scenes/${mainScenes[0].id}`),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);

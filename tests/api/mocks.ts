@@ -246,21 +246,20 @@ export const api = supertest(app);
 export const using = (
   apiCall: Test,
   {
-    withAuth,
-    withCsrf,
+    withAuth = true,
+    withCsrf = true,
   }: {
-    withAuth: boolean;
-    withCsrf: boolean;
-  },
-) =>
-  withAuth && withCsrf
-    ? apiCall
-        .set("Cookie", ["__Host-auth=jwt", "__Host-x-csrf-token=a-b-c-d-e"])
-        .set("X-CSRF-Token", "a-b-c-d-e")
-    : withAuth
-      ? apiCall.set("Cookie", ["__Host-auth=jwt"])
-      : withCsrf
-        ? apiCall
-            .set("Cookie", ["__Host-x-csrf-token=a-b-c-d-e"])
-            .set("X-CSRF-Token", "a-b-c-d-e")
-        : apiCall;
+    withAuth?: boolean;
+    withCsrf?: boolean;
+  } = {},
+) => {
+  const cookies = [];
+  if (withAuth) {
+    cookies.push("__Host-auth=jwt");
+  }
+  if (apiCall.method !== "GET" && withCsrf) {
+    apiCall.set("X-CSRF-Token", "a-b-c-d-e");
+    cookies.push("__Host-x-csrf-token=a-b-c-d-e");
+  }
+  return apiCall.set("Cookie", cookies);
+};

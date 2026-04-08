@@ -27,7 +27,6 @@ describe("Preferences API", () => {
         api.post(`/api/scenes/${mainScenes[0].id}/preferences`).send({
           level: "HIGH",
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.scenes.preferences.upsert.status);
@@ -41,7 +40,6 @@ describe("Preferences API", () => {
         api.post(`/api/scenes/${mainScenes[0].id}/preferences`).send({
           level: "HIGH",
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -54,7 +52,6 @@ describe("Preferences API", () => {
         api.post(`/api/scenes/not-a-number/preferences`).send({
           level: "HIGH",
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.notFound.status);
@@ -67,7 +64,6 @@ describe("Preferences API", () => {
         api.post(`/api/scenes/${mainScenes[0].id}/preferences`).send({
           level: "UNKNOWN_LEVEL",
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.badRequest.status);
@@ -80,7 +76,6 @@ describe("Preferences API", () => {
 
       const response = await using(
         api.get(`/api/plays/${mainPlay.id}/preferences`),
-        { withAuth: true, withCsrf: false },
       );
 
       expect(response.status).toBe(contracts.plays.preferences.browse.status);
@@ -92,7 +87,6 @@ describe("Preferences API", () => {
 
       const response = await using(
         api.get(`/api/plays/${mainPlay.id}/preferences`),
-        { withAuth: true, withCsrf: false },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);

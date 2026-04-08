@@ -24,10 +24,7 @@ describe("Roles API", () => {
     it("should fetch roles successfully for a play member", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.get(`/api/plays/${mainPlay.id}/roles`), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get(`/api/plays/${mainPlay.id}/roles`));
 
       expect(response.status).toBe(contracts.plays.roles.browse.status);
       expect(response.body).toEqual(contracts.plays.roles.browse.body);
@@ -36,10 +33,7 @@ describe("Roles API", () => {
     it("should fail when user is not a member of the play", async () => {
       setupApiAuth(guestUser);
 
-      const response = await using(api.get(`/api/plays/${mainPlay.id}/roles`), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get(`/api/plays/${mainPlay.id}/roles`));
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
     });
@@ -47,10 +41,7 @@ describe("Roles API", () => {
     it("should fail when play does not exist", async () => {
       setupApiAuth(teacherUser);
 
-      const response = await using(api.get(`/api/plays/999/roles`), {
-        withCsrf: false,
-        withAuth: true,
-      });
+      const response = await using(api.get(`/api/plays/999/roles`));
 
       expect(response.status).toBe(contracts.errors.notFound.status);
     });
@@ -66,7 +57,6 @@ describe("Roles API", () => {
           description: "The Prince of Denmark",
           sceneIds: [mainScenes[0].id],
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.roles.create.status);
@@ -82,7 +72,6 @@ describe("Roles API", () => {
           description: "The Prince of Denmark",
           sceneIds: [],
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.plays.roles.create.status);
@@ -98,7 +87,6 @@ describe("Roles API", () => {
           description: "The Prince of Denmark",
           sceneIds: [mainScenes[0].id],
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.forbidden.status);
@@ -109,7 +97,6 @@ describe("Roles API", () => {
 
       const response = await using(
         api.post(`/api/plays/${mainPlay.id}/roles`).send({}),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.badRequest.status);
@@ -124,7 +111,6 @@ describe("Roles API", () => {
           description: "The Prince of Denmark",
           sceneIds: [mainScenes[0].id],
         }),
-        { withCsrf: true, withAuth: true },
       );
 
       expect(response.status).toBe(contracts.errors.notFound.status);

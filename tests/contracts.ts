@@ -39,7 +39,8 @@ export const contracts = {
     delete: { status: 204, body: {} },
   },
   health: {
-    status: { status: 200, body: { status: "hello, world!" } },
+    get: { status: 200, body: "hello, world!" },
+    post: { status: 200, body: "hello, world!" },
   },
   plays: {
     browse: { status: 200, body: [mainPlay] },
