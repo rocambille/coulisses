@@ -6,6 +6,7 @@ import supertest, { type Test } from "supertest";
 import databaseClient from "../../src/database/client";
 import routes from "../../src/express/routes";
 import {
+  actorUser,
   allUsers,
   insertId,
   mainCastings,
@@ -14,8 +15,7 @@ import {
   mainRoles,
   mainScenes,
   openingNightEvent,
-  playMembersDb,
-  sceneRolesDb,
+  teacherUser,
 } from "../mocks";
 
 export * from "../mocks";
@@ -23,6 +23,25 @@ export * from "../mocks";
 // -------------------------
 // Mocked DB content
 // -------------------------
+
+const playMembersDb: PlayMember[] = [
+  {
+    id: 1,
+    user_id: teacherUser.id,
+    play_id: mainPlay.id,
+    role: "TEACHER" as const,
+  },
+  {
+    id: 2,
+    user_id: actorUser.id,
+    play_id: mainPlay.id,
+    role: "ACTOR" as const,
+  },
+];
+
+const sceneRolesDb: { scene_id: number; role_id: number }[] = [
+  { scene_id: 1, role_id: 1 },
+];
 
 const mockedData = {
   user: allUsers,
@@ -120,7 +139,7 @@ export const mockDatabaseClient = () => {
           return [members({ id: playId }), []];
         }
 
-        // roleRepository.findByPlay (Role with stringified scenes)
+        // roleRepository.findByPlay (Role with scenes)
         if (
           /select r\.id, r\.name, r\.description, r\.play_id, json_arrayagg\(json_object\(/i.test(
             normalizedSql,
@@ -129,46 +148,65 @@ export const mockDatabaseClient = () => {
           const playId = Number(
             normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
           );
-          const roles = mockedData.role
-            .filter((r) => r.play_id === playId)
-            .map((r) => {
-              const roleId = r.id;
-              const scenes = mockedData.scene_role
-                .filter((sr) => sr.role_id === roleId)
-                .map((sr) => mockedData.scene.find((s) => s.id === sr.scene_id))
-                .filter(Boolean);
-              return { ...r, scenes: JSON.stringify(scenes) };
-            });
-          return [roles, []];
+          return [mockedData.role.filter((r) => r.play_id === playId), []];
         }
 
         // castingRepository.getPlayCastingMatrix (Multiple queries for matrix)
         if (/select \* from scene where play_id =/i.test(normalizedSql)) {
-          return [mockedData.scene, []];
+          const playId = Number(
+            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
+          );
+          return [mockedData.scene.filter((s) => s.play_id === playId), []];
         }
         if (/select \* from role where play_id =/i.test(normalizedSql)) {
-          return [mockedData.role, []];
+          const playId = Number(
+            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
+          );
+          return [mockedData.role.filter((r) => r.play_id === playId), []];
         }
         if (
           /select scene_id, role_id from scene_role where role_id in/i.test(
             normalizedSql,
           )
         ) {
-          return [mockedData.scene_role, []];
+          const roleIds = normalizedSql
+            .match(/role_id in \(([^)]+)\)/i)?.[1]
+            ?.split(",")
+            .map(Number);
+          return [
+            mockedData.scene_role.filter((sr) => roleIds?.includes(sr.role_id)),
+            [],
+          ];
         }
         if (
           /select role_id, user_id from casting where role_id in/i.test(
             normalizedSql,
           )
         ) {
-          return [mockedData.casting, []];
+          const roleIds = normalizedSql
+            .match(/role_id in \(([^)]+)\)/i)?.[1]
+            ?.split(",")
+            .map(Number);
+          return [
+            mockedData.casting.filter((c) => roleIds?.includes(c.role_id)),
+            [],
+          ];
         }
         if (
           /select p\.* from preference p join scene s on p\.scene_id = s\.id where s\.play_id =/i.test(
             normalizedSql,
           )
         ) {
-          return [mockedData.preference, []];
+          const playId = Number(
+            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
+          );
+          const scenes = mockedData.scene
+            .filter((s) => s.play_id === playId)
+            .map((s) => s.id);
+          const preferences = mockedData.preference.filter((p) =>
+            scenes.includes(p.scene_id),
+          );
+          return [preferences, []];
         }
 
         // Generic Table Selects (Single Table, e.g., browse, findById)

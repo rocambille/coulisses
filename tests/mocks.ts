@@ -57,21 +57,6 @@ export const mainPlayMembers: (User & { role: "TEACHER" | "ACTOR" })[] = [
   { ...actorUser, role: "ACTOR" },
 ];
 
-export const playMembersDb: PlayMember[] = [
-  {
-    id: 1,
-    user_id: teacherUser.id,
-    play_id: mainPlay.id,
-    role: "TEACHER" as const,
-  },
-  {
-    id: 2,
-    user_id: actorUser.id,
-    play_id: mainPlay.id,
-    role: "ACTOR" as const,
-  },
-];
-
 // ---------------------------------------------------------
 // Scenes & Roles
 // ---------------------------------------------------------
@@ -120,10 +105,6 @@ export const mainRoles: RoleWithScenes[] = [
     description: "Minor role",
     scenes: [mainScenes[1]],
   },
-];
-
-export const sceneRolesDb: { scene_id: number; role_id: number }[] = [
-  { scene_id: 1, role_id: 1 },
 ];
 
 // ---------------------------------------------------------

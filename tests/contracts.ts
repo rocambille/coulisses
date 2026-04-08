@@ -70,10 +70,7 @@ export const contracts = {
     roles: {
       browse: {
         status: 200,
-        body: [
-          { ...mainRoles[0], scenes: [mainScenes[0]] },
-          { ...mainRoles[1], scenes: [] },
-        ],
+        body: mainRoles,
       },
       create: { status: 201, body: { insertId } },
     },

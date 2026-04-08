@@ -55,7 +55,7 @@ class RoleRepository {
         name,
         description,
         play_id,
-        scenes: JSON.parse(scenes),
+        scenes,
       }),
     );
   }
