@@ -1,7 +1,7 @@
 import { contracts } from "../contracts";
 import { api, using } from "./mocks";
 
-describe("Base API", () => {
+describe("Health checks", () => {
   describe("GET /api", () => {
     it("should return successfully", async () => {
       const response = await using(api.get("/api"));
