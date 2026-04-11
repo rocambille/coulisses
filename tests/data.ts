@@ -14,24 +14,24 @@
 export const allUsers: User[] = [
   {
     id: 1,
-    email: "foo@mail.com",
-    name: "foo",
+    email: "teacher@mail.com",
+    name: "teacher",
   },
   {
     id: 2,
-    email: "bar@mail.com",
-    name: "bar",
+    email: "actor@mail.com",
+    name: "actor",
   },
   {
     id: 3,
-    email: "baz@mail.com",
-    name: "baz",
+    email: "third@mail.com",
+    name: "third",
   },
 ];
 
 export const teacherUser = allUsers[0];
 export const actorUser = allUsers[1];
-export const guestUser = allUsers[2];
+export const thirdUser = allUsers[2];
 
 // ---------------------------------------------------------
 // Plays & Members
@@ -64,7 +64,7 @@ export const mainScenes: Scene[] = [
   {
     id: 1,
     play_id: mainPlay.id,
-    title: "Scène 1",
+    title: "Scene 1",
     description: "First scene",
     duration: 10,
     scene_order: 1,
@@ -73,7 +73,7 @@ export const mainScenes: Scene[] = [
   {
     id: 2,
     play_id: mainPlay.id,
-    title: "Scène 2",
+    title: "Scene 2",
     description: "Second scene",
     duration: 20,
     scene_order: 2,
@@ -82,7 +82,7 @@ export const mainScenes: Scene[] = [
   {
     id: 3,
     play_id: mainPlay.id,
-    title: "Scène 3",
+    title: "Scene 3",
     description: "Third scene",
     duration: 15,
     scene_order: 3,

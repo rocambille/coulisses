@@ -2,11 +2,10 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CastingPage from "../../src/react/components/play/CastingPage";
 import {
-  actorUser,
   expectCsrfCookie,
-  expectFetch,
+  expectFetchFrom,
+  fromRequestBody,
   mainPlay,
-  mainRoles,
   renderWithStub,
   setupApiMocks,
   teacherUser,
@@ -44,17 +43,17 @@ describe("React: CastingPage", () => {
     const user = userEvent.setup();
 
     // Specific label matching the first role
-    const label = new RegExp(`assigner.*${mainRoles[0].name}`, "i");
+    const label = new RegExp(
+      `assigner.*${fromRequestBody("castings", "assign", "first_play", "roleId")}`,
+      "i",
+    );
     await user.selectOptions(
       screen.getByLabelText(label),
-      actorUser.id.toString(),
+      fromRequestBody("castings", "assign", "first_play", "userId"),
     );
 
     expectCsrfCookie();
-    expectFetch(`/api/plays/${mainPlay.id}/castings`, "post", {
-      roleId: mainRoles[0].id,
-      userId: actorUser.id,
-    });
+    expectFetchFrom("castings", "assign", "first_play");
   });
 
   it("should unassign a role successfully (teacher)", async () => {
@@ -67,13 +66,13 @@ describe("React: CastingPage", () => {
 
     const user = userEvent.setup();
 
-    const label = new RegExp(`assigner.*${mainRoles[0].name}`, "i");
+    const label = new RegExp(
+      `assigner.*${fromRequestBody("castings", "unassign", "first_play", "roleId")}`,
+      "i",
+    );
     await user.selectOptions(screen.getByLabelText(label), "");
 
     expectCsrfCookie();
-    expectFetch(`/api/plays/${mainPlay.id}/castings`, "delete", {
-      roleId: mainRoles[0].id,
-      userId: actorUser.id,
-    });
+    expectFetchFrom("castings", "unassign", "first_play");
   });
 });

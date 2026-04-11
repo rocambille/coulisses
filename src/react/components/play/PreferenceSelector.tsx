@@ -15,13 +15,9 @@ function PreferenceSelector({
   const { refresh } = useRefresh();
 
   const handleChange = async (level: string) => {
-    const response = await mutate(
-      `/api/scenes/${sceneId}/preferences`,
-      "post",
-      {
-        level,
-      },
-    );
+    const response = await mutate(`/api/scenes/${sceneId}/preferences`, "put", {
+      level,
+    });
 
     if (response.ok) {
       invalidateCache(`/api/plays/${playId}/preferences`);

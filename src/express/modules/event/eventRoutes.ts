@@ -44,7 +44,6 @@ const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
 };
 
 const checkIsTeacherByEventId: RequestHandler = async (req, res, next) => {
-  // Use event's play_id to check role
   const members = await playRepository.getMembers(req.event.play_id);
   const member = members.find((m) => m.id === req.me.id);
 
@@ -55,19 +54,16 @@ const checkIsTeacherByEventId: RequestHandler = async (req, res, next) => {
   }
 };
 
-// All event routes are protected
-router.use(EVENTS_BY_PLAY_PATH, authActions.verifyAccessToken);
-router.use(EVENT_BY_ID_PATH, authActions.verifyAccessToken);
+router.use(
+  [EVENTS_BY_PLAY_PATH, EVENT_BY_ID_PATH],
+  authActions.verifyAccessToken,
+);
 
-// GET /api/plays/:playId/events - List events (members only)
-// POST /api/plays/:playId/events - Create event (teachers only)
 router
   .route(EVENTS_BY_PLAY_PATH)
   .get(checkIsMemberByPlayId, eventActions.browse)
   .post(checkIsTeacherByPlayId, eventValidator.validate, eventActions.add);
 
-// PUT /api/events/:eventId - Update event (teachers only)
-// DELETE /api/events/:eventId - Delete event (teachers only)
 router
   .route(EVENT_BY_ID_PATH)
   .put(checkIsTeacherByEventId, eventValidator.validate, eventActions.edit)

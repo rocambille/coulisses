@@ -63,12 +63,12 @@ router.use(cookieParser(), csrf(), json());
   Minimal API sanity check.
   Useful for smoke tests and quick validation that the server is reachable.
 */
-router.get("/api", (_req, res) => {
-  res.send("hello, world!");
+router.get("/api/health", (_req, res) => {
+  res.json({ hello: "world" });
 });
 
-router.post("/api", (req, res) => {
-  res.send(`hello, ${req.body.hello}!`);
+router.post("/api/health", (req, res) => {
+  res.json({ hello: req.body.hello });
 });
 
 /* ************************************************************************ */

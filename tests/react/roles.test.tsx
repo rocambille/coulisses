@@ -4,7 +4,8 @@ import RolesPage from "../../src/react/components/play/RolesPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
   expectCsrfCookie,
-  expectFetch,
+  expectFetchFrom,
+  fromRequestBody,
   mainPlay,
   renderWithStub,
   setupApiMocks,
@@ -66,14 +67,13 @@ describe("React: RolesPage", () => {
 
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText(/nom/i), "Test");
+    await user.type(
+      screen.getByLabelText(/nom/i),
+      fromRequestBody("roles", "create", "no_scene", "name"),
+    );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
     expectCsrfCookie();
-    expectFetch(`/api/plays/${mainPlay.id}/roles`, "post", {
-      name: "Test",
-      description: null,
-      sceneIds: [],
-    });
+    expectFetchFrom("roles", "create", "no_scene");
   });
 });

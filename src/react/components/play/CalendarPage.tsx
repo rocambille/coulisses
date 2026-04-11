@@ -229,7 +229,10 @@ function CalendarPage() {
 
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
-          const currentDayDate = new Date(currentYear, currentMonth, day);
+          const timeZoneOffset = new Date().getTimezoneOffset() / 60;
+          const currentDayDate = new Date(
+            `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T${12 - timeZoneOffset}:00:00.000Z`,
+          );
           const dayEvents = currentMonthEvents.filter(
             (e) => new Date(e.start_time).getDate() === day,
           );
@@ -251,9 +254,9 @@ function CalendarPage() {
               {isTeacher && (
                 <button
                   type="button"
-                  aria-label={`Ajouter un événement le ${currentDayDate.toISOString()}`}
+                  aria-label={`Ajouter un événement le ${currentDayDate.toISOString().split("T")[0]}`}
                   onClick={() => {
-                    setSelectedDate(new Date(currentYear, currentMonth, day));
+                    setSelectedDate(currentDayDate);
                     setShowAddModal(true);
                   }}
                   style={{
@@ -359,11 +362,7 @@ function CalendarPage() {
                   <input
                     name="start_date"
                     type="date"
-                    defaultValue={
-                      selectedDate
-                        ? selectedDate.toISOString().split("T")[0]
-                        : ""
-                    }
+                    defaultValue={selectedDate?.toISOString().split("T")[0]}
                     required
                   />
                 </label>
@@ -372,7 +371,10 @@ function CalendarPage() {
                   <input
                     name="start_time"
                     type="time"
-                    defaultValue="19:00"
+                    defaultValue={selectedDate
+                      ?.toISOString()
+                      .split("T")[1]
+                      .slice(0, 5)}
                     required
                   />
                 </label>
@@ -384,11 +386,7 @@ function CalendarPage() {
                   <input
                     name="end_date"
                     type="date"
-                    defaultValue={
-                      selectedDate
-                        ? selectedDate.toISOString().split("T")[0]
-                        : ""
-                    }
+                    defaultValue={selectedDate?.toISOString().split("T")[0]}
                     required
                   />
                 </label>
@@ -397,7 +395,10 @@ function CalendarPage() {
                   <input
                     name="end_time"
                     type="time"
-                    defaultValue="21:00"
+                    defaultValue={selectedDate
+                      ?.toISOString()
+                      .split("T")[1]
+                      .slice(0, 5)}
                     required
                   />
                 </label>

@@ -44,18 +44,13 @@ const checkIsTeacher: RequestHandler = async (req, res, next) => {
   }
 };
 
-// All endpoints require authentication
-router.use(BASE_PATH, authActions.verifyAccessToken);
+router.use([BASE_PATH, PLAY_PATH, MEMBERS_PATH], authActions.verifyAccessToken);
 
-// Create a new play (open to any authenticated user, they become teacher)
 router.post(BASE_PATH, playValidator.validate, playActions.add);
-// List plays the user is member of
 router.get(BASE_PATH, playActions.browse);
 
-// Operate on a specific play (must be member)
 router.route(PLAY_PATH).all(checkIsMember).get(playActions.read);
 
-// Edit/Delete play (must be teacher)
 router
   .route(PLAY_PATH)
   .all(checkIsTeacher)

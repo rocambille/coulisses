@@ -3,9 +3,9 @@ import { createRoutesStub } from "react-router";
 
 import { AuthProvider } from "../../src/react/components/auth/AuthContext";
 import { RefreshProvider } from "../../src/react/components/RefreshContext";
-import { contracts } from "../contracts";
+import { type Contract, contracts, type Test } from "../contracts";
 
-export * from "../mocks";
+export * from "../data";
 
 // -------------------------
 // Fetch mock (contract-based)
@@ -30,7 +30,11 @@ const fromContract = (c: { status: number; body: unknown }) =>
   respond(c.body, c.status);
 
 export const mockFetch = (
-  custom?: (path: string, method: string) => Promise<Response> | undefined,
+  custom?: (
+    path: string,
+    method: string,
+    init?: RequestInit,
+  ) => Promise<Response> | undefined,
 ) => {
   globalThis.fetch = vi
     .fn<typeof globalThis.fetch>()
@@ -50,84 +54,25 @@ export const mockFetch = (
         if (customResult != null) return customResult;
       }
 
-      // --- Auth ---
-      if (path === "/api/auth/magic-link" && method === "post")
-        return fromContract(contracts.auth.magicLink);
-      if (path === "/api/auth/verify" && method === "post")
-        return fromContract(contracts.auth.verifySuccess);
-      if (path === "/api/auth/logout" && method === "post")
-        return fromContract(contracts.auth.logout);
-      if (path === "/api/me" && method === "get")
-        return fromContract(contracts.auth.me);
+      // --- From contracts ---
+      for (const [_contractName, contract] of Object.entries(contracts)) {
+        for (const [_testName, test] of Object.entries(contract)) {
+          for (const [_caseName, c] of Object.entries(test.cases)) {
+            if (path === (c.path ?? test.path) && method === test.method) {
+              if (init?.body === JSON.stringify(c.request.body)) {
+                return fromContract(c.response);
+              }
+            }
+          }
+        }
+      }
 
-      // --- Plays (collection) ---
-      if (path === "/api/plays" && method === "get")
-        return fromContract(contracts.plays.browse);
-      if (path === "/api/plays" && method === "post")
-        return fromContract(contracts.plays.create);
-
-      // --- Play sub-resources (must be matched before /api/plays/:id) ---
-      if (path.match(/\/api\/plays\/\d+\/castings/) && method === "get")
-        return fromContract(contracts.plays.castings.browse);
-      if (path.match(/\/api\/plays\/\d+\/castings/) && method === "post")
-        return fromContract(contracts.plays.castings.assign);
-      if (path.match(/\/api\/plays\/\d+\/castings/) && method === "delete")
-        return fromContract(contracts.plays.castings.unassign);
-
-      if (path.match(/\/api\/plays\/\d+\/events/) && method === "get")
-        return fromContract(contracts.plays.events.browse);
-      if (path.match(/\/api\/plays\/\d+\/events/) && method === "post")
-        return fromContract(contracts.plays.events.create);
-
-      if (path.match(/\/api\/plays\/\d+\/members/) && method === "get")
-        return fromContract(contracts.plays.members.browse);
-      if (path.match(/\/api\/plays\/\d+\/members/) && method === "post")
-        return fromContract(contracts.plays.members.invite);
-
-      if (path.match(/\/api\/plays\/\d+\/preferences/) && method === "get")
-        return fromContract(contracts.plays.preferences.browse);
-      if (path.match(/\/api\/scenes\/\d+\/preferences/) && method === "post")
-        return fromContract(contracts.scenes.preferences.upsert);
-
-      if (path.match(/\/api\/plays\/\d+\/roles/) && method === "get")
-        return fromContract(contracts.plays.roles.browse);
-      if (path.match(/\/api\/plays\/\d+\/roles/) && method === "post")
-        return fromContract(contracts.plays.roles.create);
-
-      if (path.match(/\/api\/plays\/\d+\/scenes/) && method === "get")
-        return fromContract(contracts.plays.scenes.browse);
-      if (path.match(/\/api\/plays\/\d+\/scenes/) && method === "post")
-        return fromContract(contracts.plays.scenes.create);
-
-      // --- Standalone resources ---
-      if (path.match(/\/api\/events\/\d+/) && method === "put")
-        return fromContract(contracts.events.update);
-      if (path.match(/\/api\/events\/\d+/) && method === "delete")
-        return fromContract(contracts.events.delete);
-
-      if (path.match(/\/api\/scenes\/\d+/) && method === "get")
-        return fromContract(contracts.scenes.get);
-      if (path.match(/\/api\/scenes\/\d+/) && method === "put")
-        return fromContract(contracts.scenes.update);
-      if (path.match(/\/api\/scenes\/\d+/) && method === "delete")
-        return fromContract(contracts.scenes.delete);
-
-      if (path.match(/\/api\/users\/\d+/) && method === "get")
-        return fromContract(contracts.users.get);
-
-      // --- Plays (single) ---
-      if (path.match(/\/api\/plays\/\d+$/) && method === "get")
-        return fromContract(contracts.plays.get);
-      if (path.match(/\/api\/plays\/\d+$/) && method === "put")
-        return fromContract(contracts.plays.update);
-      if (path.match(/\/api\/plays\/\d+$/) && method === "delete")
-        return fromContract(contracts.plays.delete);
-
-      // --- 404 test ---
-      if (path === "/api/404") return fromContract(contracts.errors.notFound);
+      if (path === "/api/404" && method === "get") {
+        return respond(null, 404);
+      }
 
       throw new Error(
-        `[Contract Mock] Unhandled fetch: ${method.toUpperCase()} ${path}`,
+        `[Contract Mock] Unhandled fetch: ${method.toUpperCase()} ${path} with ${JSON.stringify(init)}`,
       );
     });
 };
@@ -207,7 +152,20 @@ export const expectCsrfCookie = () => {
   });
 };
 
-export const expectFetch = (path: string, method: string, body?: unknown) => {
+export const fromRequestBody = (
+  contractName: keyof typeof contracts,
+  testName: keyof Contract,
+  caseName: keyof Test["cases"],
+  field: string,
+) => {
+  const body = contracts[contractName][testName].cases[caseName].request.body;
+  if (typeof body === "object" && body !== null && !Array.isArray(body)) {
+    return body[field]?.toString() ?? "";
+  }
+  throw new Error(`Case body is not an object: ${JSON.stringify(body)}`);
+};
+
+const expectFetch = (path: string, method: string, body?: unknown) => {
   const headers: Record<string, string> = {};
 
   if (method !== "get") {
@@ -228,6 +186,16 @@ export const expectFetch = (path: string, method: string, body?: unknown) => {
   }
 
   expect(globalThis.fetch).toHaveBeenCalledWith(...fetchArgs);
+};
+
+export const expectFetchFrom = (
+  contractName: keyof typeof contracts,
+  testName: keyof Contract,
+  caseName: keyof Test["cases"],
+) => {
+  const contract = contracts[contractName][testName];
+  const c = contract.cases[caseName];
+  expectFetch(c.path ?? contract.path, contract.method, c.request.body);
 };
 
 export const expectNoFetch = (path: string, method: string) => {

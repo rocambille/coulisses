@@ -21,7 +21,6 @@ const PREFERENCES_BY_PLAY_PATH = "/api/plays/:playId/preferences";
 router.param("sceneId", sceneParamConverter.convert);
 router.param("playId", playParamConverter.convert);
 
-// Ensure the user is part of the play that contains the scene
 const checkIsMemberBySceneId: RequestHandler = async (req, res, next) => {
   const members = await playRepository.getMembers(req.scene.play_id);
   const isMember = members.some((member) => member.id === req.me.id);
@@ -46,16 +45,14 @@ const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
 
 router.use(PREFERENCES_BY_SCENE_PATH, authActions.verifyAccessToken);
 
-// A Comédien connected can save or update their preference.
 router
   .route(PREFERENCES_BY_SCENE_PATH)
-  .post(
+  .put(
     checkIsMemberBySceneId,
     preferenceValidator.validate,
     preferenceActions.upsert,
   );
 
-// Endpoint for player's preferences in a specific play
 router.get(
   PREFERENCES_BY_PLAY_PATH,
   authActions.verifyAccessToken,

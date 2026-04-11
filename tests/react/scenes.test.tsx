@@ -4,7 +4,8 @@ import ScenesPage from "../../src/react/components/play/ScenesPage";
 import {
   actorUser,
   expectCsrfCookie,
-  expectFetch,
+  expectFetchFrom,
+  fromRequestBody,
   mainPlay,
   mainScenes,
   renderWithStub,
@@ -45,14 +46,35 @@ describe("React: ScenesPage", () => {
 
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText(/titre/i), "Test");
+    await user.type(
+      screen.getByLabelText(/titre/i),
+      fromRequestBody("scenes", "create", "teacher", "title"),
+    );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
     expectCsrfCookie();
-    expectFetch(`/api/plays/${mainPlay.id}/scenes`, "post", {
-      title: "Test",
-      scene_order: mainScenes.length + 1,
-    });
+    expectFetchFrom("scenes", "create", "teacher");
+  });
+
+  it("should update preference successfully (actor)", async () => {
+    await renderWithStub(
+      "/plays/:playId/scenes",
+      ScenesPage,
+      [`/plays/${mainPlay.id}/scenes`],
+      { user: actorUser },
+    );
+
+    const user = userEvent.setup();
+
+    await user.selectOptions(
+      screen.getByLabelText(
+        new RegExp(`envie.*scène.*${mainScenes[0].id}`, "i"),
+      ),
+      "HIGH",
+    );
+
+    expectCsrfCookie();
+    expectFetchFrom("preferences", "upsert", "update");
   });
 
   it("should add a new preference successfully (actor)", async () => {
@@ -66,14 +88,14 @@ describe("React: ScenesPage", () => {
     const user = userEvent.setup();
 
     await user.selectOptions(
-      screen.getByLabelText(new RegExp(`envie.*${mainScenes[0].title}`, "i")),
+      screen.getByLabelText(
+        new RegExp(`envie.*scène.*${mainScenes[2].id}`, "i"),
+      ),
       "HIGH",
     );
 
     expectCsrfCookie();
-    expectFetch(`/api/scenes/${mainScenes[0].id}/preferences`, "post", {
-      level: "HIGH",
-    });
+    expectFetchFrom("preferences", "upsert", "insert");
   });
 
   it("should display edit form when clicking on edit button", async () => {
@@ -161,7 +183,10 @@ describe("React: ScenesPage", () => {
     );
 
     await user.clear(screen.getByLabelText(/^titre$/i));
-    await user.type(screen.getByLabelText(/^titre$/i), "updated");
+    await user.type(
+      screen.getByLabelText(/^titre$/i),
+      fromRequestBody("scenes", "update", "first_scene", "title"),
+    );
     await user.click(
       screen.getByLabelText(
         new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
@@ -169,10 +194,7 @@ describe("React: ScenesPage", () => {
     );
 
     expectCsrfCookie();
-    expectFetch(`/api/scenes/${mainScenes[0].id}`, "put", {
-      title: "updated",
-      scene_order: mainScenes[0].scene_order,
-    });
+    expectFetchFrom("scenes", "update", "first_scene");
   });
 
   it("should delete a scene successfully (teacher)", async () => {
@@ -192,7 +214,7 @@ describe("React: ScenesPage", () => {
     );
 
     expectCsrfCookie();
-    expectFetch(`/api/scenes/${mainScenes[0].id}`, "delete");
+    expectFetchFrom("scenes", "delete", "first_scene");
   });
 
   it("should select no preference when user has no preference", async () => {
@@ -203,7 +225,7 @@ describe("React: ScenesPage", () => {
       { user: actorUser },
     );
 
-    const label = new RegExp(`envie.*${mainScenes[2].title}`, "i");
+    const label = new RegExp(`envie.*scène.*${mainScenes[2].id}`, "i");
     await waitFor(() => screen.getByLabelText(label));
 
     expect(screen.getByLabelText<HTMLSelectElement>(label).value).toBe("");

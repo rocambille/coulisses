@@ -4,11 +4,12 @@ import DashboardPage from "../../src/react/components/DashboardPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
   expectCsrfCookie,
-  expectFetch,
-  guestUser,
+  expectFetchFrom,
+  fromRequestBody,
   renderWithStub,
   setupApiMocks,
   teacherUser,
+  thirdUser,
 } from "./mocks";
 
 describe("<DashboardPage />", () => {
@@ -46,7 +47,7 @@ describe("<DashboardPage />", () => {
       }
     });
 
-    await renderWithStub("/", DashboardPage, ["/"], { user: guestUser });
+    await renderWithStub("/", DashboardPage, ["/"], { user: thirdUser });
 
     await waitFor(() => screen.getByText(/aucune pièce/i));
   });
@@ -56,10 +57,13 @@ describe("<DashboardPage />", () => {
 
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText(/titre/i), "Test");
+    await user.type(
+      screen.getByLabelText(/titre/i),
+      fromRequestBody("plays", "create", "teacher", "title"),
+    );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
     expectCsrfCookie();
-    expectFetch("/api/plays", "post", { title: "Test" });
+    expectFetchFrom("plays", "create", "teacher");
   });
 });

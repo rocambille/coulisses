@@ -12,12 +12,14 @@ import VerifyPage from "../../src/react/components/auth/VerifyPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
   expectCsrfCookie,
-  expectFetch,
+  expectFetchFrom,
   expectNoFetch,
+  fromRequestBody,
   mockFetch,
   renderHookAsync,
   renderWithStub,
   setupApiMocks,
+  teacherUser,
 } from "./mocks";
 
 describe("React auth components", () => {
@@ -47,7 +49,7 @@ describe("React auth components", () => {
         () => <AuthProvider>hello, world!</AuthProvider>,
         ["/"],
       );
-      await waitFor(() => expectFetch("/api/me", "get"));
+      await waitFor(() => expectFetchFrom("auth", "me", "teacher"));
     });
   });
   describe("useAuth()", () => {
@@ -67,8 +69,6 @@ describe("React auth components", () => {
         wrapper: AuthProvider,
       });
 
-      await waitFor(() => expectFetch("/api/me", "get"));
-
       const auth = result.current;
 
       expect(auth).toBeDefined();
@@ -77,8 +77,6 @@ describe("React auth components", () => {
       const { result } = await renderHookAsync(() => useAuth(), {
         wrapper: AuthProvider,
       });
-
-      await waitFor(() => expectFetch("/api/me", "get"));
 
       const auth = result.current;
 
@@ -91,58 +89,45 @@ describe("React auth components", () => {
         wrapper: AuthProvider,
       });
 
-      await waitFor(() => expectFetch("/api/me", "get"));
-
       const auth = result.current;
 
       expect(typeof auth.sendMagicLink).toBe("function");
 
-      await act(async () => await auth.sendMagicLink("foo@mail.com"));
+      await act(async () => await auth.sendMagicLink(teacherUser.email));
 
       expectCsrfCookie();
-      expectFetch("/api/auth/magic-link", "post", { email: "foo@mail.com" });
+      expectFetchFrom("auth", "magic_link", "teacher");
     });
     it("should return a verifyMagicLink function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
         wrapper: AuthProvider,
       });
 
-      await waitFor(() => expectFetch("/api/me", "get"));
-
       const auth = result.current;
 
       expect(typeof auth.verifyMagicLink).toBe("function");
-
-      await act(async () => await auth.verifyMagicLink("token"));
-
-      expectCsrfCookie();
-      expectFetch("/api/auth/verify", "post", { token: "token" });
-
-      /* test behaviour when sending an invalid token */
-      mockFetch((path, method) => {
-        if (path === "/api/auth/verify" && method === "post") {
-          return Promise.resolve().then(
-            () =>
-              new Response(null, {
-                status: 401,
-              }),
-          );
-        }
+    });
+    it("should verify a magic link", async () => {
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
       });
 
-      await expect(auth.verifyMagicLink("invalid-token")).rejects.toThrow(
-        /invalid/i,
+      const auth = result.current;
+
+      await act(
+        async () =>
+          await auth.verifyMagicLink(
+            String(fromRequestBody("auth", "verify", "new_user", "token")),
+          ),
       );
 
       expectCsrfCookie();
-      expectFetch("/api/auth/verify", "post", { token: "invalid-token" });
+      expectFetchFrom("auth", "verify", "new_user");
     });
     it("should return a logout function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
         wrapper: AuthProvider,
       });
-
-      await waitFor(() => expectFetch("/api/me", "get"));
 
       const auth = result.current;
 
@@ -151,30 +136,23 @@ describe("React auth components", () => {
       await act(async () => await auth.logout());
 
       expectCsrfCookie();
-      expectFetch("/api/auth/logout", "post");
+      expectFetchFrom("auth", "logout", "anyone");
     });
-    it("should return a logout function", async () => {
+    it("should throw when logout fails", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
         wrapper: AuthProvider,
       });
 
-      await waitFor(() => expectFetch("/api/me", "get"));
-
       const auth = result.current;
 
       expect(typeof auth.logout).toBe("function");
-
-      await act(async () => await auth.logout());
-
-      expectCsrfCookie();
-      expectFetch("/api/auth/logout", "post");
 
       mockFetch((path, method) => {
         if (path === "/api/auth/logout" && method === "post") {
           return Promise.resolve().then(
             () =>
               new Response(null, {
-                status: 401,
+                status: 500,
               }),
           );
         }
@@ -183,7 +161,7 @@ describe("React auth components", () => {
       await expect(auth.logout()).rejects.toThrow(/logout/i);
 
       expectCsrfCookie();
-      expectFetch("/api/auth/logout", "post");
+      expectFetchFrom("auth", "logout", "anyone");
     });
   });
   describe("<MagicLinkForm />", () => {
@@ -200,10 +178,10 @@ describe("React auth components", () => {
 
       const user = userEvent.setup();
 
-      await user.type(screen.getByLabelText(/^email$/i), "foo@mail.com");
+      await user.type(screen.getByLabelText(/^email$/i), teacherUser.email);
       await user.click(screen.getByRole("button"));
 
-      expectFetch("/api/auth/magic-link", "post", { email: "foo@mail.com" });
+      expectFetchFrom("auth", "magic_link", "teacher");
     });
   });
   describe("<LogoutForm />", () => {
@@ -226,7 +204,7 @@ describe("React auth components", () => {
 
       await user.click(screen.getByRole("button"));
 
-      expectFetch("/api/auth/logout", "post");
+      expectFetchFrom("auth", "logout", "anyone");
     });
   });
   describe("<VerifyPage />", () => {
@@ -239,7 +217,9 @@ describe("React auth components", () => {
         () => mockedNavigate,
       );
 
-      await renderWithStub("/verify", VerifyPage, ["/verify?token=foo"]);
+      await renderWithStub("/verify", VerifyPage, [
+        "/verify?token=fake_jwt_token",
+      ]);
 
       await waitFor(() => screen.getByText(/en cours/i));
     });
@@ -249,35 +229,27 @@ describe("React auth components", () => {
         () => mockedNavigate,
       );
 
-      await renderWithStub("/verify", VerifyPage, ["/verify?token=foo"]);
+      await renderWithStub("/verify", VerifyPage, [
+        "/verify?token=fake_jwt_token",
+      ]);
 
-      await waitFor(() =>
-        expectFetch("/api/auth/verify", "post", { token: "foo" }),
-      );
+      await waitFor(() => expectFetchFrom("auth", "verify", "new_user"));
 
       expect(mockedNavigate).toHaveBeenCalledWith("/", { replace: true });
     });
     it("should display error when token is invalid", async () => {
-      mockFetch((path, method) => {
-        if (path === "/api/auth/verify" && method === "post") {
-          return Promise.resolve().then(
-            () =>
-              new Response(null, {
-                status: 401,
-              }),
-          );
-        }
-      });
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
         () => mockedNavigate,
       );
 
-      await renderWithStub("/verify", VerifyPage, ["/verify?token=foo"]);
+      await renderWithStub("/verify", VerifyPage, [
+        "/verify?token=invalid_jwt_token",
+      ]);
 
       await waitFor(() => screen.getByText(/invalide/i));
 
-      expectFetch("/api/auth/verify", "post", { token: "foo" });
+      expectFetchFrom("auth", "verify", "unauthorized");
       expect(mockedNavigate).not.toHaveBeenCalled();
     });
     it("should display error when token is missing", async () => {

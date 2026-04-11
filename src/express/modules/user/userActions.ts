@@ -28,25 +28,6 @@ import userRepository from "./userRepository";
 /* ************************************************************************ */
 
 /*
-  Browse all users.
-
-  Preconditions:
-  - None (public endpoint)
-
-  Response:
-  - 200 with an array of users
-*/
-const browse: RequestHandler = async (req, res) => {
-  const offset = Number(req.query.start ?? "0");
-
-  const users = await userRepository.findAll(10, offset);
-
-  res.json(users);
-};
-
-/* ************************************************************************ */
-
-/*
   Read a single user.
 
   Preconditions:
@@ -101,7 +82,6 @@ const destroy: RequestHandler = async (req, res) => {
 /* ************************************************************************ */
 
 export default {
-  browse,
   read,
   edit,
   destroy,

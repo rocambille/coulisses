@@ -18,7 +18,6 @@ const ROLES_BY_PLAY_PATH = "/api/plays/:playId/roles";
 
 router.param("playId", playParamConverter.convert);
 
-// Reusable middlewares to check permissions
 const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
   const members = await playRepository.getMembers(req.play.id);
   const isMember = members.some((member) => member.id === req.me.id);

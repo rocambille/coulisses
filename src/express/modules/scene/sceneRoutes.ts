@@ -66,10 +66,8 @@ const checkIsTeacherBySceneId: RequestHandler = async (req, res, next) => {
   }
 };
 
-// All scene endpoints require authentication
-router.use([SCENES_BY_PLAY_PATH, "/api/scenes"], authActions.verifyAccessToken);
+router.use([SCENES_BY_PLAY_PATH, SCENE_PATH], authActions.verifyAccessToken);
 
-// List/Add scenes for a specific play
 router
   .route(SCENES_BY_PLAY_PATH)
   .get(checkIsMemberByPlayId, sceneActions.browse)
@@ -77,7 +75,6 @@ router
 
 router.route(SCENE_PATH).all(checkIsMemberBySceneId).get(sceneActions.read);
 
-// Edit/Delete an existing scene (requires to be TEACHER of the play the scene belongs to)
 router
   .route(SCENE_PATH)
   .all(checkIsTeacherBySceneId)

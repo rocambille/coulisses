@@ -4,7 +4,8 @@ import { useRefresh } from "../../src/react/components/RefreshContext";
 import { cache, mutate } from "../../src/react/components/utils";
 import {
   expectCsrfCookie,
-  expectFetch,
+  expectFetchFrom,
+  fromRequestBody,
   mainPlay,
   renderHookAsync,
   renderWithStub,
@@ -58,10 +59,13 @@ describe("React: Base Components & Utilities", () => {
 
   describe("mutate", () => {
     it("should send a mutation request with a body", async () => {
-      const data = await mutate("/api/plays/1", "put", {});
+      const data = await mutate("/api/plays/1", "put", {
+        ...mainPlay,
+        title: fromRequestBody("plays", "update", "teacher", "title"),
+      });
 
       expectCsrfCookie();
-      expectFetch("/api/plays/1", "put", {});
+      expectFetchFrom("plays", "update", "teacher");
       expect(data).toEqual(new Response(null, { status: 204 }));
     });
 
@@ -69,7 +73,7 @@ describe("React: Base Components & Utilities", () => {
       const data = await mutate("/api/plays/1", "delete");
 
       expectCsrfCookie();
-      expectFetch("/api/plays/1", "delete");
+      expectFetchFrom("plays", "delete", "teacher");
       expect(data).toEqual(new Response(null, { status: 204 }));
     });
   });

@@ -4,7 +4,8 @@ import CalendarPage from "../../src/react/components/play/CalendarPage";
 import {
   actorUser,
   expectCsrfCookie,
-  expectFetch,
+  expectFetchFrom,
+  fromRequestBody,
   mainPlay,
   openingNightEvent,
   renderWithStub,
@@ -32,7 +33,7 @@ describe("React: CalendarPage", () => {
 
     await waitFor(() => screen.getByRole("heading", { level: 2 }));
 
-    expect(screen.queryByLabelText(/ajouter.*28T/i)).toBeNull();
+    expect(screen.queryByLabelText(/ajouter.*28$/i)).toBeNull();
   });
 
   it("should allow user to navigate previous month", async () => {
@@ -75,7 +76,7 @@ describe("React: CalendarPage", () => {
       { user: teacherUser },
     );
 
-    await waitFor(() => screen.getByLabelText(/ajouter.*28T/i));
+    await waitFor(() => screen.getByLabelText(/ajouter.*28$/i));
   });
 
   it("should open event details (actor)", async () => {
@@ -189,17 +190,15 @@ describe("React: CalendarPage", () => {
 
     const titleInput = screen.getByLabelText(/titre/i);
     await user.clear(titleInput);
-    await user.type(titleInput, "Updated Night");
+    await user.type(
+      titleInput,
+      fromRequestBody("events", "update", "opening_night", "title"),
+    );
 
     await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
     expectCsrfCookie();
-    expectFetch(`/api/events/${openingNightEvent.id}`, "put", {
-      ...openingNightEvent,
-      id: undefined,
-      play_id: undefined,
-      title: "Updated Night",
-    });
+    expectFetchFrom("events", "update", "opening_night");
 
     expect(screen.queryByRole("button", { name: /enregistrer/i })).toBeNull();
   });
@@ -223,14 +222,12 @@ describe("React: CalendarPage", () => {
     await user.click(screen.getByRole("button", { name: /supprimer/i }));
 
     expectCsrfCookie();
-    expectFetch(`/api/events/${openingNightEvent.id}`, "delete");
+    expectFetchFrom("events", "delete", "opening_night");
 
     expect(screen.queryByRole("button", { name: /supprimer/i })).toBeNull();
   });
 
   it("should open form to create a new event on a date (teacher)", async () => {
-    vi.setSystemTime(new Date("2026-06-05T12:00:00Z"));
-
     await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
@@ -240,7 +237,7 @@ describe("React: CalendarPage", () => {
 
     const user = userEvent.setup();
 
-    await user.click(screen.getByLabelText(/ajouter.*28T/i));
+    await user.click(screen.getByLabelText(/ajouter.*28$/i));
 
     await waitFor(() => screen.getByRole("button", { name: /^ajouter$/i }));
     await waitFor(() => screen.getByRole("button", { name: /fermer/i }));
@@ -256,7 +253,7 @@ describe("React: CalendarPage", () => {
 
     const user = userEvent.setup();
 
-    await user.click(screen.getByLabelText(/ajouter.*28T/i));
+    await user.click(screen.getByLabelText(/ajouter.*28$/i));
 
     await user.click(screen.getByRole("button", { name: /fermer/i }));
 
@@ -266,7 +263,11 @@ describe("React: CalendarPage", () => {
   });
 
   it("should open form and create a new event on a date (teacher)", async () => {
-    vi.setSystemTime(new Date("2026-06-05T12:00:00Z"));
+    vi.setSystemTime(
+      new Date(
+        fromRequestBody("events", "create", "opening_night", "start_time"),
+      ),
+    );
 
     await renderWithStub(
       "/plays/:playId/calendar",
@@ -277,21 +278,24 @@ describe("React: CalendarPage", () => {
 
     const user = userEvent.setup();
 
-    await user.click(screen.getByLabelText(/ajouter.*28T/i));
+    await user.click(
+      screen.getByLabelText(
+        new RegExp(
+          `ajouter.*${fromRequestBody("events", "create", "opening_night", "start_time").split("T")[0]}`,
+          "i",
+        ),
+      ),
+    );
 
-    await user.type(screen.getByLabelText(/titre/i), "New Rehearsal");
+    await user.type(
+      screen.getByLabelText(/titre/i),
+      fromRequestBody("events", "create", "opening_night", "title"),
+    );
 
     await user.click(screen.getByRole("button", { name: /^ajouter$/i }));
 
     expectCsrfCookie();
-    expectFetch(`/api/plays/${mainPlay.id}/events`, "post", {
-      title: "New Rehearsal",
-      type: "SHOW",
-      start_time: "2026-06-28T17:00:00.000Z",
-      end_time: "2026-06-28T19:00:00.000Z",
-      location: "",
-      description: "",
-    });
+    expectFetchFrom("events", "create", "opening_night");
     await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
   });
 });

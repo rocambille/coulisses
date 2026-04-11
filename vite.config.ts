@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => ({
         "tests/**/mocks.ts",
         "tests/**/mocks.tsx",
         "tests/contracts.ts",
+        "tests/data.ts",
       ],
     },
   },

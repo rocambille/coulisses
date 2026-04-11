@@ -4,7 +4,8 @@ import MembersPage from "../../src/react/components/play/MembersPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
   expectCsrfCookie,
-  expectFetch,
+  expectFetchFrom,
+  fromRequestBody,
   mainPlay,
   renderWithStub,
   setupApiMocks,
@@ -66,13 +67,13 @@ describe("React: MembersPage", () => {
 
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText(/email/i), "test@mail.com");
+    await user.type(
+      screen.getByLabelText(/email/i),
+      fromRequestBody("members", "invite", "teacher", "email"),
+    );
     await user.click(screen.getByRole("button", { name: /inviter/i }));
 
     expectCsrfCookie();
-    expectFetch(`/api/plays/${mainPlay.id}/members`, "post", {
-      email: "test@mail.com",
-      role: "ACTOR",
-    });
+    expectFetchFrom("members", "invite", "teacher");
   });
 });

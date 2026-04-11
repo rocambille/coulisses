@@ -12,7 +12,7 @@ class PlayRepository {
   async create(play: Omit<Play, "id">) {
     const [result] = await databaseClient.query<Result>(
       "insert into play (title, description) values (?, ?)",
-      [play.title, play.description ?? null],
+      [play.title, play.description],
     );
 
     return result.insertId;

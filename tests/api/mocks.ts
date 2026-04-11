@@ -1,10 +1,11 @@
 import express, { type ErrorRequestHandler } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import type { QueryOptions } from "mysql2";
-import supertest, { type Test } from "supertest";
+import supertest from "supertest";
 
 import databaseClient from "../../src/database/client";
 import routes from "../../src/express/routes";
+import type { Test } from "../contracts";
 import {
   actorUser,
   allUsers,
@@ -16,9 +17,7 @@ import {
   mainScenes,
   openingNightEvent,
   teacherUser,
-} from "../mocks";
-
-export * from "../mocks";
+} from "../data";
 
 // -------------------------
 // Mocked DB content
@@ -55,7 +54,7 @@ const mockedData = {
   event: [openingNightEvent],
 };
 
-export const members = (play: { id: number }) =>
+const members = (play: { id: number }) =>
   mockedData.play_member
     .filter((pm) => pm.play_id === play.id)
     .map((pm) => ({
@@ -74,7 +73,7 @@ export const members = (play: { id: number }) =>
  */
 const normalize = (sql: string) => sql.replace(/\s+/g, " ").trim();
 
-export const mockDatabaseClient = () => {
+const mockDatabaseClient = () => {
   databaseClient.query = vi
     .fn()
     .mockImplementation(
@@ -238,28 +237,9 @@ export const mockDatabaseClient = () => {
     );
 };
 
-export const setupDatabaseMocks = () => {
+export const setupMocks = () => {
   mockDatabaseClient();
-};
-
-// -------------------------
-// JWT.verify mock
-// -------------------------
-
-export const setupApiAuth = (
-  user: { id: number } | { email: string } | null,
-) => {
-  vi.spyOn(jwt, "verify").mockImplementation((): JwtPayload => {
-    if (user == null) {
-      throw new Error("Invalid token");
-    }
-
-    if ("id" in user) {
-      return { sub: user.id.toString() };
-    }
-
-    return { sub: user.email };
-  });
+  vi.spyOn(jwt, "sign").mockImplementation(() => "fake_jwt_token");
 };
 
 // -------------------------
@@ -278,26 +258,45 @@ const logErrors: ErrorRequestHandler = (err, req, _res, next) => {
 app.use(logErrors);
 
 // Wrapper for supertest
-export const api = supertest(app);
+const api = supertest(app);
 
-// Helper for call options
-export const using = (
-  apiCall: Test,
-  {
-    withAuth = true,
-    withCsrf = true,
-  }: {
-    withAuth?: boolean;
-    withCsrf?: boolean;
-  } = {},
-) => {
-  const cookies = [];
-  if (withAuth) {
-    cookies.push("__Host-auth=jwt");
+// Helper to check a contract case
+export const check = async (test: Test, caseName: keyof Test["cases"]) => {
+  const c = test.cases[caseName];
+
+  const apiCall = api[test.method](c.path ?? test.path);
+
+  if (c.request.body != null) {
+    apiCall.send(c.request.body);
   }
-  if (apiCall.method !== "GET" && withCsrf) {
+
+  const cookies = [];
+
+  if (c.request.jwtPayload !== undefined) {
+    cookies.push("__Host-auth=jwt");
+
+    vi.spyOn(jwt, "verify").mockImplementation((): JwtPayload => {
+      if (c.request.jwtPayload == null) {
+        throw new Error("Invalid token");
+      }
+
+      return { sub: c.request.jwtPayload.sub.toString() };
+    });
+  }
+
+  if (apiCall.method !== "GET" && !c.request.withoutCsrfProtection) {
     apiCall.set("X-CSRF-Token", "a-b-c-d-e");
     cookies.push("__Host-x-csrf-token=a-b-c-d-e");
   }
-  return apiCall.set("Cookie", cookies);
+
+  const response = await apiCall.set("Cookie", cookies);
+
+  expect(response.status).toBe(c.response.status);
+  expect(response.body).toEqual(c.response.body);
+
+  if (c.response.and) {
+    c.response.and(response);
+  }
+
+  return response;
 };

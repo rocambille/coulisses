@@ -18,7 +18,6 @@ const CASTINGS_BY_PLAY_PATH = "/api/plays/:playId/castings";
 
 router.param("playId", playParamConverter.convert);
 
-// Reusable middlewares to check permissions
 const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
   const userId = req.me.id;
   const playId = req.play.id;
@@ -45,7 +44,6 @@ const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
 
 router.use(CASTINGS_BY_PLAY_PATH, authActions.verifyAccessToken);
 
-// Teacher can assign a role to a user
 router
   .route(CASTINGS_BY_PLAY_PATH)
   .post(

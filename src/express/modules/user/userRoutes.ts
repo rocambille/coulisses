@@ -13,7 +13,6 @@ import userActions from "./userActions";
 import userParamConverter from "./userParamConverter";
 import userValidator from "./userValidator";
 
-const BASE_PATH = "/api/users";
 const USER_PATH = "/api/users/:userId";
 
 router.param("userId", userParamConverter.convert);
@@ -26,25 +25,11 @@ const checkAccess: RequestHandler = (req, res, next) => {
   }
 };
 
-/*
-  Public read-only endpoints.
-*/
-router.get(BASE_PATH, userActions.browse);
-router.get(USER_PATH, userActions.read);
-
-/*
-  Everything below this line requires authentication.
-*/
-router.use(BASE_PATH, authActions.verifyAccessToken);
-
-/*
-  User-specific mutations.
-  - Authentication already enforced
-  - Ownership enforced via checkAccess
-*/
+router.use(USER_PATH, authActions.verifyAccessToken);
 router
   .route(USER_PATH)
   .all(checkAccess)
+  .get(userActions.read)
   .put(userValidator.validate, userActions.edit)
   .delete(userActions.destroy);
 

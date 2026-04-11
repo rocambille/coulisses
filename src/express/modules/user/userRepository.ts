@@ -56,15 +56,6 @@ class UserRepository {
     return { id, email, name: name ?? email.split("@")[0] };
   }
 
-  async findAll(limit: number, offset: number): Promise<User[]> {
-    const [rows] = await databaseClient.query<Rows>(
-      "select id, email, name from user where deleted_at is null limit ? offset ?",
-      [limit, offset],
-    );
-
-    return rows.map<User>(({ id, email, name }) => ({ id, email, name }));
-  }
-
   async update(id: number, user: Omit<User, "id">) {
     const [result] = await databaseClient.query<Result>(
       "update user set email = ?, name = ? where id = ? and deleted_at is null",
