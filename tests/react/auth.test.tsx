@@ -11,19 +11,18 @@ import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
 import VerifyPage from "../../src/react/components/auth/VerifyPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  expectCsrfCookie,
-  expectFetchFrom,
-  expectNoFetch,
-  fromRequestBody,
+  expectFetchTo,
   mockFetch,
   renderHookAsync,
   renderWithStub,
-  setupApiMocks,
+  requestValue,
+  setupMocks,
   teacherUser,
-} from "./mocks";
+} from ".";
 
 describe("React auth components", () => {
   beforeEach(() => {
+    setupMocks();
     invalidateCache("/api/me");
   });
 
@@ -32,9 +31,6 @@ describe("React auth components", () => {
     vi.unstubAllGlobals();
   });
   describe("<AuthProvider />", () => {
-    beforeEach(() => {
-      setupApiMocks();
-    });
     it("should render its children", async () => {
       await renderWithStub(
         "/",
@@ -49,13 +45,10 @@ describe("React auth components", () => {
         () => <AuthProvider>hello, world!</AuthProvider>,
         ["/"],
       );
-      await waitFor(() => expectFetchFrom("auth", "me", "teacher"));
+      await waitFor(() => expectFetchTo("auth", "me", "teacher"));
     });
   });
   describe("useAuth()", () => {
-    beforeEach(() => {
-      setupApiMocks();
-    });
     it("should be used within <AuthProvider>", async () => {
       // Avoid exception noise in console
       vi.spyOn(console, "error").mockImplementationOnce(() => {});
@@ -95,8 +88,7 @@ describe("React auth components", () => {
 
       await act(async () => await auth.sendMagicLink(teacherUser.email));
 
-      expectCsrfCookie();
-      expectFetchFrom("auth", "magic_link", "teacher");
+      expectFetchTo("auth", "magic_link", "teacher");
     });
     it("should return a verifyMagicLink function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
@@ -117,12 +109,11 @@ describe("React auth components", () => {
       await act(
         async () =>
           await auth.verifyMagicLink(
-            String(fromRequestBody("auth", "verify", "new_user", "token")),
+            requestValue("auth", "verify", "new_user", "token"),
           ),
       );
 
-      expectCsrfCookie();
-      expectFetchFrom("auth", "verify", "new_user");
+      expectFetchTo("auth", "verify", "new_user");
     });
     it("should return a logout function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
@@ -135,8 +126,7 @@ describe("React auth components", () => {
 
       await act(async () => await auth.logout());
 
-      expectCsrfCookie();
-      expectFetchFrom("auth", "logout", "anyone");
+      expectFetchTo("auth", "logout", "anyone");
     });
     it("should throw when logout fails", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
@@ -160,14 +150,10 @@ describe("React auth components", () => {
 
       await expect(auth.logout()).rejects.toThrow(/logout/i);
 
-      expectCsrfCookie();
-      expectFetchFrom("auth", "logout", "anyone");
+      expectFetchTo("auth", "logout", "anyone");
     });
   });
   describe("<MagicLinkForm />", () => {
-    beforeEach(() => {
-      setupApiMocks();
-    });
     it("should mount successfully", async () => {
       await renderWithStub("/", MagicLinkForm, ["/"]);
       await waitFor(() => screen.getByRole("button"));
@@ -181,13 +167,10 @@ describe("React auth components", () => {
       await user.type(screen.getByLabelText(/^email$/i), teacherUser.email);
       await user.click(screen.getByRole("button"));
 
-      expectFetchFrom("auth", "magic_link", "teacher");
+      expectFetchTo("auth", "magic_link", "teacher");
     });
   });
   describe("<LogoutForm />", () => {
-    beforeEach(() => {
-      setupApiMocks();
-    });
     it("should mount successfully", async () => {
       await renderWithStub("/", LogoutForm, ["/"], {
         user: { id: 1, email: "foo@mail.com", name: "foo" },
@@ -204,13 +187,10 @@ describe("React auth components", () => {
 
       await user.click(screen.getByRole("button"));
 
-      expectFetchFrom("auth", "logout", "anyone");
+      expectFetchTo("auth", "logout", "anyone");
     });
   });
   describe("<VerifyPage />", () => {
-    beforeEach(() => {
-      setupApiMocks();
-    });
     it("should mount successfully", async () => {
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
       vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
@@ -233,7 +213,7 @@ describe("React auth components", () => {
         "/verify?token=fake_jwt_token",
       ]);
 
-      await waitFor(() => expectFetchFrom("auth", "verify", "new_user"));
+      await waitFor(() => expectFetchTo("auth", "verify", "new_user"));
 
       expect(mockedNavigate).toHaveBeenCalledWith("/", { replace: true });
     });
@@ -249,7 +229,7 @@ describe("React auth components", () => {
 
       await waitFor(() => screen.getByText(/invalide/i));
 
-      expectFetchFrom("auth", "verify", "unauthorized");
+      expectFetchTo("auth", "verify", "unauthorized");
       expect(mockedNavigate).not.toHaveBeenCalled();
     });
     it("should display error when token is missing", async () => {
@@ -262,7 +242,12 @@ describe("React auth components", () => {
 
       await waitFor(() => screen.getByText(/invalide/i));
 
-      expectNoFetch("/api/auth/verify", "post");
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(
+        "/api/auth/verify",
+        expect.objectContaining({
+          method: "post",
+        }),
+      );
       expect(mockedNavigate).not.toHaveBeenCalled();
     });
   });

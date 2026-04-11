@@ -3,19 +3,18 @@ import userEvent from "@testing-library/user-event";
 import ScenesPage from "../../src/react/components/play/ScenesPage";
 import {
   actorUser,
-  expectCsrfCookie,
-  expectFetchFrom,
-  fromRequestBody,
+  expectFetchTo,
   mainPlay,
   mainScenes,
   renderWithStub,
-  setupApiMocks,
+  requestValue,
+  setupMocks,
   teacherUser,
-} from "./mocks";
+} from ".";
 
 describe("React: ScenesPage", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupMocks();
   });
 
   afterEach(() => {
@@ -48,12 +47,11 @@ describe("React: ScenesPage", () => {
 
     await user.type(
       screen.getByLabelText(/titre/i),
-      fromRequestBody("scenes", "create", "teacher", "title"),
+      requestValue("scenes", "create", "teacher", "title"),
     );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-    expectCsrfCookie();
-    expectFetchFrom("scenes", "create", "teacher");
+    expectFetchTo("scenes", "create", "teacher");
   });
 
   it("should update preference successfully (actor)", async () => {
@@ -73,8 +71,7 @@ describe("React: ScenesPage", () => {
       "HIGH",
     );
 
-    expectCsrfCookie();
-    expectFetchFrom("preferences", "upsert", "update");
+    expectFetchTo("preferences", "upsert", "update");
   });
 
   it("should add a new preference successfully (actor)", async () => {
@@ -94,8 +91,7 @@ describe("React: ScenesPage", () => {
       "HIGH",
     );
 
-    expectCsrfCookie();
-    expectFetchFrom("preferences", "upsert", "insert");
+    expectFetchTo("preferences", "upsert", "insert");
   });
 
   it("should display edit form when clicking on edit button", async () => {
@@ -185,7 +181,7 @@ describe("React: ScenesPage", () => {
     await user.clear(screen.getByLabelText(/^titre$/i));
     await user.type(
       screen.getByLabelText(/^titre$/i),
-      fromRequestBody("scenes", "update", "first_scene", "title"),
+      requestValue("scenes", "update", "first_scene", "title"),
     );
     await user.click(
       screen.getByLabelText(
@@ -193,8 +189,7 @@ describe("React: ScenesPage", () => {
       ),
     );
 
-    expectCsrfCookie();
-    expectFetchFrom("scenes", "update", "first_scene");
+    expectFetchTo("scenes", "update", "first_scene");
   });
 
   it("should delete a scene successfully (teacher)", async () => {
@@ -213,8 +208,7 @@ describe("React: ScenesPage", () => {
       ),
     );
 
-    expectCsrfCookie();
-    expectFetchFrom("scenes", "delete", "first_scene");
+    expectFetchTo("scenes", "delete", "first_scene");
   });
 
   it("should select no preference when user has no preference", async () => {

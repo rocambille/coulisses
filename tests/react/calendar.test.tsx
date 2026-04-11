@@ -3,19 +3,18 @@ import userEvent from "@testing-library/user-event";
 import CalendarPage from "../../src/react/components/play/CalendarPage";
 import {
   actorUser,
-  expectCsrfCookie,
-  expectFetchFrom,
-  fromRequestBody,
+  expectFetchTo,
   mainPlay,
   openingNightEvent,
   renderWithStub,
-  setupApiMocks,
+  requestValue,
+  setupMocks,
   teacherUser,
-} from "./mocks";
+} from ".";
 
 describe("React: CalendarPage", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupMocks();
   });
 
   afterEach(() => {
@@ -192,13 +191,12 @@ describe("React: CalendarPage", () => {
     await user.clear(titleInput);
     await user.type(
       titleInput,
-      fromRequestBody("events", "update", "opening_night", "title"),
+      requestValue("events", "update", "opening_night", "title"),
     );
 
     await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
-    expectCsrfCookie();
-    expectFetchFrom("events", "update", "opening_night");
+    expectFetchTo("events", "update", "opening_night");
 
     expect(screen.queryByRole("button", { name: /enregistrer/i })).toBeNull();
   });
@@ -221,8 +219,7 @@ describe("React: CalendarPage", () => {
     );
     await user.click(screen.getByRole("button", { name: /supprimer/i }));
 
-    expectCsrfCookie();
-    expectFetchFrom("events", "delete", "opening_night");
+    expectFetchTo("events", "delete", "opening_night");
 
     expect(screen.queryByRole("button", { name: /supprimer/i })).toBeNull();
   });
@@ -264,9 +261,7 @@ describe("React: CalendarPage", () => {
 
   it("should open form and create a new event on a date (teacher)", async () => {
     vi.setSystemTime(
-      new Date(
-        fromRequestBody("events", "create", "opening_night", "start_time"),
-      ),
+      new Date(requestValue("events", "create", "opening_night", "start_time")),
     );
 
     await renderWithStub(
@@ -281,7 +276,7 @@ describe("React: CalendarPage", () => {
     await user.click(
       screen.getByLabelText(
         new RegExp(
-          `ajouter.*${fromRequestBody("events", "create", "opening_night", "start_time").split("T")[0]}`,
+          `ajouter.*${requestValue("events", "create", "opening_night", "start_time").split("T")[0]}`,
           "i",
         ),
       ),
@@ -289,13 +284,12 @@ describe("React: CalendarPage", () => {
 
     await user.type(
       screen.getByLabelText(/titre/i),
-      fromRequestBody("events", "create", "opening_night", "title"),
+      requestValue("events", "create", "opening_night", "title"),
     );
 
     await user.click(screen.getByRole("button", { name: /^ajouter$/i }));
 
-    expectCsrfCookie();
-    expectFetchFrom("events", "create", "opening_night");
+    expectFetchTo("events", "create", "opening_night");
     await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
   });
 });

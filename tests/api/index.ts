@@ -23,7 +23,7 @@ import {
 // Mocked DB content
 // -------------------------
 
-const playMembersDb: PlayMember[] = [
+const playMembers: PlayMember[] = [
   {
     id: 1,
     user_id: teacherUser.id,
@@ -38,17 +38,17 @@ const playMembersDb: PlayMember[] = [
   },
 ];
 
-const sceneRolesDb: { scene_id: number; role_id: number }[] = [
+const sceneRoles: { scene_id: number; role_id: number }[] = [
   { scene_id: 1, role_id: 1 },
 ];
 
 const mockedData = {
   user: allUsers,
   play: [mainPlay],
-  play_member: playMembersDb,
+  play_member: playMembers,
   scene: mainScenes,
   role: mainRoles,
-  scene_role: sceneRolesDb,
+  scene_role: sceneRoles,
   preference: mainPreferences,
   casting: mainCastings,
   event: [openingNightEvent],
@@ -260,7 +260,7 @@ app.use(logErrors);
 // Wrapper for supertest
 const api = supertest(app);
 
-// Helper to check a contract case
+// Helper to check a test case
 export const check = async (test: Test, caseName: keyof Test["cases"]) => {
   const c = test.cases[caseName];
 

@@ -3,18 +3,17 @@ import userEvent from "@testing-library/user-event";
 import RolesPage from "../../src/react/components/play/RolesPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  expectCsrfCookie,
-  expectFetchFrom,
-  fromRequestBody,
+  expectFetchTo,
   mainPlay,
   renderWithStub,
-  setupApiMocks,
+  requestValue,
+  setupMocks,
   teacherUser,
-} from "./mocks";
+} from ".";
 
 describe("React: RolesPage", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupMocks();
     invalidateCache(`/api/plays/${mainPlay.id}/roles`);
   });
 
@@ -35,7 +34,7 @@ describe("React: RolesPage", () => {
   });
 
   it("should display a message when the play has no roles", async () => {
-    setupApiMocks((path, method) => {
+    setupMocks((path, method) => {
       if (path === `/api/plays/${mainPlay.id}/roles` && method === "get") {
         return Promise.resolve().then(
           () =>
@@ -69,11 +68,10 @@ describe("React: RolesPage", () => {
 
     await user.type(
       screen.getByLabelText(/nom/i),
-      fromRequestBody("roles", "create", "no_scene", "name"),
+      requestValue("roles", "create", "no_scene", "name"),
     );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-    expectCsrfCookie();
-    expectFetchFrom("roles", "create", "no_scene");
+    expectFetchTo("roles", "create", "no_scene");
   });
 });

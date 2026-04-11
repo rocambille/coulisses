@@ -3,18 +3,17 @@ import userEvent from "@testing-library/user-event";
 import DashboardPage from "../../src/react/components/DashboardPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  expectCsrfCookie,
-  expectFetchFrom,
-  fromRequestBody,
+  expectFetchTo,
   renderWithStub,
-  setupApiMocks,
+  requestValue,
+  setupMocks,
   teacherUser,
   thirdUser,
-} from "./mocks";
+} from ".";
 
 describe("<DashboardPage />", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupMocks();
     invalidateCache("/api/plays");
   });
 
@@ -35,7 +34,7 @@ describe("<DashboardPage />", () => {
   });
 
   it("should display a message when the user has no plays", async () => {
-    setupApiMocks((path, method) => {
+    setupMocks((path, method) => {
       if (path === "/api/plays" && method === "get") {
         return Promise.resolve().then(
           () =>
@@ -59,11 +58,10 @@ describe("<DashboardPage />", () => {
 
     await user.type(
       screen.getByLabelText(/titre/i),
-      fromRequestBody("plays", "create", "teacher", "title"),
+      requestValue("plays", "create", "teacher", "title"),
     );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-    expectCsrfCookie();
-    expectFetchFrom("plays", "create", "teacher");
+    expectFetchTo("plays", "create", "teacher");
   });
 });

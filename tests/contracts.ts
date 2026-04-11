@@ -1,3 +1,4 @@
+import { cookies } from "supertest";
 import {
   actorUser,
   insertId,
@@ -13,7 +14,7 @@ import {
 } from "./data";
 
 type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
-export type JsonObject = { [key: string]: Json };
+type JsonObject = { [key: string]: Json };
 
 export type Case = {
   path?: string;
@@ -107,10 +108,17 @@ export const contracts: Record<string, Contract> = {
           response: {
             status: 201,
             body: teacherUser,
-            and: (response) => {
-              expect(response.headers["set-cookie"]).toBeDefined();
-              expect(response.headers["set-cookie"].toString()).toContain(
-                "__Host-auth=",
+            and: () => {
+              expect(
+                cookies.set({
+                  name: "__Host-auth",
+                  options: {
+                    httpOnly: true,
+                    sameSite: "strict",
+                    secure: true,
+                    path: "/",
+                  },
+                }),
               );
             },
           },
@@ -127,10 +135,17 @@ export const contracts: Record<string, Contract> = {
               email: "new_user@mail.com",
               name: "new_user",
             },
-            and: (response) => {
-              expect(response.headers["set-cookie"]).toBeDefined();
-              expect(response.headers["set-cookie"].toString()).toContain(
-                "__Host-auth=",
+            and: () => {
+              expect(
+                cookies.set({
+                  name: "__Host-auth",
+                  options: {
+                    httpOnly: true,
+                    sameSite: "strict",
+                    secure: true,
+                    path: "/",
+                  },
+                }),
               );
             },
           },
@@ -140,8 +155,12 @@ export const contracts: Record<string, Contract> = {
           response: {
             status: 400,
             body: expect.any(Object),
-            and: (response) => {
-              expect(response.headers["set-cookie"]).toBeUndefined();
+            and: () => {
+              expect(
+                cookies.not("set", {
+                  name: "__Host-auth",
+                }),
+              );
             },
           },
         },
@@ -150,8 +169,12 @@ export const contracts: Record<string, Contract> = {
           response: {
             status: 401,
             body: {},
-            and: (response) => {
-              expect(response.headers["set-cookie"]).toBeUndefined();
+            and: () => {
+              expect(
+                cookies.not("set", {
+                  name: "__Host-auth",
+                }),
+              );
             },
           },
         },

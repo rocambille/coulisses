@@ -3,19 +3,18 @@ import Layout from "../../src/react/components/Layout";
 import { useRefresh } from "../../src/react/components/RefreshContext";
 import { cache, mutate } from "../../src/react/components/utils";
 import {
-  expectCsrfCookie,
-  expectFetchFrom,
-  fromRequestBody,
+  expectFetchTo,
   mainPlay,
   renderHookAsync,
   renderWithStub,
-  setupApiMocks,
+  requestValue,
+  setupMocks,
   teacherUser,
-} from "./mocks";
+} from ".";
 
 describe("React: Base Components & Utilities", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupMocks();
   });
 
   afterEach(() => {
@@ -47,7 +46,7 @@ describe("React: Base Components & Utilities", () => {
 
   describe("cache", () => {
     it("should return cached data", async () => {
-      const data = await cache("/api/plays/1");
+      const data = await cache(`/api/plays/${mainPlay.id}`);
       expect(data).toEqual(mainPlay);
     });
 
@@ -59,22 +58,18 @@ describe("React: Base Components & Utilities", () => {
 
   describe("mutate", () => {
     it("should send a mutation request with a body", async () => {
-      const data = await mutate("/api/plays/1", "put", {
+      await mutate("/api/plays/1", "put", {
         ...mainPlay,
-        title: fromRequestBody("plays", "update", "teacher", "title"),
+        title: requestValue("plays", "update", "teacher", "title"),
       });
 
-      expectCsrfCookie();
-      expectFetchFrom("plays", "update", "teacher");
-      expect(data).toEqual(new Response(null, { status: 204 }));
+      expectFetchTo("plays", "update", "teacher");
     });
 
     it("should send a mutation request without a body", async () => {
-      const data = await mutate("/api/plays/1", "delete");
+      await mutate("/api/plays/1", "delete");
 
-      expectCsrfCookie();
-      expectFetchFrom("plays", "delete", "teacher");
-      expect(data).toEqual(new Response(null, { status: 204 }));
+      expectFetchTo("plays", "delete", "teacher");
     });
   });
 

@@ -3,18 +3,17 @@ import userEvent from "@testing-library/user-event";
 import MembersPage from "../../src/react/components/play/MembersPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  expectCsrfCookie,
-  expectFetchFrom,
-  fromRequestBody,
+  expectFetchTo,
   mainPlay,
   renderWithStub,
-  setupApiMocks,
+  requestValue,
+  setupMocks,
   teacherUser,
-} from "./mocks";
+} from ".";
 
 describe("React: MembersPage", () => {
   beforeEach(() => {
-    setupApiMocks();
+    setupMocks();
     invalidateCache(`/api/plays/${mainPlay.id}/members`);
   });
 
@@ -35,7 +34,7 @@ describe("React: MembersPage", () => {
   });
 
   it("should display a message when the play has no members", async () => {
-    setupApiMocks((path, method) => {
+    setupMocks((path, method) => {
       if (path === `/api/plays/${mainPlay.id}/members` && method === "get") {
         return Promise.resolve().then(
           () =>
@@ -69,11 +68,10 @@ describe("React: MembersPage", () => {
 
     await user.type(
       screen.getByLabelText(/email/i),
-      fromRequestBody("members", "invite", "teacher", "email"),
+      requestValue("members", "invite", "teacher", "email"),
     );
     await user.click(screen.getByRole("button", { name: /inviter/i }));
 
-    expectCsrfCookie();
-    expectFetchFrom("members", "invite", "teacher");
+    expectFetchTo("members", "invite", "teacher");
   });
 });

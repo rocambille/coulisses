@@ -11,8 +11,8 @@ export * from "../data";
 // Fetch mock (contract-based)
 // -------------------------
 
-const respond = (data: unknown, status: number) => {
-  const json = JSON.stringify(data);
+const respond = (body: unknown, status: number) => {
+  const json = JSON.stringify(body);
 
   if (json === "{}") {
     return Promise.resolve(new Response(null, { status }));
@@ -25,9 +25,6 @@ const respond = (data: unknown, status: number) => {
     }),
   );
 };
-
-const fromContract = (c: { status: number; body: unknown }) =>
-  respond(c.body, c.status);
 
 export const mockFetch = (
   custom?: (
@@ -60,7 +57,7 @@ export const mockFetch = (
           for (const [_caseName, c] of Object.entries(test.cases)) {
             if (path === (c.path ?? test.path) && method === test.method) {
               if (init?.body === JSON.stringify(c.request.body)) {
-                return fromContract(c.response);
+                return respond(c.response.body, c.response.status);
               }
             }
           }
@@ -90,12 +87,15 @@ export const renderHookAsync = async <
 
 type StubRouteObject = Parameters<typeof createRoutesStub>[0][number];
 
-const stubRoute = (
+// Wrapping render in act is required here because we use Suspense (cache)
+// see https://github.com/testing-library/react-testing-library/issues/1375#issuecomment-2582198933
+export const renderWithStub = async (
   path: StubRouteObject["path"],
   Component: StubRouteObject["Component"],
+  initialEntries: string[],
   options: { user?: User | null } = {},
-) =>
-  createRoutesStub([
+) => {
+  const Stub = createRoutesStub([
     {
       path,
       Component: (props) => {
@@ -117,16 +117,6 @@ const stubRoute = (
         },
     },
   ]);
-
-// Wrapping render in act is required here because we use Suspense (cache)
-// see https://github.com/testing-library/react-testing-library/issues/1375#issuecomment-2582198933
-export const renderWithStub = async (
-  path: StubRouteObject["path"],
-  Component: StubRouteObject["Component"],
-  initialEntries: string[],
-  options: { user?: User | null } = {},
-) => {
-  const Stub = stubRoute(path, Component, options);
   return await act(async () =>
     render(<Stub initialEntries={initialEntries} />),
   );
@@ -134,7 +124,7 @@ export const renderWithStub = async (
 
 const mockedRandomUUID = "a-b-c-d-e";
 
-export const setupApiMocks = (
+export const setupMocks = (
   customFetch?: (path: string, method: string) => Promise<Response> | undefined,
 ) => {
   vi.stubGlobal("cookieStore", { get: vi.fn(), set: vi.fn() });
@@ -142,17 +132,7 @@ export const setupApiMocks = (
   mockFetch(customFetch);
 };
 
-export const expectCsrfCookie = () => {
-  expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-    expires: expect.any(Number),
-    name: "__Host-x-csrf-token",
-    path: "/",
-    sameSite: "strict",
-    value: mockedRandomUUID,
-  });
-};
-
-export const fromRequestBody = (
+export const requestValue = (
   contractName: keyof typeof contracts,
   testName: keyof Contract,
   caseName: keyof Test["cases"],
@@ -165,44 +145,42 @@ export const fromRequestBody = (
   throw new Error(`Case body is not an object: ${JSON.stringify(body)}`);
 };
 
-const expectFetch = (path: string, method: string, body?: unknown) => {
-  const headers: Record<string, string> = {};
-
-  if (method !== "get") {
-    headers["X-CSRF-Token"] = mockedRandomUUID;
-  }
-  if (body) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const fetchArgs: Parameters<typeof globalThis.fetch> = [path];
-
-  if (Object.keys(headers).length > 0 || method !== "get" || body) {
-    fetchArgs.push({
-      ...(method !== "get" ? { method } : {}),
-      ...(Object.keys(headers).length > 0 ? { headers } : {}),
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    });
-  }
-
-  expect(globalThis.fetch).toHaveBeenCalledWith(...fetchArgs);
-};
-
-export const expectFetchFrom = (
+export const expectFetchTo = (
   contractName: keyof typeof contracts,
   testName: keyof Contract,
   caseName: keyof Test["cases"],
 ) => {
-  const contract = contracts[contractName][testName];
-  const c = contract.cases[caseName];
-  expectFetch(c.path ?? contract.path, contract.method, c.request.body);
-};
+  const test = contracts[contractName][testName];
+  const c = test.cases[caseName];
 
-export const expectNoFetch = (path: string, method: string) => {
-  expect(globalThis.fetch).not.toHaveBeenCalledWith(
-    path,
-    expect.objectContaining({
-      method,
-    }),
-  );
+  const headers: Record<string, string> = {};
+
+  if (test.method !== "get") {
+    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
+      expires: expect.any(Number),
+      name: "__Host-x-csrf-token",
+      path: "/",
+      sameSite: "strict",
+      value: mockedRandomUUID,
+    });
+
+    headers["X-CSRF-Token"] = mockedRandomUUID;
+  }
+  if (c.request.body) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const init = {
+    ...(test.method !== "get" ? { method: test.method } : {}),
+    ...(Object.keys(headers).length > 0 ? { headers } : {}),
+    ...(c.request.body ? { body: JSON.stringify(c.request.body) } : {}),
+  };
+
+  const fetchArgs: Parameters<typeof globalThis.fetch> = [c.path ?? test.path];
+
+  if (Object.keys(init).length > 0) {
+    fetchArgs.push(init);
+  }
+
+  expect(globalThis.fetch).toHaveBeenCalledWith(...fetchArgs);
 };
