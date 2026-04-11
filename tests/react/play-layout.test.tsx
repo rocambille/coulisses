@@ -2,7 +2,12 @@ import { screen, waitFor } from "@testing-library/react";
 import * as AuthContext from "../../src/react/components/auth/AuthContext";
 import { useMembership } from "../../src/react/components/play/hooks";
 import PlayLayout from "../../src/react/components/play/PlayLayout";
-import { renderHookAsync, renderWithStub, setupMocks, teacherUser } from ".";
+import {
+  renderHookAsync,
+  renderWithStub,
+  setupMocks,
+  teacherUser,
+} from "./test-utils";
 
 describe("<PlayLayout />", () => {
   beforeEach(() => {

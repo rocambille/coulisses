@@ -9,7 +9,7 @@ import {
   requestValue,
   setupMocks,
   teacherUser,
-} from ".";
+} from "./test-utils";
 
 describe("React: RolesPage", () => {
   beforeEach(() => {

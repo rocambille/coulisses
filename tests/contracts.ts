@@ -13,8 +13,15 @@ import {
   thirdUser,
 } from "./data";
 
-type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
-type JsonObject = { [key: string]: Json };
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | { [key: string]: Json }
+  | Json[];
+export type JsonObject = { [key: string]: Json };
 
 export type Case = {
   path?: string;

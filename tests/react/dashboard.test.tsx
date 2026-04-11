@@ -9,7 +9,7 @@ import {
   setupMocks,
   teacherUser,
   thirdUser,
-} from ".";
+} from "./test-utils";
 
 describe("<DashboardPage />", () => {
   beforeEach(() => {

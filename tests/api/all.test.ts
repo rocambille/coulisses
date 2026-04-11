@@ -1,5 +1,5 @@
 import { contracts } from "../contracts";
-import { check, setupMocks } from ".";
+import { check, setupMocks } from "./test-utils";
 
 for (const [contractName, contract] of Object.entries(contracts)) {
   describe(contractName, () => {

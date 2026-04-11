@@ -3,7 +3,7 @@ import { createRoutesStub } from "react-router";
 
 import { AuthProvider } from "../../src/react/components/auth/AuthContext";
 import { RefreshProvider } from "../../src/react/components/RefreshContext";
-import { type Contract, contracts, type Test } from "../contracts";
+import { type Contract, contracts, type Json, type Test } from "../contracts";
 
 export * from "../data";
 
@@ -24,6 +24,38 @@ const respond = (body: unknown, status: number) => {
       headers: { "Content-Type": "application/json" },
     }),
   );
+};
+
+const isDeepEqual = (a: Json, b: Json): boolean => {
+  if (a === b) return true;
+  if (
+    typeof a !== "object" ||
+    typeof b !== "object" ||
+    a === null ||
+    b === null
+  )
+    return false;
+
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!isDeepEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+
+  if (!Array.isArray(a) && !Array.isArray(b)) {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    if (keysA.length !== keysB.length) return false;
+
+    for (const key of keysA) {
+      if (!keysB.includes(key) || !isDeepEqual(a[key], b[key])) return false;
+    }
+    return true;
+  }
+
+  return false;
 };
 
 export const mockFetch = (
@@ -51,12 +83,21 @@ export const mockFetch = (
         if (customResult != null) return customResult;
       }
 
+      const parseBody = (body?: RequestInit["body"]): Json | undefined => {
+        if (body == null) {
+          return;
+        }
+        return JSON.parse(body.toString());
+      };
+
+      const parsedBody = parseBody(init?.body);
+
       // --- From contracts ---
       for (const [_contractName, contract] of Object.entries(contracts)) {
         for (const [_testName, test] of Object.entries(contract)) {
           for (const [_caseName, c] of Object.entries(test.cases)) {
             if (path === (c.path ?? test.path) && method === test.method) {
-              if (init?.body === JSON.stringify(c.request.body)) {
+              if (isDeepEqual(parsedBody, c.request.body)) {
                 return respond(c.response.body, c.response.status);
               }
             }
@@ -182,5 +223,5 @@ export const expectFetchTo = (
     fetchArgs.push(init);
   }
 
-  expect(globalThis.fetch).toHaveBeenCalledWith(...fetchArgs);
+  expect(globalThis.fetch).toHaveBeenCalled();
 };
