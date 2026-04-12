@@ -1,6 +1,5 @@
 import { useId } from "react";
-import { useRefresh } from "../RefreshContext";
-import { invalidateCache, mutate } from "../utils";
+import { useAction } from "./hooks";
 
 function PreferenceSelector({
   sceneId,
@@ -12,17 +11,12 @@ function PreferenceSelector({
   currentLevel?: string;
 }) {
   const selectId = useId();
-  const { refresh } = useRefresh();
+  const runAction = useAction();
 
   const handleChange = async (level: string) => {
-    const response = await mutate(`/api/scenes/${sceneId}/preferences`, "put", {
-      level,
-    });
-
-    if (response.ok) {
-      invalidateCache(`/api/plays/${playId}/preferences`);
-      refresh();
-    }
+    await runAction(`/api/scenes/${sceneId}/preferences`, "put", { level }, [
+      `/api/plays/${playId}/preferences`,
+    ]);
   };
 
   return (

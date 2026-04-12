@@ -8,7 +8,9 @@ import routes from "../../src/express/routes";
 import type { Test } from "../contracts";
 import {
   actorUser,
+  allPlays,
   allUsers,
+  emptyPlay,
   insertId,
   mainCastings,
   mainPlay,
@@ -36,6 +38,12 @@ const playMembers: PlayMember[] = [
     play_id: mainPlay.id,
     role: "ACTOR" as const,
   },
+  {
+    id: 3,
+    user_id: teacherUser.id,
+    play_id: emptyPlay.id,
+    role: "TEACHER" as const,
+  },
 ];
 
 const sceneRoles: { scene_id: number; role_id: number }[] = [
@@ -44,7 +52,7 @@ const sceneRoles: { scene_id: number; role_id: number }[] = [
 
 const mockedData = {
   user: allUsers,
-  play: [mainPlay],
+  play: allPlays,
   play_member: playMembers,
   scene: mainScenes,
   role: mainRoles,
@@ -150,62 +158,30 @@ const mockDatabaseClient = () => {
           return [mockedData.role.filter((r) => r.play_id === playId), []];
         }
 
-        // castingRepository.getPlayCastingMatrix (Multiple queries for matrix)
-        if (/select \* from scene where play_id =/i.test(normalizedSql)) {
-          const playId = Number(
-            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
-          );
-          return [mockedData.scene.filter((s) => s.play_id === playId), []];
-        }
-        if (/select \* from role where play_id =/i.test(normalizedSql)) {
-          const playId = Number(
-            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
-          );
-          return [mockedData.role.filter((r) => r.play_id === playId), []];
-        }
+        // castingRepository.getPlayCastingMatrix
         if (
-          /select scene_id, role_id from scene_role where role_id in/i.test(
+          /select r.\*, json_arrayagg\(sr.scene_id\) as scene_ids, c.user_id as user_id/i.test(
             normalizedSql,
           )
         ) {
-          const roleIds = normalizedSql
-            .match(/role_id in \(([^)]+)\)/i)?.[1]
-            ?.split(",")
-            .map(Number);
+          const playId = Number(
+            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
+          );
           return [
-            mockedData.scene_role.filter((sr) => roleIds?.includes(sr.role_id)),
+            mockedData.role
+              .filter((r) => r.play_id === playId)
+              .map(({ id, name, description, play_id, scenes }) => ({
+                id,
+                name,
+                description,
+                play_id,
+                scene_ids: scenes.map((s) => s.id),
+                user_id:
+                  mockedData.casting.find((c) => c.role_id === id)?.user_id ??
+                  null,
+              })),
             [],
           ];
-        }
-        if (
-          /select role_id, user_id from casting where role_id in/i.test(
-            normalizedSql,
-          )
-        ) {
-          const roleIds = normalizedSql
-            .match(/role_id in \(([^)]+)\)/i)?.[1]
-            ?.split(",")
-            .map(Number);
-          return [
-            mockedData.casting.filter((c) => roleIds?.includes(c.role_id)),
-            [],
-          ];
-        }
-        if (
-          /select p\.* from preference p join scene s on p\.scene_id = s\.id where s\.play_id =/i.test(
-            normalizedSql,
-          )
-        ) {
-          const playId = Number(
-            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
-          );
-          const scenes = mockedData.scene
-            .filter((s) => s.play_id === playId)
-            .map((s) => s.id);
-          const preferences = mockedData.preference.filter((p) =>
-            scenes.includes(p.scene_id),
-          );
-          return [preferences, []];
         }
 
         // Generic Table Selects (Single Table, e.g., browse, findById)
@@ -225,6 +201,17 @@ const mockDatabaseClient = () => {
             const email = normalizedSql.match(/where email = '([^']+)'/i)?.[1];
             return [
               rows.filter((row) => "email" in row && row.email === email),
+              [],
+            ];
+          }
+
+          // WHERE play_id = ?
+          if (/\bwhere play_id =/i.test(normalizedSql)) {
+            const playId = Number(
+              normalizedSql.match(/where play_id = ([^\s]+)/i)?.[1],
+            );
+            return [
+              rows.filter((row) => "play_id" in row && row.play_id === playId),
               [],
             ];
           }

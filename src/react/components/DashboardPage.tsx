@@ -14,8 +14,6 @@ function DashboardPage() {
   const { me } = useAuth();
   const runAction = useAction();
 
-  if (!me) throw new Error("User not authenticated");
-
   const plays: Play[] = use(cache("/api/plays"));
 
   const handleAdd = async (formData: FormData) => {
@@ -30,7 +28,7 @@ function DashboardPage() {
     <>
       <hgroup>
         <h1>Mes Pièces</h1>
-        <p>{me.name}</p>
+        <p>{me?.name}</p>
       </hgroup>
 
       {plays.length === 0 ? (

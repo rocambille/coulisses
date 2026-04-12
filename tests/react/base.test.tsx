@@ -1,9 +1,9 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import Layout from "../../src/react/components/Layout";
 import { useRefresh } from "../../src/react/components/RefreshContext";
 import { cache, mutate } from "../../src/react/components/utils";
 import {
-  expectFetchTo,
+  expectContractCall,
   mainPlay,
   renderHookAsync,
   renderWithStub,
@@ -22,10 +22,18 @@ describe("React: Base Components & Utilities", () => {
     vi.useRealTimers();
   });
 
+  it("should render magic link form when not authenticated", async () => {
+    await renderWithStub("/", () => <Layout>hello, world!</Layout>, ["/"], {
+      user: null,
+    });
+
+    await screen.findByLabelText(/email/i);
+  });
+
   it("should mount successfully", async () => {
     await renderWithStub("/", () => <Layout />, ["/"], { user: teacherUser });
 
-    await waitFor(() => screen.getByRole("navigation"));
+    await screen.findByRole("navigation");
   });
 
   it("should render its children when authenticated", async () => {
@@ -33,15 +41,7 @@ describe("React: Base Components & Utilities", () => {
       user: teacherUser,
     });
 
-    await waitFor(() => screen.getByText("hello, world!"));
-  });
-
-  it("should render magic link form when not authenticated", async () => {
-    await renderWithStub("/", () => <Layout>hello, world!</Layout>, ["/"], {
-      user: null,
-    });
-
-    await waitFor(() => screen.getByLabelText(/email/i));
+    await screen.findByText("hello, world!");
   });
 
   describe("cache", () => {
@@ -63,13 +63,13 @@ describe("React: Base Components & Utilities", () => {
         title: requestValue("plays", "update", "teacher", "title"),
       });
 
-      expectFetchTo("plays", "update", "teacher");
+      expectContractCall("plays", "update", "teacher");
     });
 
     it("should send a mutation request without a body", async () => {
       await mutate("/api/plays/1", "delete");
 
-      expectFetchTo("plays", "delete", "teacher");
+      expectContractCall("plays", "delete", "teacher");
     });
   });
 

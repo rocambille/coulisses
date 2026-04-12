@@ -1,9 +1,8 @@
-import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { screen } from "@testing-library/react";
 import ScenesPage from "../../src/react/components/play/ScenesPage";
 import {
   actorUser,
-  expectFetchTo,
+  expectContractCall,
   mainPlay,
   mainScenes,
   renderWithStub,
@@ -21,7 +20,7 @@ describe("React: ScenesPage", () => {
     vi.restoreAllMocks();
   });
 
-  it("should render scenes list", async () => {
+  it("should mount successfully and render scenes list", async () => {
     await renderWithStub(
       "/plays/:playId/scenes",
       ScenesPage,
@@ -29,21 +28,19 @@ describe("React: ScenesPage", () => {
       { user: teacherUser },
     );
 
-    await waitFor(() => screen.getByText(new RegExp(mainScenes[0].title, "i")));
+    await screen.findByText(new RegExp(mainScenes[0].title, "i"));
     expect(
       screen.getByText(new RegExp(mainScenes[1].title, "i")),
     ).toBeDefined();
   });
 
   it("should add a new scene successfully (teacher)", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
       { user: teacherUser },
     );
-
-    const user = userEvent.setup();
 
     await user.type(
       screen.getByLabelText(/titre/i),
@@ -51,18 +48,16 @@ describe("React: ScenesPage", () => {
     );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-    expectFetchTo("scenes", "create", "teacher");
+    expectContractCall("scenes", "create", "teacher");
   });
 
   it("should update preference successfully (actor)", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
       { user: actorUser },
     );
-
-    const user = userEvent.setup();
 
     await user.selectOptions(
       screen.getByLabelText(
@@ -71,18 +66,16 @@ describe("React: ScenesPage", () => {
       "HIGH",
     );
 
-    expectFetchTo("preferences", "upsert", "update");
+    expectContractCall("preferences", "upsert", "update");
   });
 
   it("should add a new preference successfully (actor)", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
       { user: actorUser },
     );
-
-    const user = userEvent.setup();
 
     await user.selectOptions(
       screen.getByLabelText(
@@ -91,18 +84,16 @@ describe("React: ScenesPage", () => {
       "HIGH",
     );
 
-    expectFetchTo("preferences", "upsert", "insert");
+    expectContractCall("preferences", "upsert", "insert");
   });
 
   it("should display edit form when clicking on edit button", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
       { user: teacherUser },
     );
-
-    const user = userEvent.setup();
 
     await user.click(
       screen.getByLabelText(
@@ -110,61 +101,51 @@ describe("React: ScenesPage", () => {
       ),
     );
 
-    await waitFor(() =>
-      screen.getByLabelText(
-        new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
-      ),
+    await screen.findByLabelText(
+      new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
     );
-    await waitFor(() =>
-      screen.getByLabelText(new RegExp(`annuler.*${mainScenes[0].title}`, "i")),
+    await screen.findByLabelText(
+      new RegExp(`annuler.*${mainScenes[0].title}`, "i"),
     );
   });
 
   it("should cancel editing a scene when clicking on cancel button", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
       { user: teacherUser },
     );
 
-    const user = userEvent.setup();
-
     await user.click(
       screen.getByLabelText(
         new RegExp(`modifier.*${mainScenes[0].title}`, "i"),
       ),
     );
 
-    await waitFor(() =>
-      screen.getByLabelText(
-        new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
-      ),
+    await screen.findByLabelText(
+      new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
     );
-    await waitFor(() =>
-      screen.getByLabelText(new RegExp(`annuler.*${mainScenes[0].title}`, "i")),
+    await screen.findByLabelText(
+      new RegExp(`annuler.*${mainScenes[0].title}`, "i"),
     );
 
     await user.click(
       screen.getByLabelText(new RegExp(`annuler.*${mainScenes[0].title}`, "i")),
     );
 
-    await waitFor(() =>
-      screen.getByLabelText(
-        new RegExp(`modifier.*${mainScenes[0].title}`, "i"),
-      ),
+    await screen.findByLabelText(
+      new RegExp(`modifier.*${mainScenes[0].title}`, "i"),
     );
   });
 
   it("should edit a scene successfully (teacher)", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
       { user: teacherUser },
     );
-
-    const user = userEvent.setup();
 
     await user.click(
       screen.getByLabelText(
@@ -172,10 +153,8 @@ describe("React: ScenesPage", () => {
       ),
     );
 
-    await waitFor(() =>
-      screen.getByLabelText(
-        new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
-      ),
+    await screen.findByLabelText(
+      new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
     );
 
     await user.clear(screen.getByLabelText(/^titre$/i));
@@ -189,18 +168,16 @@ describe("React: ScenesPage", () => {
       ),
     );
 
-    expectFetchTo("scenes", "update", "first_scene");
+    expectContractCall("scenes", "update", "first_scene");
   });
 
   it("should delete a scene successfully (teacher)", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
       { user: teacherUser },
     );
-
-    const user = userEvent.setup();
 
     await user.click(
       screen.getByLabelText(
@@ -208,7 +185,7 @@ describe("React: ScenesPage", () => {
       ),
     );
 
-    expectFetchTo("scenes", "delete", "first_scene");
+    expectContractCall("scenes", "delete", "first_scene");
   });
 
   it("should select no preference when user has no preference", async () => {
@@ -220,7 +197,7 @@ describe("React: ScenesPage", () => {
     );
 
     const label = new RegExp(`envie.*scène.*${mainScenes[2].id}`, "i");
-    await waitFor(() => screen.getByLabelText(label));
+    await screen.findByLabelText(label);
 
     expect(screen.getByLabelText<HTMLSelectElement>(label).value).toBe("");
   });

@@ -1,4 +1,5 @@
 import { act, render, renderHook } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 
 import { AuthProvider } from "../../src/react/components/auth/AuthContext";
@@ -11,7 +12,7 @@ export * from "../data";
 // Fetch mock (contract-based)
 // -------------------------
 
-const respond = (body: unknown, status: number) => {
+export const respond = (body: unknown, status: number) => {
   const json = JSON.stringify(body);
 
   if (json === "{}") {
@@ -58,7 +59,7 @@ const isDeepEqual = (a: Json, b: Json): boolean => {
   return false;
 };
 
-export const mockFetch = (
+const mockFetch = (
   custom?: (
     path: string,
     method: string,
@@ -158,18 +159,44 @@ export const renderWithStub = async (
         },
     },
   ]);
-  return await act(async () =>
+  const user = userEvent.setup();
+  const view = await act(async () =>
     render(<Stub initialEntries={initialEntries} />),
   );
+  return { user, ...view };
 };
 
 const mockedRandomUUID = "a-b-c-d-e";
 
-export const setupMocks = (
-  customFetch?: (path: string, method: string) => Promise<Response> | undefined,
-) => {
+export const setupMocks = ({
+  forceCases,
+  forceFetch,
+}: {
+  forceCases?: Record<`${string}.${string}`, keyof Test["cases"]>;
+  forceFetch?: (path: string, method: string) => Promise<Response> | undefined;
+} = {}) => {
   vi.stubGlobal("cookieStore", { get: vi.fn(), set: vi.fn() });
   vi.spyOn(crypto, "randomUUID").mockImplementation(() => mockedRandomUUID);
+
+  const customFetch = (path: string, method: string) => {
+    if (forceFetch) {
+      const result = forceFetch(path, method);
+      if (result != null) return result;
+    }
+    if (forceCases) {
+      for (const [key, caseName] of Object.entries(forceCases)) {
+        const [contractName, testName] = key.split(".");
+        if (contractName in contracts && testName in contracts[contractName]) {
+          const test = contracts[contractName][testName];
+          const c = test.cases[caseName];
+          if (c && path === (c.path ?? test.path) && method === test.method) {
+            return respond(c.response.body, c.response.status);
+          }
+        }
+      }
+    }
+  };
+
   mockFetch(customFetch);
 };
 
@@ -186,7 +213,7 @@ export const requestValue = (
   throw new Error(`Case body is not an object: ${JSON.stringify(body)}`);
 };
 
-export const expectFetchTo = (
+export const expectContractCall = (
   contractName: keyof typeof contracts,
   testName: keyof Contract,
   caseName: keyof Test["cases"],

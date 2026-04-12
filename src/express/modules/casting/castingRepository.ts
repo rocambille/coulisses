@@ -35,39 +35,20 @@ class CastingRepository {
     // To avoid massive unstructured JSON from MySQL, let's fetch individual sets and assemble them.
 
     const [scenes] = await databaseClient.query<Rows>(
-      "select * from scene where play_id = ? order by scene_order asc",
+      `select *
+      from scene
+      where play_id = ?
+      order by scene_order asc`,
       [playId],
     );
 
     const [roles] = await databaseClient.query<Rows>(
-      "select * from role where play_id = ?",
-      [playId],
-    );
-
-    // Get Scene-Role relations
-    const [sceneRoles] = await databaseClient.query<Rows>(
-      `select sr.scene_id, sr.role_id 
-       from scene_role sr 
-       join role r on sr.role_id = r.id 
-       where r.play_id = ?`,
-      [playId],
-    );
-
-    // Get Official Casting
-    const [castings] = await databaseClient.query<Rows>(
-      `select c.* 
-       from casting c 
-       join role r on c.role_id = r.id 
-       where r.play_id = ?`,
-      [playId],
-    );
-
-    // Get Preferences for scenes of this play
-    const [preferences] = await databaseClient.query<Rows>(
-      `select p.* 
-       from preference p 
-       join scene s on p.scene_id = s.id 
-       where s.play_id = ?`,
+      `select r.*, json_arrayagg(sr.scene_id) as scene_ids, c.user_id as user_id
+      from role r
+      join scene_role sr on r.id = sr.role_id
+      left join casting c on r.id = c.role_id
+      where r.play_id = ?
+      group by r.id`,
       [playId],
     );
 
@@ -81,29 +62,13 @@ class CastingRepository {
         duration: scene.duration,
         is_active: scene.is_active,
       })),
-      roles: roles.map<Role>((role) => ({
+      roles: roles.map<CastingMatrix["roles"][number]>((role) => ({
         id: role.id,
         name: role.name,
         description: role.description,
         play_id: role.play_id,
-      })),
-      sceneRoles: sceneRoles.map<{
-        scene_id: number;
-        role_id: number;
-      }>((sceneRole) => ({
-        scene_id: sceneRole.scene_id,
-        role_id: sceneRole.role_id,
-      })),
-      castings: castings.map<Casting>((casting) => ({
-        user_id: casting.user_id,
-        role_id: casting.role_id,
-        assigned_at: casting.assigned_at,
-      })),
-      preferences: preferences.map<Preference>((preference) => ({
-        id: preference.id,
-        user_id: preference.user_id,
-        scene_id: preference.scene_id,
-        level: preference.level,
+        scene_ids: role.scene_ids,
+        user_id: role.user_id,
       })),
     };
 

@@ -1,5 +1,4 @@
-import { act, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { act, screen } from "@testing-library/react";
 import * as ReactRouter from "react-router";
 
 import {
@@ -11,11 +10,11 @@ import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
 import VerifyPage from "../../src/react/components/auth/VerifyPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  expectFetchTo,
-  mockFetch,
+  expectContractCall,
   renderHookAsync,
   renderWithStub,
   requestValue,
+  respond,
   setupMocks,
   teacherUser,
 } from "./test-utils";
@@ -37,7 +36,7 @@ describe("React auth components", () => {
         () => <AuthProvider>hello, world!</AuthProvider>,
         ["/"],
       );
-      await waitFor(() => screen.getByText("hello, world!"));
+      await screen.findByText("hello, world!");
     });
     it("should fetch /api/me on mount", async () => {
       await renderWithStub(
@@ -45,7 +44,7 @@ describe("React auth components", () => {
         () => <AuthProvider>hello, world!</AuthProvider>,
         ["/"],
       );
-      await waitFor(() => expectFetchTo("auth", "me", "teacher"));
+      await expectContractCall("auth", "me", "teacher");
     });
   });
   describe("useAuth()", () => {
@@ -73,8 +72,6 @@ describe("React auth components", () => {
 
       const auth = result.current;
 
-      expect(typeof auth.check).toBe("function");
-
       expect(auth.check()).toBe(auth.me != null);
     });
     it("should return a sendMagicLink function", async () => {
@@ -84,22 +81,11 @@ describe("React auth components", () => {
 
       const auth = result.current;
 
-      expect(typeof auth.sendMagicLink).toBe("function");
-
       await act(async () => await auth.sendMagicLink(teacherUser.email));
 
-      expectFetchTo("auth", "magic_link", "teacher");
+      expectContractCall("auth", "magic_link", "teacher");
     });
     it("should return a verifyMagicLink function", async () => {
-      const { result } = await renderHookAsync(() => useAuth(), {
-        wrapper: AuthProvider,
-      });
-
-      const auth = result.current;
-
-      expect(typeof auth.verifyMagicLink).toBe("function");
-    });
-    it("should verify a magic link", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
         wrapper: AuthProvider,
       });
@@ -113,7 +99,7 @@ describe("React auth components", () => {
           ),
       );
 
-      expectFetchTo("auth", "verify", "new_user");
+      expectContractCall("auth", "verify", "new_user");
     });
     it("should return a logout function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
@@ -122,52 +108,39 @@ describe("React auth components", () => {
 
       const auth = result.current;
 
-      expect(typeof auth.logout).toBe("function");
-
       await act(async () => await auth.logout());
 
-      expectFetchTo("auth", "logout", "anyone");
+      expectContractCall("auth", "logout", "anyone");
     });
     it("should throw when logout fails", async () => {
+      setupMocks({
+        forceFetch: () => respond(null, 500),
+      });
+
       const { result } = await renderHookAsync(() => useAuth(), {
         wrapper: AuthProvider,
       });
 
       const auth = result.current;
 
-      expect(typeof auth.logout).toBe("function");
-
-      mockFetch((path, method) => {
-        if (path === "/api/auth/logout" && method === "post") {
-          return Promise.resolve().then(
-            () =>
-              new Response(null, {
-                status: 500,
-              }),
-          );
-        }
-      });
-
       await expect(auth.logout()).rejects.toThrow(/logout/i);
 
-      expectFetchTo("auth", "logout", "anyone");
+      expectContractCall("auth", "logout", "anyone");
     });
   });
   describe("<MagicLinkForm />", () => {
     it("should mount successfully", async () => {
       await renderWithStub("/", MagicLinkForm, ["/"]);
-      await waitFor(() => screen.getByRole("button"));
+      await screen.findByRole("button");
     });
     it("should submit email and show confirmation", async () => {
-      await renderWithStub("/", MagicLinkForm, ["/"]);
-      await waitFor(() => screen.getByRole("button"));
-
-      const user = userEvent.setup();
+      const { user } = await renderWithStub("/", MagicLinkForm, ["/"]);
+      await screen.findByRole("button");
 
       await user.type(screen.getByLabelText(/^email$/i), teacherUser.email);
       await user.click(screen.getByRole("button"));
 
-      expectFetchTo("auth", "magic_link", "teacher");
+      expectContractCall("auth", "magic_link", "teacher");
     });
   });
   describe("<LogoutForm />", () => {
@@ -175,19 +148,17 @@ describe("React auth components", () => {
       await renderWithStub("/", LogoutForm, ["/"], {
         user: { id: 1, email: "foo@mail.com", name: "foo" },
       });
-      await waitFor(() => screen.getByRole("button"));
+      await screen.findByRole("button");
     });
     it("should submit form logout", async () => {
-      await renderWithStub("/", LogoutForm, ["/"], {
+      const { user } = await renderWithStub("/", LogoutForm, ["/"], {
         user: { id: 1, email: "foo@mail.com", name: "foo" },
       });
-      await waitFor(() => screen.getByRole("button"));
-
-      const user = userEvent.setup();
+      await screen.findByRole("button");
 
       await user.click(screen.getByRole("button"));
 
-      expectFetchTo("auth", "logout", "anyone");
+      expectContractCall("auth", "logout", "anyone");
     });
   });
   describe("<VerifyPage />", () => {
@@ -201,7 +172,7 @@ describe("React auth components", () => {
         "/verify?token=fake_jwt_token",
       ]);
 
-      await waitFor(() => screen.getByText(/en cours/i));
+      await screen.findByText(/en cours/i);
     });
     it("should verify token and redirect to dashboard when valid", async () => {
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
@@ -213,7 +184,7 @@ describe("React auth components", () => {
         "/verify?token=fake_jwt_token",
       ]);
 
-      await waitFor(() => expectFetchTo("auth", "verify", "new_user"));
+      expectContractCall("auth", "verify", "new_user");
 
       expect(mockedNavigate).toHaveBeenCalledWith("/", { replace: true });
     });
@@ -227,9 +198,9 @@ describe("React auth components", () => {
         "/verify?token=invalid_jwt_token",
       ]);
 
-      await waitFor(() => screen.getByText(/invalide/i));
+      await screen.findByText(/invalide/i);
 
-      expectFetchTo("auth", "verify", "unauthorized");
+      expectContractCall("auth", "verify", "unauthorized");
       expect(mockedNavigate).not.toHaveBeenCalled();
     });
     it("should display error when token is missing", async () => {
@@ -240,7 +211,7 @@ describe("React auth components", () => {
 
       await renderWithStub("/verify", VerifyPage, ["/verify"]);
 
-      await waitFor(() => screen.getByText(/invalide/i));
+      await screen.findByText(/invalide/i);
 
       expect(globalThis.fetch).not.toHaveBeenCalledWith(
         "/api/auth/verify",

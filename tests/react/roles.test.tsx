@@ -1,9 +1,9 @@
-import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { screen } from "@testing-library/react";
 import RolesPage from "../../src/react/components/play/RolesPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  expectFetchTo,
+  emptyPlay,
+  expectContractCall,
   mainPlay,
   renderWithStub,
   requestValue,
@@ -29,42 +29,29 @@ describe("React: RolesPage", () => {
       { user: teacherUser },
     );
 
-    await waitFor(() => screen.getByRole("heading", { level: 2 }));
+    await screen.findByRole("heading", { level: 2 });
     expect(screen.getByText(/rôles/i)).toBeDefined();
   });
 
   it("should display a message when the play has no roles", async () => {
-    setupMocks((path, method) => {
-      if (path === `/api/plays/${mainPlay.id}/roles` && method === "get") {
-        return Promise.resolve().then(
-          () =>
-            new Response(JSON.stringify([]), {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            }),
-        );
-      }
-    });
-
     await renderWithStub(
       "/plays/:playId/roles",
       RolesPage,
-      [`/plays/${mainPlay.id}/roles`],
+      [`/plays/${emptyPlay.id}/roles`],
       { user: teacherUser },
     );
 
-    await waitFor(() => screen.getByText(/aucun rôle/i));
+    await screen.findByText(/aucun rôle/i);
+    expectContractCall("roles", "browse", "empty");
   });
 
   it("should add a new role successfully", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/roles",
       RolesPage,
       [`/plays/${mainPlay.id}/roles`],
       { user: teacherUser },
     );
-
-    const user = userEvent.setup();
 
     await user.type(
       screen.getByLabelText(/nom/i),
@@ -72,6 +59,6 @@ describe("React: RolesPage", () => {
     );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-    expectFetchTo("roles", "create", "no_scene");
+    expectContractCall("roles", "create", "no_scene");
   });
 });

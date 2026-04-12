@@ -38,28 +38,24 @@ function MembersPage() {
     <>
       <h2>Membres</h2>
 
-      {members.length === 0 ? (
-        <p>Aucun membre pour le moment.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Nom</th>
-              <th>Email</th>
-              <th>Rôle</th>
+      <table>
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Rôle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {members.map((member) => (
+            <tr key={member.id}>
+              <td>{member.name}</td>
+              <td>{member.email}</td>
+              <td>{member.role === "TEACHER" ? "Professeur" : "Comédien"}</td>
             </tr>
-          </thead>
-          <tbody>
-            {members.map((member) => (
-              <tr key={member.id}>
-                <td>{member.name}</td>
-                <td>{member.email}</td>
-                <td>{member.role === "TEACHER" ? "Professeur" : "Comédien"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
 
       {isTeacher && (
         <details>

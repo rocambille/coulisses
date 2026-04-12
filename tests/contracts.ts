@@ -1,6 +1,10 @@
 import { cookies } from "supertest";
 import {
   actorUser,
+  allPlays,
+  emptyMatrix,
+  emptyPlay,
+  emptyPlayMembers,
   insertId,
   mainMatrix,
   mainPlay,
@@ -206,9 +210,14 @@ export const contracts: Record<string, Contract> = {
       method: "get" as const,
       path: `/api/plays/${mainPlay.id}/castings`,
       cases: {
-        first_play: {
+        main: {
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 200, body: mainMatrix },
+        },
+        empty: {
+          path: `/api/plays/${emptyPlay.id}/castings`,
+          request: { jwtPayload: { sub: teacherUser.id } },
+          response: { status: 200, body: emptyMatrix },
         },
         unauthorized: {
           request: { jwtPayload: null },
@@ -229,7 +238,7 @@ export const contracts: Record<string, Contract> = {
       method: "post" as const,
       path: `/api/plays/${mainPlay.id}/castings`,
       cases: {
-        first_play: {
+        main: {
           request: {
             body: { roleId: 2, userId: actorUser.id },
             jwtPayload: { sub: teacherUser.id },
@@ -255,11 +264,24 @@ export const contracts: Record<string, Contract> = {
         },
       },
     },
+    update: {
+      method: "post" as const,
+      path: `/api/plays/${mainPlay.id}/castings`,
+      cases: {
+        main: {
+          request: {
+            body: { roleId: 1, userId: teacherUser.id },
+            jwtPayload: { sub: teacherUser.id },
+          },
+          response: { status: 201, body: {} },
+        },
+      },
+    },
     unassign: {
       method: "delete" as const,
       path: `/api/plays/${mainPlay.id}/castings`,
       cases: {
-        first_play: {
+        main: {
           request: {
             body: { roleId: 1, userId: actorUser.id },
             jwtPayload: { sub: teacherUser.id },
@@ -451,6 +473,11 @@ export const contracts: Record<string, Contract> = {
           request: { jwtPayload: { sub: actorUser.id } },
           response: { status: 200, body: mainPlayMembers },
         },
+        empty: {
+          path: `/api/plays/${emptyPlay.id}/members`,
+          request: { jwtPayload: { sub: teacherUser.id } },
+          response: { status: 200, body: emptyPlayMembers },
+        },
         unauthorized: {
           request: { jwtPayload: null },
           response: { status: 401, body: {} },
@@ -504,11 +531,11 @@ export const contracts: Record<string, Contract> = {
       cases: {
         teacher: {
           request: { jwtPayload: { sub: teacherUser.id } },
-          response: { status: 200, body: [mainPlay] },
+          response: { status: 200, body: allPlays },
         },
-        actor: {
-          request: { jwtPayload: { sub: actorUser.id } },
-          response: { status: 200, body: [mainPlay] },
+        third: {
+          request: { jwtPayload: { sub: thirdUser.id } },
+          response: { status: 200, body: [] },
         },
         unauthorized: {
           request: { jwtPayload: null },
@@ -703,6 +730,11 @@ export const contracts: Record<string, Contract> = {
           request: { jwtPayload: { sub: actorUser.id } },
           response: { status: 200, body: mainRoles },
         },
+        empty: {
+          path: `/api/plays/${emptyPlay.id}/roles`,
+          request: { jwtPayload: { sub: teacherUser.id } },
+          response: { status: 200, body: [] },
+        },
         unauthorized: {
           request: { jwtPayload: null },
           response: { status: 401, body: {} },
@@ -772,6 +804,11 @@ export const contracts: Record<string, Contract> = {
         actor: {
           request: { jwtPayload: { sub: actorUser.id } },
           response: { status: 200, body: mainScenes },
+        },
+        empty: {
+          path: `/api/plays/${emptyPlay.id}/scenes`,
+          request: { jwtPayload: { sub: teacherUser.id } },
+          response: { status: 200, body: [] },
         },
         unauthorized: {
           request: { jwtPayload: null },

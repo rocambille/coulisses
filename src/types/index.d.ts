@@ -55,10 +55,7 @@ type Casting = {
 
 type CastingMatrix = {
   scenes: Scene[];
-  roles: Role[];
-  sceneRoles: { scene_id: number; role_id: number }[];
-  castings: { user_id: number; role_id: number }[];
-  preferences: { user_id: number; scene_id: number; level: string }[];
+  roles: (Role & { scene_ids: number[]; user_id: number | null })[];
 };
 
 type EventData = {

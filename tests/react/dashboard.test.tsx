@@ -1,9 +1,8 @@
-import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { screen } from "@testing-library/react";
 import DashboardPage from "../../src/react/components/DashboardPage";
 import { invalidateCache } from "../../src/react/components/utils";
 import {
-  expectFetchTo,
+  expectContractCall,
   renderWithStub,
   requestValue,
   setupMocks,
@@ -20,41 +19,29 @@ describe("<DashboardPage />", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-  it("should throw when not authenticated", async () => {
-    await expect(
-      renderWithStub("/", DashboardPage, ["/"], { user: null }),
-    ).rejects.toThrow("User not authenticated");
-  });
+
   it("should mount successfully", async () => {
     await renderWithStub("/", DashboardPage, ["/"], { user: teacherUser });
 
-    await waitFor(() =>
-      screen.getByRole("heading", { level: 1, name: /mes pièces/i }),
-    );
+    await screen.findByRole("heading", { level: 1, name: /mes pièces/i });
+
+    expectContractCall("plays", "browse", "teacher");
   });
 
   it("should display a message when the user has no plays", async () => {
-    setupMocks((path, method) => {
-      if (path === "/api/plays" && method === "get") {
-        return Promise.resolve().then(
-          () =>
-            new Response(JSON.stringify([]), {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            }),
-        );
-      }
-    });
+    setupMocks({ forceCases: { "plays.browse": "third" } });
 
     await renderWithStub("/", DashboardPage, ["/"], { user: thirdUser });
 
-    await waitFor(() => screen.getByText(/aucune pièce/i));
+    await screen.findByText(/aucune pièce/i);
+
+    expectContractCall("plays", "browse", "third");
   });
 
   it("should add a play", async () => {
-    await renderWithStub("/", DashboardPage, ["/"], { user: teacherUser });
-
-    const user = userEvent.setup();
+    const { user } = await renderWithStub("/", DashboardPage, ["/"], {
+      user: teacherUser,
+    });
 
     await user.type(
       screen.getByLabelText(/titre/i),
@@ -62,6 +49,6 @@ describe("<DashboardPage />", () => {
     );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-    expectFetchTo("plays", "create", "teacher");
+    expectContractCall("plays", "create", "teacher");
   });
 });

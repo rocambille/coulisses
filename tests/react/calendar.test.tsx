@@ -1,9 +1,8 @@
 import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import CalendarPage from "../../src/react/components/play/CalendarPage";
 import {
   actorUser,
-  expectFetchTo,
+  expectContractCall,
   mainPlay,
   openingNightEvent,
   renderWithStub,
@@ -30,7 +29,7 @@ describe("React: CalendarPage", () => {
       { user: actorUser },
     );
 
-    await waitFor(() => screen.getByRole("heading", { level: 2 }));
+    await screen.findByRole("heading", { level: 2 });
 
     expect(screen.queryByLabelText(/ajouter.*28$/i)).toBeNull();
   });
@@ -38,33 +37,29 @@ describe("React: CalendarPage", () => {
   it("should allow user to navigate previous month", async () => {
     vi.setSystemTime(new Date("2026-05-05T12:00:00Z"));
 
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: actorUser },
     );
 
-    const user = userEvent.setup();
-
     await user.click(screen.getByRole("button", { name: /</i }));
-    await waitFor(() => screen.getByText("Avril 2026"));
+    await screen.findByText("Avril 2026");
   });
 
   it("should allow user to navigate next month", async () => {
     vi.setSystemTime(new Date("2026-05-05T12:00:00Z"));
 
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: actorUser },
     );
 
-    const user = userEvent.setup();
-
     await user.click(screen.getByRole("button", { name: />/i }));
-    await waitFor(() => screen.getByText("Juin 2026"));
+    await screen.findByText("Juin 2026");
   });
 
   it("should display 'add' button (teacher)", async () => {
@@ -75,26 +70,24 @@ describe("React: CalendarPage", () => {
       { user: teacherUser },
     );
 
-    await waitFor(() => screen.getByLabelText(/ajouter.*28$/i));
+    await screen.findByLabelText(/ajouter.*28$/i);
   });
 
   it("should open event details (actor)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: actorUser },
     );
 
-    const user = userEvent.setup();
-
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
     );
 
-    await waitFor(() => screen.getByRole("button", { name: /fermer/i }));
+    await screen.findByRole("button", { name: /fermer/i });
 
     expect(screen.queryByRole("button", { name: /enregistrer/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /supprimer/i })).toBeNull();
@@ -105,14 +98,12 @@ describe("React: CalendarPage", () => {
   it("should open and close event details (actor)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: actorUser },
     );
-
-    const user = userEvent.setup();
 
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
@@ -126,14 +117,12 @@ describe("React: CalendarPage", () => {
   it("should open form to edit/delete an event (teacher)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: teacherUser },
     );
-
-    const user = userEvent.setup();
 
     await user.click(
       screen.getByRole("button", {
@@ -141,9 +130,9 @@ describe("React: CalendarPage", () => {
       }),
     );
 
-    await waitFor(() => screen.getByRole("button", { name: /fermer/i }));
-    await waitFor(() => screen.getByRole("button", { name: /enregistrer/i }));
-    await waitFor(() => screen.getByRole("button", { name: /supprimer/i }));
+    await screen.findByRole("button", { name: /fermer/i });
+    await screen.findByRole("button", { name: /enregistrer/i });
+    await screen.findByRole("button", { name: /supprimer/i });
 
     expect(screen.getByLabelText<HTMLInputElement>(/titre/i).value).toEqual(
       openingNightEvent.title,
@@ -153,14 +142,12 @@ describe("React: CalendarPage", () => {
   it("should open form to edit/delete an event and close it (teacher)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: teacherUser },
     );
-
-    const user = userEvent.setup();
 
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
@@ -174,20 +161,18 @@ describe("React: CalendarPage", () => {
   it("should open form and edit an event (teacher)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: teacherUser },
     );
 
-    const user = userEvent.setup();
-
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
     );
 
-    const titleInput = screen.getByLabelText(/titre/i);
+    const titleInput = await screen.findByLabelText(/titre/i);
     await user.clear(titleInput);
     await user.type(
       titleInput,
@@ -196,7 +181,7 @@ describe("React: CalendarPage", () => {
 
     await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
-    expectFetchTo("events", "update", "opening_night");
+    expectContractCall("events", "update", "opening_night");
 
     expect(screen.queryByRole("button", { name: /enregistrer/i })).toBeNull();
   });
@@ -205,54 +190,48 @@ describe("React: CalendarPage", () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
     vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: teacherUser },
     );
-
-    const user = userEvent.setup();
 
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
     );
     await user.click(screen.getByRole("button", { name: /supprimer/i }));
 
-    expectFetchTo("events", "delete", "opening_night");
+    expectContractCall("events", "delete", "opening_night");
 
     expect(screen.queryByRole("button", { name: /supprimer/i })).toBeNull();
   });
 
   it("should open form to create a new event on a date (teacher)", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: teacherUser },
     );
 
-    const user = userEvent.setup();
-
     await user.click(screen.getByLabelText(/ajouter.*28$/i));
 
-    await waitFor(() => screen.getByRole("button", { name: /^ajouter$/i }));
-    await waitFor(() => screen.getByRole("button", { name: /fermer/i }));
+    await screen.findByRole("button", { name: /^ajouter$/i });
+    await screen.findByRole("button", { name: /fermer/i });
   });
 
   it("should open form to create a new event on a date and close it (teacher)", async () => {
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: teacherUser },
     );
 
-    const user = userEvent.setup();
-
     await user.click(screen.getByLabelText(/ajouter.*28$/i));
 
-    await user.click(screen.getByRole("button", { name: /fermer/i }));
+    await user.click(await screen.findByRole("button", { name: /fermer/i }));
 
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: /fermer/i })).toBeNull(),
@@ -264,14 +243,12 @@ describe("React: CalendarPage", () => {
       new Date(requestValue("events", "create", "opening_night", "start_time")),
     );
 
-    await renderWithStub(
+    const { user } = await renderWithStub(
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
       { user: teacherUser },
     );
-
-    const user = userEvent.setup();
 
     await user.click(
       screen.getByLabelText(
@@ -283,13 +260,13 @@ describe("React: CalendarPage", () => {
     );
 
     await user.type(
-      screen.getByLabelText(/titre/i),
+      await screen.findByLabelText(/titre/i),
       requestValue("events", "create", "opening_night", "title"),
     );
 
     await user.click(screen.getByRole("button", { name: /^ajouter$/i }));
 
-    expectFetchTo("events", "create", "opening_night");
+    expectContractCall("events", "create", "opening_night");
     await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
   });
 });

@@ -57,6 +57,12 @@ export const mainPlayMembers: (User & { role: "TEACHER" | "ACTOR" })[] = [
   { ...actorUser, role: "ACTOR" },
 ];
 
+export const emptyPlay = allPlays[1];
+
+export const emptyPlayMembers: (User & { role: "TEACHER" | "ACTOR" })[] = [
+  { ...teacherUser, role: "TEACHER" },
+];
+
 // ---------------------------------------------------------
 // Scenes & Roles
 // ---------------------------------------------------------
@@ -154,16 +160,23 @@ export const openingNightEvent = {
   end_time: "2026-06-01T22:30:00.000Z",
 };
 
-export const mainMatrix: CastingMatrix = {
-  scenes: [...mainScenes],
-  roles: mainRoles.map(({ scenes, ...r }) => ({ ...r })),
-  sceneRoles: [{ scene_id: 1, role_id: 1 }],
-  castings: [...mainCastings],
-  preferences: mainPreferences.map(({ user_id, scene_id, level }) => ({
-    user_id,
-    scene_id,
-    level,
-  })),
+const matrix = (
+  scenes: Scene[],
+  roles: RoleWithScenes[],
+  castings: Casting[],
+): CastingMatrix => {
+  return {
+    scenes: [...scenes],
+    roles: roles.map(({ scenes, ...r }) => ({
+      ...r,
+      scene_ids: scenes.map((s) => s.id),
+      user_id: castings.find((c) => c.role_id === r.id)?.user_id ?? null,
+    })),
+  };
 };
+
+export const mainMatrix = matrix(mainScenes, mainRoles, mainCastings);
+
+export const emptyMatrix = matrix([], [], []);
 
 export const insertId = 42;
