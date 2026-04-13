@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import express, { type ErrorRequestHandler } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import type { QueryOptions } from "mysql2";
@@ -5,7 +6,7 @@ import supertest from "supertest";
 
 import databaseClient from "../../src/database/client";
 import routes from "../../src/express/routes";
-import type { Test } from "../contracts";
+import { type Contract, contracts, type Test } from "../contracts";
 import {
   actorUser,
   allPlays,
@@ -60,6 +61,7 @@ const mockedData = {
   preference: mainPreferences,
   casting: mainCastings,
   event: [openingNightEvent],
+  magic_link_token: [] as MagicLinkToken[],
 };
 
 const members = (play: { id: number }) =>
@@ -73,6 +75,19 @@ const members = (play: { id: number }) =>
 // -------------------------
 // DB mock
 // -------------------------
+
+export const requestValue = (
+  contractName: keyof typeof contracts,
+  testName: keyof Contract,
+  caseName: keyof Test["cases"],
+  field: string,
+) => {
+  const body = contracts[contractName][testName].cases[caseName].request.body;
+  if (typeof body === "object" && body !== null && !Array.isArray(body)) {
+    return body[field]?.toString() ?? "";
+  }
+  throw new Error(`Case body is not an object: ${JSON.stringify(body)}`);
+};
 
 /**
  * Normalizes SQL queries by collapsing whitespace and newlines.
@@ -114,6 +129,104 @@ const mockDatabaseClient = () => {
 
         if (/^delete\b/i.test(normalizedSql)) {
           return [{ affectedRows: 1 }, []];
+        }
+
+        // --- AUTH SPECIAL (Hashing for mock) ---
+        if (
+          /select id, user_id, token_hash, expires_at, consumed_at from magic_link_token where token_hash =/i.test(
+            normalizedSql,
+          )
+        ) {
+          const hash = normalizedSql.match(/token_hash = '([^']+)'/i)?.[1];
+          if (
+            hash ===
+            crypto
+              .createHash("sha256")
+              .update(requestValue("auth", "verify", "teacher", "token"))
+              .digest("hex")
+          ) {
+            return [
+              [
+                {
+                  id: 1,
+                  user_id: teacherUser.id,
+                  token_hash: hash,
+                  expires_at: new Date(Date.now() + 100000),
+                  consumed_at: null,
+                },
+              ],
+              [],
+            ];
+          }
+          if (
+            hash ===
+            crypto
+              .createHash("sha256")
+              .update(requestValue("auth", "verify", "unauthorized", "token"))
+              .digest("hex")
+          ) {
+            return [[], []];
+          }
+          if (
+            hash ===
+            crypto
+              .createHash("sha256")
+              .update(requestValue("auth", "verify", "consumed", "token"))
+              .digest("hex")
+          ) {
+            return [
+              [
+                {
+                  id: 1,
+                  user_id: teacherUser.id,
+                  token_hash: hash,
+                  expires_at: new Date(Date.now() + 100000),
+                  consumed_at: new Date(),
+                },
+              ],
+              [],
+            ];
+          }
+          if (
+            hash ===
+            crypto
+              .createHash("sha256")
+              .update(requestValue("auth", "verify", "expired", "token"))
+              .digest("hex")
+          ) {
+            return [
+              [
+                {
+                  id: 1,
+                  user_id: teacherUser.id,
+                  token_hash: hash,
+                  expires_at: new Date(Date.now() - 100000),
+                  consumed_at: null,
+                },
+              ],
+              [],
+            ];
+          }
+          if (
+            hash ===
+            crypto
+              .createHash("sha256")
+              .update(requestValue("auth", "verify", "deleted_user", "token"))
+              .digest("hex")
+          ) {
+            return [
+              [
+                {
+                  id: 1,
+                  user_id: NaN,
+                  token_hash: hash,
+                  expires_at: new Date(Date.now() + 100000),
+                  consumed_at: null,
+                },
+              ],
+              [],
+            ];
+          }
         }
 
         // --- SELECT (Strict Registry) ---

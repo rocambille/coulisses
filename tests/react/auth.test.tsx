@@ -14,7 +14,6 @@ import {
   renderHookAsync,
   renderWithStub,
   requestValue,
-  respond,
   setupMocks,
   teacherUser,
 } from "./test-utils";
@@ -95,11 +94,11 @@ describe("React auth components", () => {
       await act(
         async () =>
           await auth.verifyMagicLink(
-            requestValue("auth", "verify", "new_user", "token"),
+            requestValue("auth", "verify", "teacher", "token"),
           ),
       );
 
-      expectContractCall("auth", "verify", "new_user");
+      expectContractCall("auth", "verify", "teacher");
     });
     it("should return a logout function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
@@ -113,9 +112,7 @@ describe("React auth components", () => {
       expectContractCall("auth", "logout", "anyone");
     });
     it("should throw when logout fails", async () => {
-      setupMocks({
-        forceFetch: () => respond(null, 500),
-      });
+      setupMocks({ force500: true });
 
       const { result } = await renderHookAsync(() => useAuth(), {
         wrapper: AuthProvider,
@@ -169,7 +166,7 @@ describe("React auth components", () => {
       );
 
       await renderWithStub("/verify", VerifyPage, [
-        "/verify?token=fake_jwt_token",
+        `/verify?token=${requestValue("auth", "verify", "teacher", "token")}`,
       ]);
 
       await screen.findByText(/en cours/i);
@@ -181,10 +178,10 @@ describe("React auth components", () => {
       );
 
       await renderWithStub("/verify", VerifyPage, [
-        "/verify?token=fake_jwt_token",
+        `/verify?token=${requestValue("auth", "verify", "teacher", "token")}`,
       ]);
 
-      expectContractCall("auth", "verify", "new_user");
+      expectContractCall("auth", "verify", "teacher");
 
       expect(mockedNavigate).toHaveBeenCalledWith("/", { replace: true });
     });
@@ -195,7 +192,7 @@ describe("React auth components", () => {
       );
 
       await renderWithStub("/verify", VerifyPage, [
-        "/verify?token=invalid_jwt_token",
+        `/verify?token=${requestValue("auth", "verify", "unauthorized", "token")}`,
       ]);
 
       await screen.findByText(/invalide/i);

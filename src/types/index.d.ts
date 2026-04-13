@@ -68,3 +68,11 @@ type EventData = {
   start_time: string;
   end_time: string;
 };
+
+type MagicLinkToken = {
+  id: number;
+  user_id: number;
+  token_hash: string;
+  expires_at: Date;
+  consumed_at: Date | null;
+};

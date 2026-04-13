@@ -82,3 +82,12 @@ create table event (
   end_time datetime not null,
   foreign key(play_id) references play(id) on delete cascade
 );
+
+create table magic_link_token (
+  id int unsigned primary key auto_increment not null,
+  user_id int unsigned not null,
+  token_hash char(64) not null,
+  expires_at datetime not null,
+  consumed_at datetime default null,
+  foreign key(user_id) references user(id) on delete cascade
+);

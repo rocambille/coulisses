@@ -3,10 +3,11 @@
   Centralize all authentication-related actions and middleware for Magic Link.
 */
 
+import crypto from "node:crypto";
 import type { CookieOptions, RequestHandler } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
-
 import userRepository from "../user/userRepository";
+import authRepository from "./authRepository";
 
 const appSecret = process.env.APP_SECRET;
 
@@ -24,11 +25,6 @@ class Auth<Payload extends JwtPayload | string = JwtPayload> {
   // Session token sign (long lived)
   signSession(payload: Payload): string {
     return jwt.sign(payload, this.#secret, { expiresIn: "30d" });
-  }
-
-  // Magic link token sign (short lived)
-  signMagicLink(payload: Payload): string {
-    return jwt.sign(payload, this.#secret, { expiresIn: "15m" });
   }
 
   verify(token: string): Payload {
@@ -87,17 +83,29 @@ const sendMagicLink: RequestHandler = async (req, res) => {
     return;
   }
 
-  const token = auth.signMagicLink({ sub: email });
+  // Find or create user to get an ID
+  const user = await userRepository.findOrCreateByEmail(email);
+
+  // Clean up old/expired tokens for this user as per request
+  await authRepository.deleteExpiredByUser(user.id);
+
+  // Generate opaque token
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+  // Store in DB
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+  await authRepository.insertToken(user.id, tokenHash, expiresAt);
 
   // In a real app we would send the email here using an SMTP or API service.
   // For the POC, we log it and return it for easy testing.
-  const magicLink = `http://localhost:5173/verify?token=${token}`; // Assuming standard Vite port
+  const magicLink = `http://localhost:5173/verify?token=${rawToken}`;
   console.log(`[MAGIC LINK] User requested login: ${magicLink}`);
 
-  res.status(200).json({
+  res.status(201).json({
     message: "Magic link sent to your email",
     _testing_link: magicLink, // Included strictly for POC ease
-    _testing_token: token,
+    _testing_token: rawToken,
   });
 };
 
@@ -107,23 +115,42 @@ const sendMagicLink: RequestHandler = async (req, res) => {
 const verifyMagicLink: RequestHandler = async (req, res) => {
   const { token } = req.body;
 
-  if (!token) {
+  if (!token || typeof token !== "string") {
     res.sendStatus(400);
     return;
   }
 
   try {
-    const payload = auth.verify(token);
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const storedToken = await authRepository.findByHash(tokenHash);
 
-    // Find user directly, or create if doesn't exist yet (simplified onboarding)
-    const user = await userRepository.findOrCreateByEmail(payload.sub);
+    if (storedToken == null) {
+      throw new Error("Invalid token");
+    }
+
+    if (storedToken.consumed_at != null) {
+      throw new Error("Token already consumed");
+    }
+
+    if (new Date(storedToken.expires_at) < new Date()) {
+      throw new Error("Token expired");
+    }
+
+    // Mark as consumed
+    await authRepository.markAsConsumed(storedToken.id);
+
+    const user = await userRepository.find(storedToken.user_id);
+
+    if (user == null) {
+      throw new Error("User not found");
+    }
 
     const sessionToken = auth.signSession({ sub: user.id.toString() });
 
     res.cookie("__Host-auth", sessionToken, cookieOptions);
 
     res.status(201).json(user);
-  } catch (_err) {
+  } catch {
     res.sendStatus(401);
   }
 };

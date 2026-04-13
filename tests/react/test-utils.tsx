@@ -12,7 +12,7 @@ export * from "../data";
 // Fetch mock (contract-based)
 // -------------------------
 
-export const respond = (body: unknown, status: number) => {
+const respond = (body: unknown, status: number) => {
   const json = JSON.stringify(body);
 
   if (json === "{}") {
@@ -170,18 +170,17 @@ const mockedRandomUUID = "a-b-c-d-e";
 
 export const setupMocks = ({
   forceCases,
-  forceFetch,
+  force500,
 }: {
   forceCases?: Record<`${string}.${string}`, keyof Test["cases"]>;
-  forceFetch?: (path: string, method: string) => Promise<Response> | undefined;
+  force500?: boolean;
 } = {}) => {
   vi.stubGlobal("cookieStore", { get: vi.fn(), set: vi.fn() });
   vi.spyOn(crypto, "randomUUID").mockImplementation(() => mockedRandomUUID);
 
   const customFetch = (path: string, method: string) => {
-    if (forceFetch) {
-      const result = forceFetch(path, method);
-      if (result != null) return result;
+    if (force500) {
+      return respond(null, 500);
     }
     if (forceCases) {
       for (const [key, caseName] of Object.entries(forceCases)) {

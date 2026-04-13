@@ -67,12 +67,28 @@ export const contracts: Record<string, Contract> = {
             },
           },
           response: {
-            status: 200,
+            status: 201,
             body: {
               message: "Magic link sent to your email",
-              _testing_link:
-                "http://localhost:5173/verify?token=fake_jwt_token",
-              _testing_token: "fake_jwt_token",
+              _testing_link: expect.stringMatching(
+                /http:\/\/localhost:5173\/verify\?token=[0-9a-f]{64}/,
+              ),
+              _testing_token: expect.stringMatching(/[0-9a-f]{64}/),
+            },
+          },
+        },
+        new_user: {
+          request: {
+            body: { email: "new_user@mail.com" },
+          },
+          response: {
+            status: 201,
+            body: {
+              message: "Magic link sent to your email",
+              _testing_link: expect.stringMatching(
+                /http:\/\/localhost:5173\/verify\?token=[0-9a-f]{64}/,
+              ),
+              _testing_token: expect.stringMatching(/[0-9a-f]{64}/),
             },
           },
         },
@@ -99,7 +115,7 @@ export const contracts: Record<string, Contract> = {
           request: {},
           response: { status: 401, body: {} },
         },
-        unknown: {
+        unauthorized: {
           request: { jwtPayload: { sub: NaN } },
           response: { status: 401, body: {} },
         },
@@ -112,40 +128,12 @@ export const contracts: Record<string, Contract> = {
         teacher: {
           request: {
             body: {
-              token: "fake_jwt_token",
+              token: "teacher_token",
             },
-            jwtPayload: { sub: teacherUser.email },
           },
           response: {
             status: 201,
             body: teacherUser,
-            and: () => {
-              expect(
-                cookies.set({
-                  name: "__Host-auth",
-                  options: {
-                    httpOnly: true,
-                    sameSite: "strict",
-                    secure: true,
-                    path: "/",
-                  },
-                }),
-              );
-            },
-          },
-        },
-        new_user: {
-          request: {
-            body: { token: "fake_jwt_token" },
-            jwtPayload: { sub: "new_user@mail.com" },
-          },
-          response: {
-            status: 201,
-            body: {
-              id: expect.any(Number),
-              email: "new_user@mail.com",
-              name: "new_user",
-            },
             and: () => {
               expect(
                 cookies.set({
@@ -176,7 +164,52 @@ export const contracts: Record<string, Contract> = {
           },
         },
         unauthorized: {
-          request: { body: { token: "invalid_jwt_token" }, jwtPayload: null },
+          request: { body: { token: "invalid_token" } },
+          response: {
+            status: 401,
+            body: {},
+            and: () => {
+              expect(
+                cookies.not("set", {
+                  name: "__Host-auth",
+                }),
+              );
+            },
+          },
+        },
+        consumed: {
+          request: { body: { token: "consumed_token" } },
+          response: {
+            status: 401,
+            body: {},
+            and: () => {
+              expect(
+                cookies.not("set", {
+                  name: "__Host-auth",
+                }),
+              );
+            },
+          },
+        },
+        expired: {
+          request: { body: { token: "expired_token" } },
+          response: {
+            status: 401,
+            body: {},
+            and: () => {
+              expect(
+                cookies.not("set", {
+                  name: "__Host-auth",
+                }),
+              );
+            },
+          },
+        },
+        deleted_user: {
+          request: {
+            body: { token: "deleted_user_token" },
+            jwtPayload: { sub: "deleted_user@mail.com" },
+          },
           response: {
             status: 401,
             body: {},
