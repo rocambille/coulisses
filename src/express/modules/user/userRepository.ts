@@ -15,7 +15,7 @@
   Design notes:
   - Controllers and services rely on repository contracts
   - SQL queries are explicit (no ORM, no magic)
-  - Soft delete is the default read behavior
+  - Soft delete is the default find behavior
 */
 
 import databaseClient, {
@@ -43,10 +43,10 @@ class UserRepository {
     - No validation here (done earlier in the pipeline)
     - Assumes referential integrity (user_id exists)
   */
-  async create(user: Omit<UserWithPassword, "id">) {
+  async create(user: Omit<User, "id">) {
     const [result] = await databaseClient.query<Result>(
-      "insert into user (email, password) values (?, ?)",
-      [user.email, user.password],
+      "insert into user (email, name) values (?, ?)",
+      [user.email, user.name],
     );
 
     return result.insertId;
@@ -57,7 +57,7 @@ class UserRepository {
   /* ********************************************************************** */
 
   /*
-    Read a single user by id.
+    Find a single user by id.
 
     Behavior:
     - Ignores soft-deleted rows (`deleted_at is null`)
@@ -66,9 +66,9 @@ class UserRepository {
     Why null instead of throwing:
     - Allows upper layers to decide HTTP semantics (404, 204, etc.)
   */
-  async read(byId: number): Promise<User | null> {
+  async find(byId: number): Promise<User | null> {
     const [rows] = await databaseClient.query<Rows>(
-      "select id, email from user where id = ? and deleted_at is null",
+      "select id, email, name from user where id = ? and deleted_at is null",
       [byId],
     );
 
@@ -76,42 +76,40 @@ class UserRepository {
       return null;
     }
 
-    const { id, email } = rows[0];
+    const { id, email, name } = rows[0];
 
-    return { id, email };
+    return { id, email, name };
   }
 
   /*
-    Read all non-deleted users.
+    Find all non-deleted users.
 
     Notes:
     - Meant to be composed or extended if needed
   */
-  async readAll(limit: number, offset: number): Promise<User[]> {
+  async findAll(limit: number, offset: number): Promise<User[]> {
     const [rows] = await databaseClient.query<Rows>(
-      "select id, email from user where deleted_at is null limit ? offset ?",
+      "select id, email, name from user where deleted_at is null limit ? offset ?",
       [limit, offset],
     );
 
-    return rows.map<User>(({ id, email }) => ({ id, email }));
+    return rows.map<User>(({ id, email, name }) => ({ id, email, name }));
   }
 
   /*
-    Read a single user by email.
+    Find a single user by email.
 
     Behavior:
     - Ignores soft-deleted rows (`deleted_at is null`)
     - Returns `null` when no matching user exists
-    - Returns a full user with password when matching user exists
+    - Returns matching user when exists
 
     Why null instead of throwing:
     - Allows upper layers to decide HTTP semantics (404, 204, etc.)
   */
-  async readByEmailWithPassword(
-    byEmail: string,
-  ): Promise<UserWithPassword | null> {
+  async findByEmail(byEmail: string): Promise<User | null> {
     const [rows] = await databaseClient.query<Rows>(
-      "select id, email, password from user where email = ? and deleted_at is null",
+      "select id, email, name from user where email = ? and deleted_at is null",
       [byEmail],
     );
 
@@ -119,9 +117,31 @@ class UserRepository {
       return null;
     }
 
-    const { id, email, password } = rows[0];
+    const { id, email, name } = rows[0];
 
-    return { id, email, password };
+    return { id, email, name };
+  }
+
+  /*
+    Find or create a single user by email.
+
+    Behavior:
+    - Ignores soft-deleted rows (`deleted_at is null`)
+    - Returns `null` when no matching user exists
+
+    Why null instead of throwing:
+    - Allows upper layers to decide HTTP semantics (404, 204, etc.)
+  */
+  async findOrCreateByEmail(email: string, name?: string): Promise<User> {
+    const user = await this.findByEmail(email);
+    if (user) return user;
+
+    const id = await this.create({
+      email,
+      name: name ?? email.split("@")[0],
+    });
+
+    return { id, email, name: name ?? email.split("@")[0] };
   }
 
   /* ********************************************************************** */
@@ -138,10 +158,10 @@ class UserRepository {
     Why:
     - Allows callers to decide how to interpret "0 rows affected"
   */
-  async update(id: number, user: Omit<UserWithPassword, "id">) {
+  async update(id: number, user: Omit<User, "id">) {
     const [result] = await databaseClient.query<Result>(
-      "update user set email = ?, password = ? where id = ? and deleted_at is null",
-      [user.email, user.password, id],
+      "update user set email = ?, name = ? where id = ? and deleted_at is null",
+      [user.email, user.name, id],
     );
 
     return result.affectedRows;
@@ -156,7 +176,7 @@ class UserRepository {
 
     Semantics:
     - Marks the row as deleted without removing it
-    - Default read queries automatically ignore it
+    - Default find queries automatically ignore it
   */
   async softDelete(id: number) {
     const [result] = await databaseClient.query<Result>(

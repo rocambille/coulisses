@@ -32,8 +32,8 @@ const router = Router();
 
 /*
   authActions:
-  - verifyAccessToken injects `req.auth`
-  - `req.auth.sub` contains the authenticated user id
+  - verifyAccessToken injects `req.me`
+  - `req.me` contains the authenticated user
 */
 import authActions from "../auth/authActions";
 
@@ -100,10 +100,10 @@ import type { RequestHandler } from "express";
 
   Assumptions:
   - req.params.userId is the owner
-  - req.auth.sub is the authenticated user id
+  - req.me.id is the authenticated user id
 */
 const checkAccess: RequestHandler = (req, res, next) => {
-  if (req.params.userId === req.auth.sub) {
+  if (req.user.id === req.me.id) {
     next();
   } else {
     res.sendStatus(403);
@@ -120,19 +120,6 @@ const checkAccess: RequestHandler = (req, res, next) => {
 */
 router.get(BASE_PATH, userActions.browse);
 router.get(USER_PATH, userActions.read);
-
-/*
-  Create a new user.
-  - Validates payload before processing
-  - Hashes password to keep user data safe
-  - Creates an access token along with the new user
-*/
-router.post(
-  BASE_PATH,
-  userValidator.validate,
-  authActions.hashPassword,
-  authActions.createUserAndAccessToken,
-);
 
 /* ************************************************************************ */
 /* Authentication wall                                                      */
@@ -159,7 +146,7 @@ router.use(BASE_PATH, authActions.verifyAccessToken);
 router
   .route(USER_PATH)
   .all(checkAccess)
-  .put(userValidator.validate, authActions.hashPassword, userActions.edit)
+  .put(userValidator.validate, userActions.edit)
   .delete(userActions.destroy);
 
 /* ************************************************************************ */

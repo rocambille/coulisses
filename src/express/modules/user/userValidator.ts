@@ -21,62 +21,23 @@
   - https://zod.dev/
 */
 
-/* ************************************************************************ */
-/* Schema                                                                   */
-/* ************************************************************************ */
-
-import { type ZodError, z } from "zod";
+import { z } from "zod";
 
 /*
   User Data Transfer Object (DTO)
 
   Notes:
   - `id` is optional to allow reuse for different operations
-  - `confirmPassword` is compared against `password`
 */
-const userDTOSchema = z
-  .object({
-    id: z.number().optional(),
-    email: z.email().max(255),
-    password: z.string().max(255),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"], // path of error
-  });
-
-/* ************************************************************************ */
-/* Middleware                                                               */
-/* ************************************************************************ */
-
-import type { RequestHandler } from "express";
+const userDTOSchema = z.object({
+  id: z.number().optional(),
+  email: z.email().max(255),
+  name: z.string().max(255),
+});
 
 /*
-  Validate and sanitize request body.
-
-  Behavior:
-  - Replaces req.body with a validated, typed object
-  - Returns 400 with detailed issues on validation failure
-
-  Why override req.body:
-  - Downstream handlers can rely on a safe, known structure
-  - Eliminates repeated parsing or defensive checks
+  Export validator
 */
-const validate: RequestHandler = (req, res, next) => {
-  try {
-    req.body = userDTOSchema.parse(req.body);
+import { createValidator } from "../utils";
 
-    next();
-  } catch (err) {
-    const { issues } = err as ZodError;
-
-    res.status(400).json(issues);
-  }
-};
-
-/* ************************************************************************ */
-/* Export                                                                   */
-/* ************************************************************************ */
-
-export default { validate };
+export default createValidator(userDTOSchema);

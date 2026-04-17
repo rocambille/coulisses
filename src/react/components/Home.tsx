@@ -36,7 +36,7 @@ function Home() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Learn more
+            En savoir plus
           </a>
         </p>
       </hgroup>
@@ -49,7 +49,7 @@ function Home() {
         <p data-testid="count-value">{count}</p>
 
         <button type="button" onClick={() => setCount(count + 1)}>
-          Count
+          Compteur
         </button>
       </div>
     </>

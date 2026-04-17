@@ -16,14 +16,18 @@
 
   Related docs:
   - https://reactrouter.com/start/data/routing
-  - https://expressjs.com/en/guide/using-middleware.html
+  - https://reactrouter.com/en/main/start/overview
 */
 
 import { Outlet, type RouteObject } from "react-router";
 
+import { AuthProvider } from "./components/auth/AuthContext";
+import LogoutForm from "./components/auth/LogoutForm";
+import VerifyPage from "./components/auth/VerifyPage";
 import Home from "./components/Home";
 import { itemRoutes } from "./components/item/index";
 import Layout from "./components/Layout";
+import { RefreshProvider } from "./components/RefreshContext";
 
 /*
   Global styles
@@ -44,9 +48,13 @@ const routes: RouteObject[] = [
       - Uses <Outlet> to render child routes
     */
     element: (
-      <Layout>
-        <Outlet />
-      </Layout>
+      <AuthProvider>
+        <RefreshProvider>
+          <Layout>
+            <Outlet />
+          </Layout>
+        </RefreshProvider>
+      </AuthProvider>
     ),
 
     /*
@@ -58,6 +66,14 @@ const routes: RouteObject[] = [
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "logout",
+        element: <LogoutForm />,
+      },
+      {
+        path: "verify",
+        element: <VerifyPage />,
       },
       ...itemRoutes,
     ],

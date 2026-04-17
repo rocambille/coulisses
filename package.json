@@ -15,7 +15,8 @@
     "make:clone": "tsx  --env-file=.env bin/make-clone",
     "make:purge": "tsx --env-file=.env bin/make-purge",
     "start": "tsx --env-file=.env server",
-    "test": "vitest run --coverage",
+    "test": "vitest run --coverage --exclude tests/setup",
+    "test:setup": "vitest run tests/setup",
     "types:check": "tsc --noEmit"
   },
   "devDependencies": {
@@ -27,6 +28,7 @@
     "@types/express": "^5.0.6",
     "@types/fs-extra": "^11.0.4",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^8.0.0",
     "@types/pluralize": "^0.0.33",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -43,7 +45,6 @@
     "vitest": "^4.1.0"
   },
   "dependencies": {
-    "argon2": "^0.44.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
@@ -51,6 +52,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.19.1",
+    "nodemailer": "^8.0.5",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router": "^7.13.1",

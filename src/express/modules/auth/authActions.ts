@@ -3,66 +3,50 @@
   Centralize all authentication-related actions and middleware.
 
   This file handles:
-  - Password hashing and verification
-  - User authentication (login / register)
+  - User authentication (magic link)
   - JWT creation and verification
   - Authentication cookie management
 
   This file intentionally does NOT:
-  - Perform request validation (handled by validators)
   - Handle routing concerns (handled by authRoutes)
   - Implement authorization logic (handled elsewhere)
 
   Security model:
   - Stateless authentication via JWT stored in HttpOnly cookies
   - Short-lived access tokens
-  - Strong password hashing using Argon2id
 */
 
-import argon2 from "argon2";
+import crypto from "node:crypto";
 import type { CookieOptions, RequestHandler } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
+import nodemailer from "nodemailer";
 
 import userRepository from "../user/userRepository";
+import authRepository from "./authRepository";
 
 /* ************************************************************************ */
 /* Configuration & primitives                                               */
 /* ************************************************************************ */
 
 /*
-  Application secret used to sign JWTs.
+  Environment variables.
   Must be defined at startup; failing fast is intentional.
 */
 const appSecret = process.env.APP_SECRET;
+const smtpHost = process.env.SMTP_HOST;
+const smtpPort = process.env.SMTP_PORT;
 
 if (appSecret == null) {
   throw new Error("process.env.APP_SECRET is not defined");
 }
 
-/*
-  Minimal JWT wrapper to:
-  - Encapsulate signing and verification
-  - Enforce payload typing between methods
-*/
-class Auth<Payload extends JwtPayload | string = JwtPayload> {
-  #secret: string;
-
-  constructor(secret: string) {
-    this.#secret = secret;
-  }
-
-  sign(payload: Payload): string {
-    return jwt.sign(payload, this.#secret, {
-      expiresIn: "1h",
-    });
-  }
-
-  verify(token: string): Payload {
-    return jwt.verify(token, this.#secret) as Payload;
-  }
+if (smtpHost == null) {
+  throw new Error("process.env.SMTP_HOST is not defined");
 }
 
-const auth = new Auth(appSecret);
+if (smtpPort == null) {
+  throw new Error("process.env.SMTP_PORT is not defined");
+}
 
 /*
   Extend Express Request to carry authenticated user data.
@@ -71,7 +55,7 @@ const auth = new Auth(appSecret);
 declare global {
   namespace Express {
     interface Request {
-      auth: ReturnType<typeof auth.verify>;
+      me: User;
     }
   }
 }
@@ -80,22 +64,7 @@ declare global {
 /* Security options                                                         */
 /* ************************************************************************ */
 
-/*
-  Password hashing options.
-
-  - Uses Argon2id (recommended by OWASP)
-  - Values are conservative but suitable for most applications
-
-  References:
-  - https://github.com/ranisalt/node-argon2/wiki/Options
-  - https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
-*/
-const hashingOptions = {
-  type: argon2.argon2id,
-  memoryCost: 19 * 2 ** 10, // 19 MiB
-  timeCost: 2,
-  parallelism: 1,
-};
+const magicLinkTimeout = 15 * 60 * 1000; // 15 minutes
 
 /*
   Cookie configuration for authentication token.
@@ -109,78 +78,77 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: "strict",
-  maxAge: 60 * 60 * 1000, // 1 hour
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 };
 
-/* ************************************************************************ */
-/* Middleware                                                               */
-/* ************************************************************************ */
-
 /*
-  Hash a plaintext password before persistence.
-
-  Preconditions:
-  - req.body.password exists and is a string
-
-  Postconditions:
-  - req.body.password contains a secure hash
+  Minimal JWT wrapper to:
+  - Encapsulate signing and verification
+  - Enforce payload typing between methods
 */
-const hashPassword: RequestHandler = async (req, _res, next) => {
-  req.body.password = await argon2.hash(req.body.password, hashingOptions);
+class Auth<Payload extends JwtPayload | string = JwtPayload> {
+  #secret: string;
 
-  next();
-};
-
-/* ************************************************************************ */
-
-/*
-  Verify the access token from cookies and attach its payload to req.auth.
-
-  Preconditions:
-  - Cookie parser has already run
-
-  Response:
-  - 401 if token is missing or invalid
-*/
-const verifyAccessToken: RequestHandler = (req, res, next) => {
-  try {
-    const token = req.cookies["__Host-auth"];
-
-    if (token == null) {
-      throw new Error("Access token is missing in cookies");
-    }
-
-    req.auth = auth.verify(token);
-
-    next();
-  } catch {
-    res.sendStatus(401);
+  constructor(secret: string) {
+    this.#secret = secret;
   }
-};
+
+  signSession(payload: Payload): string {
+    return jwt.sign(payload, this.#secret, { expiresIn: cookieOptions.maxAge });
+  }
+
+  verify(token: string): Payload {
+    return jwt.verify(token, this.#secret) as Payload;
+  }
+}
+
+const auth = new Auth(appSecret);
+
+const transporter = nodemailer.createTransport(
+  `smtp://${smtpHost}:${smtpPort}`,
+);
 
 /* ************************************************************************ */
 /* Actions                                                                  */
 /* ************************************************************************ */
 
 /*
-  Register a new user and issue an access token.
-
-  Preconditions:
-  - req.body has been validated
-  - req.body.password has been hashed
+  Send a magic link to the user's email.
 
   Response:
-  - 201 with the new user's id
-  - Sets authentication cookie
+  - 204 on success
 */
-const createUserAndAccessToken: RequestHandler = async (req, res) => {
-  const insertId = await userRepository.create(req.body);
+const sendMagicLink: RequestHandler = async (req, res) => {
+  const { email } = req.body;
+  if (!email || typeof email !== "string") {
+    res.sendStatus(400);
+    return;
+  }
 
-  const token = auth.sign({ sub: insertId.toString() });
+  // Find or create user to get an ID
+  const user = await userRepository.findOrCreateByEmail(email);
 
-  res.cookie("__Host-auth", token, cookieOptions);
+  // Clean up old/expired tokens for this user as per request
+  await authRepository.deleteExpiredByUser(user.id);
 
-  res.status(201).json({ insertId });
+  // Generate opaque token
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+  // Store in DB
+  const expiresAt = new Date(Date.now() + magicLinkTimeout);
+  await authRepository.insertToken(user.id, tokenHash, expiresAt);
+
+  const magicLink = `${req.protocol}://${req.get("host")}/verify?token=${rawToken}`;
+
+  await transporter.sendMail({
+    from: "starter@mail.com",
+    to: email,
+    subject: "Lien de connexion",
+    html: `<a href="${magicLink}">Cliquez ici pour vous connecter</a>`,
+  });
+
+  res.sendStatus(204);
 };
 
 /* ************************************************************************ */
@@ -188,40 +156,51 @@ const createUserAndAccessToken: RequestHandler = async (req, res) => {
 /*
   Authenticate an existing user and issue an access token.
 
-  Preconditions:
-  - req.body.email and req.body.password are present
-
   Response:
-  - 201 with user payload (without password)
-  - 401 on invalid credentials
+  - 201 with user
+  - 401 on error
 */
-const createAccessToken: RequestHandler = async (req, res) => {
-  const userWithPassword = await userRepository.readByEmailWithPassword(
-    req.body.email,
-  );
+const verifyMagicLink: RequestHandler = async (req, res) => {
+  const { token } = req.body;
 
-  if (userWithPassword == null) {
-    res.sendStatus(401);
+  if (!token || typeof token !== "string") {
+    res.sendStatus(400);
     return;
   }
 
-  const verified = await argon2.verify(
-    userWithPassword.password,
-    req.body.password,
-  );
+  try {
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const storedToken = await authRepository.findByHash(tokenHash);
 
-  if (!verified) {
+    if (storedToken == null) {
+      throw new Error("Invalid token");
+    }
+
+    if (storedToken.consumed_at != null) {
+      throw new Error("Token already consumed");
+    }
+
+    if (new Date(storedToken.expires_at) < new Date()) {
+      throw new Error("Token expired");
+    }
+
+    // Mark as consumed
+    await authRepository.markAsConsumed(storedToken.id);
+
+    const user = await userRepository.find(storedToken.user_id);
+
+    if (user == null) {
+      throw new Error("User not found");
+    }
+
+    const sessionToken = auth.signSession({ sub: user.id.toString() });
+
+    res.cookie("__Host-auth", sessionToken, cookieOptions);
+
+    res.status(201).json(user);
+  } catch {
     res.sendStatus(401);
-    return;
   }
-
-  const { password: _password, ...user } = userWithPassword;
-
-  const token = auth.sign({ sub: user.id.toString() });
-
-  res.cookie("__Host-auth", token, cookieOptions);
-
-  res.status(201).json(user);
 };
 
 /* ************************************************************************ */
@@ -247,9 +226,44 @@ const destroyAccessToken: RequestHandler = (_req, res) => {
   - verifyAccessToken has run successfully
 */
 const readMe: RequestHandler = async (req, res) => {
-  const me = await userRepository.read(Number(req.auth.sub));
+  res.json(req.me);
+};
 
-  res.json(me);
+/* ************************************************************************ */
+/* Middleware                                                               */
+/* ************************************************************************ */
+
+/*
+  Verify the access token from cookies and attach the user to req.me.
+
+  Preconditions:
+  - Cookie parser has already run
+
+  Response:
+  - 401 if token is missing or invalid
+*/
+const verifyAccessToken: RequestHandler = async (req, res, next) => {
+  try {
+    const token = req.cookies["__Host-auth"];
+
+    if (token == null) {
+      throw new Error("Access token is missing in cookies");
+    }
+
+    const payload = auth.verify(token);
+
+    const me = await userRepository.find(Number(payload.sub));
+
+    if (me == null) {
+      throw new Error("User not found");
+    }
+
+    req.me = me;
+
+    next();
+  } catch {
+    res.sendStatus(401);
+  }
 };
 
 /* ************************************************************************ */
@@ -257,10 +271,9 @@ const readMe: RequestHandler = async (req, res) => {
 /* ************************************************************************ */
 
 export default {
-  hashPassword,
-  verifyAccessToken,
-  createUserAndAccessToken,
-  createAccessToken,
+  sendMagicLink,
+  verifyMagicLink,
   destroyAccessToken,
   readMe,
+  verifyAccessToken,
 };

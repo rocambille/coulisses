@@ -39,7 +39,7 @@ import itemRepository from "./itemRepository";
 const browse: RequestHandler = async (req, res) => {
   const offset = Number(req.query.start ?? "0");
 
-  const items = await itemRepository.readAll(10, offset);
+  const items = await itemRepository.findAll(10, offset);
 
   res.json(items);
 };

@@ -1,8 +1,3 @@
-type Credentials = {
-  email: string;
-  password: string;
-};
-
 type Item = {
   id: number;
   title: string;
@@ -12,8 +7,13 @@ type Item = {
 type User = {
   id: number;
   email: string;
+  name: string;
 };
 
-type UserWithPassword = User & {
-  password: string;
+type MagicLinkToken = {
+  id: number;
+  user_id: number;
+  token_hash: string;
+  expires_at: Date;
+  consumed_at: Date | null;
 };

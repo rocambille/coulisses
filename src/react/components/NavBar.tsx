@@ -14,6 +14,8 @@
 import type { ReactNode } from "react";
 import { NavLink } from "react-router";
 
+import { useAuth } from "./auth/AuthContext";
+
 /*
   Helper to keep JSX concise and consistent.
 
@@ -27,6 +29,7 @@ const link = (to: string, children: ReactNode) => (
 );
 
 function NavBar() {
+  const { check } = useAuth();
   return (
     /*
       Semantic navigation container.
@@ -36,8 +39,13 @@ function NavBar() {
     */
     <nav>
       <ul>
-        {link("/", "Home")}
-        {link("/items", "Items")}
+        {link("/", "Accueil")}
+        {check() && (
+          <>
+            {link("/items", "Items")}
+            {link("/logout", "Déconnexion")}
+          </>
+        )}
       </ul>
     </nav>
   );

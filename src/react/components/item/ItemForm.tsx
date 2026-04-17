@@ -52,7 +52,9 @@ function ItemForm({ children, defaultValue, action }: ItemFormProps) {
           3. Delegate side effects to the caller
         */
 
-        const title = formData.get("title")?.toString() ?? "";
+        const title = formData.get("title")?.toString();
+
+        if (!title) throw new Error("Invalid form submission");
 
         /*
           Client-side validation can be done here for better UX.
@@ -63,7 +65,7 @@ function ItemForm({ children, defaultValue, action }: ItemFormProps) {
       }}
     >
       <p>
-        <label htmlFor={titleId}>title</label>
+        <label htmlFor={titleId}>titre</label>
         <input
           id={titleId}
           type="text"

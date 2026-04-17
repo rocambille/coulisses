@@ -16,10 +16,6 @@
   - https://expressjs.com/en/5x/api.html#router.param
 */
 
-/* ************************************************************************ */
-/* Request augmentation                                                     */
-/* ************************************************************************ */
-
 /*
   Extend Express.Request to include `item`.
 
@@ -35,45 +31,10 @@ declare global {
   }
 }
 
-/* ************************************************************************ */
-/* Param converter                                                          */
-/* ************************************************************************ */
-
-import type { RequestParamHandler } from "express";
-
+/*
+  Export converter
+*/
+import { createParamConverter } from "../utils";
 import itemRepository from "./itemRepository";
 
-/*
-  Param middleware for `:itemId`.
-
-  Behavior:
-  - Attempts to load the item from the repository
-  - If not found:
-      - DELETE: 204 (idempotent deletion)
-      - Other methods: 404 (resource not found)
-  - If found:
-      - Attaches item to `req`
-      - Continues the middleware chain
-
-  Design note:
-  - HTTP semantics are handled here, not in controllers
-  - Controllers never deal with "missing item" cases
-*/
-const convert: RequestParamHandler = async (req, res, next, itemId) => {
-  const item = await itemRepository.read(+itemId);
-
-  if (item == null) {
-    res.sendStatus(req.method === "DELETE" ? 204 : 404);
-    return;
-  }
-
-  req.item = item;
-
-  next();
-};
-
-/* ************************************************************************ */
-/* Export                                                                   */
-/* ************************************************************************ */
-
-export default { convert };
+export default createParamConverter(itemRepository, "item");

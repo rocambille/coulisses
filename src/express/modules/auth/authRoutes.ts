@@ -3,11 +3,11 @@
   Routes related to "auth" actions.
 
   This file defines:
-  - Login/logout endpoints
+  - Magic link endpoints
   - Authenticated "me" endpoint
 
   Guiding principles:
-  - Login/logout access is public
+  - Magic link access is public
   - Me access is authenticated
 
   Related docs:
@@ -38,23 +38,14 @@ import authActions from "./authActions";
 /* Public routes                                                            */
 /* ************************************************************************ */
 
-/*
-  Public login/logout endpoints.
-  No authentication required.
-*/
-router
-  .route("/api/access-tokens")
-  .post(authActions.createAccessToken)
-  .delete(authActions.destroyAccessToken);
+router.post("/api/auth/magic-link", authActions.sendMagicLink);
+router.post("/api/auth/verify", authActions.verifyMagicLink);
+router.post("/api/auth/logout", authActions.destroyAccessToken);
 
 /* ************************************************************************ */
 /* Authenticated routes                                                     */
 /* ************************************************************************ */
 
-/*
-  Get authenticated user.
-  - Requires authentication
-*/
 router.get("/api/me", authActions.verifyAccessToken, authActions.readMe);
 
 /* ************************************************************************ */

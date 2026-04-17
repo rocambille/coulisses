@@ -12,11 +12,30 @@
   - Focuses only on UI composition
 */
 
-import { useItems } from "./hooks";
+import { useCallback } from "react";
+import { useNavigate } from "react-router";
+
+import { useMutate } from "../RefreshContext";
 import ItemForm from "./ItemForm";
 
 function ItemCreate() {
-  const { addItem } = useItems();
+  const mutate = useMutate();
+  const navigate = useNavigate();
+
+  const addItem = useCallback(
+    async (partialItem: Omit<Item, "id" | "user_id">) => {
+      const response = await mutate("/api/items", "post", partialItem, [
+        "/api/items",
+      ]);
+
+      if (response.ok) {
+        const { insertId } = await response.json();
+
+        navigate(`/items/${insertId}`);
+      }
+    },
+    [mutate, navigate],
+  );
 
   /*
     Default value passed to the form.
@@ -38,7 +57,7 @@ function ItemCreate() {
     */
     <ItemForm defaultValue={newItem} action={addItem}>
       {/* Submit button is injected via composition */}
-      <button type="submit">Add</button>
+      <button type="submit">Ajouter</button>
     </ItemForm>
   );
 }

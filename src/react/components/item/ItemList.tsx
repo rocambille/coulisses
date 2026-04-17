@@ -13,10 +13,11 @@
   - UI stays declarative and predictable
 */
 
+import { use } from "react";
 import { Link } from "react-router";
 
 import { useAuth } from "../auth/AuthContext";
-import { useItems } from "./hooks";
+import { cache } from "../utils";
 
 function ItemList() {
   /*
@@ -27,11 +28,12 @@ function ItemList() {
   const auth = useAuth();
 
   /*
-    Items state:
-    - Provided by a domain-specific hook
-    - Keeps data-fetching logic outside the UI layer
+    Items collection:
+    - Retrieved through the shared cache layer
+    - Suspends while loading (via `use`)
+    - Invalidated after mutations
   */
-  const { items } = useItems();
+  const items = use<Item[]>(cache("/api/items"));
 
   return (
     <>
@@ -40,7 +42,7 @@ function ItemList() {
       {/* Entry point for authenticated users */}
       {auth.check() && (
         <Link to="/items/new" data-testid="items-new">
-          Add
+          Ajouter
         </Link>
       )}
 

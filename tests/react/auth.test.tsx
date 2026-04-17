@@ -1,283 +1,245 @@
-import {
-  act,
-  render,
-  renderHook,
-  screen,
-  waitFor,
-} from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { act, screen } from "@testing-library/react";
+import * as ReactRouter from "react-router";
 
 import {
   AuthProvider,
   useAuth,
 } from "../../src/react/components/auth/AuthContext";
-import LoginRegisterForm from "../../src/react/components/auth/LoginRegisterForm";
 import LogoutForm from "../../src/react/components/auth/LogoutForm";
-
+import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
+import VerifyPage from "../../src/react/components/auth/VerifyPage";
+import { invalidateCache } from "../../src/react/components/utils";
 import {
-  mockCsrfToken,
-  mockedRandomUUID,
-  mockFetch,
-  mockUseAuth,
-  stubRoute,
-} from "./utils";
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
+  expectContractCall,
+  fooUser,
+  renderHookAsync,
+  renderWithStub,
+  requestValue,
+  setupMocks,
+} from "./test-utils";
 
 describe("React auth components", () => {
+  beforeEach(() => {
+    setupMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   describe("<AuthProvider />", () => {
-    beforeEach(() => {
-      mockCsrfToken();
-      mockFetch();
-    });
     it("should render its children", async () => {
-      const Stub = stubRoute("/", () => (
-        <AuthProvider>hello, world!</AuthProvider>
-      ));
+      await renderWithStub(
+        "/",
+        () => <AuthProvider>hello, world!</AuthProvider>,
+        ["/"],
+        { me: null },
+      );
 
-      render(<Stub initialEntries={["/"]} />);
-
-      await waitFor(() => screen.getByText("hello, world!"));
+      await screen.findByText("hello, world!");
     });
     it("should fetch /api/me on mount", async () => {
-      const Stub = stubRoute("/", () => (
-        <AuthProvider>hello, world!</AuthProvider>
-      ));
+      invalidateCache("/api/me");
 
-      render(<Stub initialEntries={["/"]} />);
-
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
+      await renderWithStub(
+        "/",
+        () => <AuthProvider>hello, world!</AuthProvider>,
+        ["/"],
+        { me: null },
       );
+
+      await expectContractCall("auth", "me", "teacher");
     });
   });
+
   describe("useAuth()", () => {
-    beforeEach(() => {
-      mockCsrfToken();
-      mockFetch();
-    });
     it("should be used within <AuthProvider>", async () => {
       // Avoid exception noise in console
       vi.spyOn(console, "error").mockImplementationOnce(() => {});
 
-      expect(() => {
-        renderHook(() => useAuth());
-      }).toThrow(/\buseAuth\b.*\bwithin\b.*\bAuthProvider\b/i);
+      await expect(renderHookAsync(() => useAuth())).rejects.toThrow(
+        /\buseAuth\b.*\bwithin\b.*\bAuthProvider\b/i,
+      );
     });
     it("should return an auth object", async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
 
       const auth = result.current;
 
       expect(auth).toBeDefined();
     });
     it("should return a check function", async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
 
       const auth = result.current;
 
-      expect(typeof auth.check).toBe("function");
-
-      expect(auth.check()).toBe(auth.user != null);
+      expect(auth.check()).toBe(auth.me != null);
     });
-    it("should return a login function", async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+    it("should return a sendMagicLink function", async () => {
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
 
       const auth = result.current;
 
-      expect(typeof auth.login).toBe("function");
+      await act(async () => await auth.sendMagicLink(fooUser.email));
+
+      expectContractCall("auth", "magic_link", "teacher");
+    });
+    it("should return a verifyMagicLink function", async () => {
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
+
+      const auth = result.current;
 
       await act(
         async () =>
-          await auth.login({ email: "foo@mail.com", password: "secret" }),
+          await auth.verifyMagicLink(
+            requestValue("auth", "verify", "teacher", "token"),
+          ),
       );
 
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/access-tokens",
-        expect.objectContaining({
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-          body: JSON.stringify({ email: "foo@mail.com", password: "secret" }),
-        }),
-      );
+      expectContractCall("auth", "verify", "teacher");
     });
     it("should return a logout function", async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
 
       const auth = result.current;
-
-      expect(typeof auth.logout).toBe("function");
 
       await act(async () => await auth.logout());
 
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/access-tokens",
-        expect.objectContaining({
-          method: "delete",
-          headers: {
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-        }),
-      );
+      expectContractCall("auth", "logout", "anyone");
     });
-    it("should return a register function", async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    it("should throw when logout fails", async () => {
+      setupMocks({ force500: true });
 
-      await waitFor(() =>
-        expect(globalThis.fetch).toHaveBeenCalledWith("/api/me"),
-      );
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
 
       const auth = result.current;
 
-      expect(typeof auth.register).toBe("function");
+      await expect(auth.logout()).rejects.toThrow(/logout/i);
 
-      await act(
-        async () =>
-          await auth.register({
-            email: "foo@mail.com",
-            password: "secret",
-            confirmPassword: "secret",
-          }),
-      );
-
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/users",
-        expect.objectContaining({
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-          body: JSON.stringify({
-            email: "foo@mail.com",
-            password: "secret",
-            confirmPassword: "secret",
-          }),
-        }),
-      );
+      expectContractCall("auth", "logout", "anyone");
     });
   });
-  describe("<LoginRegisterForm />", () => {
+
+  describe("<MagicLinkForm />", () => {
     it("should mount successfully", async () => {
-      mockUseAuth(null);
-
-      const Stub = stubRoute("/", LoginRegisterForm);
-
-      render(<Stub initialEntries={["/"]} />);
-
-      await waitFor(() => screen.getByTestId("login"));
-      await waitFor(() => screen.getByTestId("register"));
+      await renderWithStub("/", MagicLinkForm, ["/"], { me: null });
+      await screen.findByRole("button");
     });
-    it("should submit form login", async () => {
-      const [auth] = mockUseAuth(null);
-
-      const Stub = stubRoute("/", LoginRegisterForm);
-
-      render(<Stub initialEntries={["/"]} />);
-
-      await waitFor(() => screen.getByTestId("login"));
-
-      const user = userEvent.setup();
-
-      await user.type(screen.getByLabelText(/^email$/i), "foo@mail.com");
-      await user.type(screen.getByLabelText(/^password$/i), "secret");
-      await user.click(screen.getByTestId("login"));
-
-      expect(auth.login).toHaveBeenCalledWith({
-        email: "foo@mail.com",
-        password: "secret",
+    it("should submit email and show confirmation", async () => {
+      const { user } = await renderWithStub("/", MagicLinkForm, ["/"], {
+        me: null,
       });
-    });
-    it("should submit form register", async () => {
-      const [auth] = mockUseAuth(null);
+      await screen.findByRole("button");
 
-      const Stub = stubRoute("/", LoginRegisterForm);
+      await user.type(screen.getByLabelText(/^email$/i), fooUser.email);
+      await user.click(screen.getByRole("button"));
 
-      render(<Stub initialEntries={["/"]} />);
-
-      await waitFor(() => screen.getByTestId("register"));
-
-      const user = userEvent.setup();
-
-      await user.type(screen.getByLabelText(/^email$/i), "foo@mail.com");
-      await user.type(screen.getByLabelText(/^password$/i), "secret");
-      await user.type(screen.getByLabelText(/^confirm\spassword$/i), "secret");
-      await user.click(screen.getByTestId("register"));
-
-      expect(auth.register).toHaveBeenCalledWith({
-        email: "foo@mail.com",
-        password: "secret",
-        confirmPassword: "secret",
-      });
+      expectContractCall("auth", "magic_link", "teacher");
     });
   });
+
   describe("<LogoutForm />", () => {
     it("should mount successfully", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
-
-      const Stub = stubRoute("/", LogoutForm);
-
-      render(<Stub initialEntries={["/"]} />);
-
-      await waitFor(() => screen.getByRole("button"));
+      await renderWithStub("/", LogoutForm, ["/"], {
+        me: fooUser,
+      });
+      await screen.findByRole("button");
     });
     it("should submit form logout", async () => {
-      const [auth] = mockUseAuth({ id: 1, email: "foo@mail.com" });
-
-      const Stub = stubRoute("/", LogoutForm);
-
-      render(<Stub initialEntries={["/"]} />);
-
-      await waitFor(() => screen.getByRole("button"));
-
-      const user = userEvent.setup();
+      const { user } = await renderWithStub("/", LogoutForm, ["/"], {
+        me: fooUser,
+      });
+      await screen.findByRole("button");
 
       await user.click(screen.getByRole("button"));
 
-      expect(auth.logout).toHaveBeenCalled();
+      expectContractCall("auth", "logout", "anyone");
+    });
+  });
+
+  describe("<VerifyPage />", () => {
+    it("should mount successfully", async () => {
+      const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
+      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
+        () => mockedNavigate,
+      );
+
+      await renderWithStub(
+        "/verify",
+        VerifyPage,
+        [`/verify?token=${requestValue("auth", "verify", "teacher", "token")}`],
+        { me: null },
+      );
+
+      await screen.findByText(/en cours/i);
+    });
+    it("should verify token and redirect to dashboard when valid", async () => {
+      const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
+      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
+        () => mockedNavigate,
+      );
+
+      await renderWithStub(
+        "/verify",
+        VerifyPage,
+        [`/verify?token=${requestValue("auth", "verify", "teacher", "token")}`],
+        { me: null },
+      );
+
+      expectContractCall("auth", "verify", "teacher");
+
+      expect(mockedNavigate).toHaveBeenCalledWith("/", { replace: true });
+    });
+    it("should display error when token is invalid", async () => {
+      const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
+      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
+        () => mockedNavigate,
+      );
+
+      await renderWithStub(
+        "/verify",
+        VerifyPage,
+        [
+          `/verify?token=${requestValue("auth", "verify", "unauthorized", "token")}`,
+        ],
+        { me: null },
+      );
+
+      await screen.findByText(/invalide/i);
+
+      expectContractCall("auth", "verify", "unauthorized");
+      expect(mockedNavigate).not.toHaveBeenCalled();
+    });
+    it("should display error when token is missing", async () => {
+      const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
+      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
+        () => mockedNavigate,
+      );
+
+      await renderWithStub("/verify", VerifyPage, ["/verify"], { me: null });
+
+      await screen.findByText(/invalide/i);
+
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(
+        "/api/auth/verify",
+        expect.objectContaining({
+          method: "post",
+        }),
+      );
+      expect(mockedNavigate).not.toHaveBeenCalled();
     });
   });
 });
