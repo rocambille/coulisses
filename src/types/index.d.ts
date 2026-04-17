@@ -1,3 +1,5 @@
+declare module "*.css";
+
 type Item = {
   id: number;
   title: string;
