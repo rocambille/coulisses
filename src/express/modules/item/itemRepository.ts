@@ -15,7 +15,7 @@
   Design notes:
   - Controllers and services rely on repository contracts
   - SQL queries are explicit (no ORM, no magic)
-  - Soft delete is the default read behavior
+  - Soft delete is the default find behavior
 */
 
 import databaseClient, {
@@ -57,7 +57,7 @@ class ItemRepository {
   /* ********************************************************************** */
 
   /*
-    Read a single item by id.
+    Find a single item by id.
 
     Behavior:
     - Ignores soft-deleted rows (`deleted_at is null`)
@@ -66,7 +66,7 @@ class ItemRepository {
     Why null instead of throwing:
     - Allows upper layers to decide HTTP semantics (404, 204, etc.)
   */
-  async read(byId: number): Promise<Item | null> {
+  async find(byId: number): Promise<Item | null> {
     const [rows] = await databaseClient.query<Rows>(
       "select id, title, user_id from item where id = ? and deleted_at is null",
       [byId],
@@ -82,12 +82,12 @@ class ItemRepository {
   }
 
   /*
-    Read all non-deleted items.
+    Find all non-deleted items.
 
     Notes:
     - Meant to be composed or extended if needed
   */
-  async readAll(limit: number, offset: number): Promise<Item[]> {
+  async findAll(limit: number, offset: number): Promise<Item[]> {
     const [rows] = await databaseClient.query<Rows>(
       "select id, title, user_id from item where deleted_at is null limit ? offset ?",
       [limit, offset],
@@ -132,7 +132,7 @@ class ItemRepository {
 
     Semantics:
     - Marks the row as deleted without removing it
-    - Default read queries automatically ignore it
+    - Default find queries automatically ignore it
   */
   async softDelete(id: number) {
     const [result] = await databaseClient.query<Result>(

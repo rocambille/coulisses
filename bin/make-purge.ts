@@ -131,10 +131,7 @@ async function purgeAuth() {
   });
 
   await updateFile("src/types/index.d.ts", (content) =>
-    content
-      .replace(/type Credentials = {[\s\S]*?};\n\n/m, "")
-      .replace(/type User = {[\s\S]*?};\n\n/m, "")
-      .replace(/type UserWithPassword = User & {[\s\S]*?};\n/m, ""),
+    content.replace(/type User = {[\s\S]*?};\n\n/m, ""),
   );
 
   // Remove AuthProvider and related imports from Layout.
@@ -142,9 +139,7 @@ async function purgeAuth() {
     content
       .replace(`import { AuthProvider } from "./auth/AuthContext";\n`, "")
       .replace(`import AuthForm from "./auth/AuthForm";\n`, "")
-      .replace(`import BurgerMenu from "./BurgerMenu";\n`, "")
-      .replace(/<AuthProvider>([\s\S]*)<\/AuthProvider>/m, "<>$1</>")
-      .replace(/<BurgerMenu>[\s\S]*?<\/BurgerMenu>\s*/m, ""),
+      .replace(/<AuthProvider>([\s\S]*)<\/AuthProvider>/m, "<>$1</>"),
   );
 }
 

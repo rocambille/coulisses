@@ -8,15 +8,18 @@
   - Delegates mutations (edit/delete) to dedicated components or pages
 */
 
-import { Link } from "react-router";
+import { use } from "react";
+import { Link, useParams } from "react-router";
 
 import { useAuth } from "../auth/AuthContext";
-import { useItems } from "./hooks";
+import { cache } from "../utils";
 import ItemDeleteForm from "./ItemDeleteForm";
 
 function ItemShow() {
   const auth = useAuth();
-  const { item } = useItems();
+  const { id } = useParams();
+
+  const item = use<Item | null>(cache(`/api/items/${id}`));
 
   /*
     Safety guard:
@@ -44,7 +47,7 @@ function ItemShow() {
       {/* Owner-only actions                                               */}
       {/* **************************************************************** */}
 
-      {auth.user?.id === item.user_id && (
+      {auth.me?.id === item.user_id && (
         <>
           {/*
             Edit action:
@@ -55,7 +58,7 @@ function ItemShow() {
             to={`/items/${item.id}/edit`}
             data-testid={`items-edit-${item.id}`}
           >
-            Edit
+            Modifier
           </Link>
 
           {/*

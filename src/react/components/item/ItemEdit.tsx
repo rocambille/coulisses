@@ -13,11 +13,32 @@
   - Focuses only on UI composition
 */
 
-import { useItems } from "./hooks";
+import { use, useCallback } from "react";
+import { useNavigate, useParams } from "react-router";
+
+import { useMutate } from "../RefreshContext";
+import { cache } from "../utils";
 import ItemForm from "./ItemForm";
 
 function ItemEdit() {
-  const { item, editItem } = useItems();
+  const mutate = useMutate();
+  const navigate = useNavigate();
+  const { id } = useParams();
+
+  const editItem = useCallback(
+    async (partialItem: Omit<Item, "id" | "user_id">) => {
+      const response = await mutate(`/api/items/${id}`, "put", partialItem, [
+        "/api/items",
+      ]);
+
+      if (response.ok) {
+        navigate(`/items/${id}`);
+      }
+    },
+    [id, mutate, navigate],
+  );
+
+  const item = use(cache(`/api/items/${id}`));
 
   /*
     Safety guard:
@@ -42,7 +63,7 @@ function ItemEdit() {
     */
     <ItemForm defaultValue={item} action={editItem}>
       {/* Submit button is injected via composition */}
-      <button type="submit">Edit</button>
+      <button type="submit">Modifier</button>
     </ItemForm>
   );
 }

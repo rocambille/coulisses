@@ -21,11 +21,7 @@
   - https://zod.dev/
 */
 
-/* ************************************************************************ */
-/* Schema                                                                   */
-/* ************************************************************************ */
-
-import { type ZodError, z } from "zod";
+import { z } from "zod";
 
 /*
   Item Data Transfer Object (DTO)
@@ -41,42 +37,13 @@ const itemDTOSchema = z.object({
   user_id: z.number(),
 });
 
-/* ************************************************************************ */
-/* Middleware                                                               */
-/* ************************************************************************ */
-
-import type { RequestHandler } from "express";
-
 /*
-  Validate and sanitize request body.
-
-  Behavior:
-  - Merges client payload with server-controlled fields
-  - Replaces req.body with a validated, typed object
-  - Returns 400 with detailed issues on validation failure
-
-  Why override req.body:
-  - Downstream handlers can rely on a safe, known structure
-  - Eliminates repeated parsing or defensive checks
+  Export validator
 */
-const validate: RequestHandler = (req, res, next) => {
-  try {
-    req.body = itemDTOSchema.parse({
-      ...req.body,
-      // user_id is derived from the authenticated JWT, not the client
-      user_id: Number(req.auth.sub),
-    });
+import { createValidator } from "../utils";
 
-    next();
-  } catch (err) {
-    const { issues } = err as ZodError;
-
-    res.status(400).json(issues);
-  }
-};
-
-/* ************************************************************************ */
-/* Export                                                                   */
-/* ************************************************************************ */
-
-export default { validate };
+export default createValidator(itemDTOSchema, (req) => ({
+  ...req.body,
+  // user_id is derived from the authenticated user, not from req.body
+  user_id: req.me.id,
+}));

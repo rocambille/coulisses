@@ -46,7 +46,12 @@ export const cache = (url: string) => {
     */
     cacheData.set(
       url,
-      fetch(url).then((response) => response.json()),
+      fetch(url).then((response) => {
+        if (!response.ok) {
+          return null;
+        }
+        return response.json();
+      }),
     );
   }
 
@@ -60,11 +65,41 @@ export const cache = (url: string) => {
   - Used after mutations to force refetch on next render
 */
 export const invalidateCache = (basePath: string) => {
+  if (basePath === "*") {
+    cacheData.clear();
+    return;
+  }
+
   cacheData.forEach((_value, key) => {
     if (key.startsWith(basePath)) {
       cacheData.delete(key);
     }
   });
+};
+
+/*
+  mutate(url, method, body):
+  - Performs a mutative fetch (POST, PUT, DELETE)
+  - Automatically attaches CSRF token
+  - Returns the Response for status checking
+*/
+export const mutate = async (
+  url: string,
+  method: "post" | "put" | "delete",
+  body?: unknown,
+) => {
+  const headers: Record<string, string> = {
+    "X-CSRF-Token": await csrfToken(),
+  };
+
+  const init: RequestInit = { method, headers };
+
+  if (body != null) {
+    headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(body);
+  }
+
+  return fetch(url, init);
 };
 
 /* ************************************************************************ */

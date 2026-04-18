@@ -10,14 +10,27 @@
   - https://react.dev/reference/react-dom/components/form
 */
 
-import { useItems } from "./hooks";
+import { useCallback } from "react";
+import { useNavigate, useParams } from "react-router";
+
+import { useMutate } from "../RefreshContext";
 
 function ItemDeleteForm() {
-  const { deleteItem } = useItems();
+  const mutate = useMutate();
+  const navigate = useNavigate();
+  const { id } = useParams();
+
+  const deleteItem = useCallback(async () => {
+    const response = await mutate(`/api/items/${id}`, "delete");
+
+    if (response.ok) {
+      navigate("/items");
+    }
+  }, [id, mutate, navigate]);
 
   return (
     <form action={deleteItem}>
-      <button type="submit">Delete</button>
+      <button type="submit">Supprimer</button>
     </form>
   );
 }

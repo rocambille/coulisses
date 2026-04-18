@@ -1,8 +1,6 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { screen } from "@testing-library/react";
 import * as ReactRouter from "react-router";
 
-import { useItems } from "../../src/react/components/item/hooks";
 import ItemCreate from "../../src/react/components/item/ItemCreate";
 import ItemDeleteForm from "../../src/react/components/item/ItemDeleteForm";
 import ItemEdit from "../../src/react/components/item/ItemEdit";
@@ -10,376 +8,178 @@ import ItemList from "../../src/react/components/item/ItemList";
 import ItemShow from "../../src/react/components/item/ItemShow";
 
 import {
-  mockCsrfToken,
-  mockedInsertId,
-  mockedItems,
-  mockedRandomUUID,
-  mockFetch,
-  mockUseAuth,
-  mockUseItems,
-  renderAsync,
-  renderHookAsync,
-  stubRoute,
-} from "./utils";
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
+  allItems,
+  expectContractCall,
+  fooUser,
+  renderWithStub,
+  requestValue,
+  setupMocks,
+} from "./test-utils";
 
 describe("React item components", () => {
-  describe("useItems", () => {
-    beforeEach(() => {
-      mockCsrfToken();
-      mockFetch();
-    });
-    it("should return items", async () => {
-      mockUseAuth(null);
-
-      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(() => () => {});
-
-      const { result } = await renderHookAsync(() => useItems());
-
-      expect(result.current.items).toEqual(mockedItems);
-    });
-    it("should return valid item when params contain valid id", async () => {
-      mockUseAuth(null);
-
-      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(() => () => {});
-      vi.spyOn(ReactRouter, "useParams").mockImplementation(() => ({
-        id: mockedItems[0].id.toString(),
-      }));
-
-      const { result } = await renderHookAsync(() => useItems());
-
-      expect(result.current.item).toEqual(mockedItems[0]);
-    });
-    it("should return undefined item when params contain invalid id", async () => {
-      mockUseAuth(null);
-
-      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(() => () => {});
-      vi.spyOn(ReactRouter, "useParams").mockImplementation(() => ({
-        id: mockedInsertId.toString(),
-      }));
-
-      const { result } = await renderHookAsync(() => useItems());
-
-      expect(result.current.item).toBeUndefined();
-    });
-    it("should return undefined item when params don't contain id", async () => {
-      mockUseAuth(null);
-
-      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(() => () => {});
-      vi.spyOn(ReactRouter, "useParams").mockImplementation(() => ({}));
-
-      const { result } = await renderHookAsync(() => useItems());
-
-      expect(result.current.item).toBeUndefined();
-    });
-    it("should return editItem function", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
-
-      const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
-
-      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
-        () => mockedNavigate,
-      );
-      vi.spyOn(ReactRouter, "useParams").mockImplementation(() => ({
-        id: mockedItems[0].id.toString(),
-      }));
-
-      const { result } = await renderHookAsync(() => useItems());
-
-      expect(typeof result.current.editItem).toBe("function");
-
-      await act(async () => {
-        result.current.editItem({ title: "Updated item" });
-      });
-
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        `/api/items/${mockedItems[0].id}`,
-        expect.objectContaining({
-          method: "put",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-          body: JSON.stringify({ title: "Updated item" }),
-        }),
-      );
-
-      expect(mockedNavigate).toHaveBeenCalledWith(
-        `/items/${mockedItems[0].id}`,
-      );
-    });
-    it("should return addItem function", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
-
-      const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
-
-      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
-        () => mockedNavigate,
-      );
-      vi.spyOn(ReactRouter, "useParams").mockImplementation(() => ({}));
-
-      const { result } = await renderHookAsync(() => useItems());
-
-      expect(typeof result.current.addItem).toBe("function");
-
-      await act(async () => {
-        result.current.addItem({ title: "New item" });
-      });
-
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/items",
-        expect.objectContaining({
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-          body: JSON.stringify({ title: "New item" }),
-        }),
-      );
-
-      expect(mockedNavigate).toHaveBeenCalledWith(`/items/${mockedInsertId}`);
-    });
-    it("should return deleteItem function", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
-
-      const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
-
-      vi.spyOn(ReactRouter, "useNavigate").mockImplementation(
-        () => mockedNavigate,
-      );
-      vi.spyOn(ReactRouter, "useParams").mockImplementation(() => ({
-        id: mockedItems[0].id.toString(),
-      }));
-
-      const { result } = await renderHookAsync(() => useItems());
-
-      expect(typeof result.current.deleteItem).toBe("function");
-
-      await act(async () => {
-        result.current.deleteItem();
-      });
-
-      expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-        expires: expect.any(Number),
-        name: "__Host-x-csrf-token",
-        path: "/",
-        sameSite: "strict",
-        value: mockedRandomUUID,
-      });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        `/api/items/${mockedItems[0].id}`,
-        expect.objectContaining({
-          method: "delete",
-          headers: {
-            "X-CSRF-Token": mockedRandomUUID,
-          },
-        }),
-      );
-
-      expect(mockedNavigate).toHaveBeenCalledWith("/items");
-    });
+  beforeEach(() => {
+    setupMocks();
+    vi.spyOn(ReactRouter, "useNavigate").mockImplementation(() => () => {});
   });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   describe("<ItemCreate />", () => {
     it("should mount successfully", async () => {
-      mockUseItems();
-
-      const Stub = stubRoute("/items/new", ItemCreate);
-
-      await renderAsync(<Stub initialEntries={["/items/new"]} />);
-
-      await waitFor(() => screen.getByRole("button"));
-    });
-    it("should submit form creating an item", async () => {
-      const [{ addItem }] = mockUseItems();
-
-      const Stub = stubRoute("/items/new", ItemCreate);
-
-      await renderAsync(<Stub initialEntries={["/items/new"]} />);
-
-      const user = userEvent.setup();
-
-      await user.type(screen.getByLabelText(/title/i), "New item");
-      await user.click(screen.getByRole("button"));
-
-      expect(addItem).toHaveBeenCalledWith({ title: "New item" });
-    });
-  });
-  describe("<ItemDeleteForm />", () => {
-    it("should mount successfully", async () => {
-      mockUseItems({ id: mockedItems[0].id.toString() });
-
-      const Stub = stubRoute("/items/:id", ItemDeleteForm);
-
-      await renderAsync(
-        <Stub initialEntries={[`/items/${mockedItems[0].id}`]} />,
-      );
-
-      await waitFor(() => screen.getByRole("button"));
-    });
-    it("should submit form editing an item", async () => {
-      const [{ deleteItem }] = mockUseItems({
-        id: mockedItems[0].id.toString(),
+      await renderWithStub("/items/new", ItemCreate, ["/items/new"], {
+        me: fooUser,
       });
 
-      const Stub = stubRoute("/items/:id", ItemDeleteForm);
-
-      await renderAsync(
-        <Stub initialEntries={[`/items/${mockedItems[0].id}`]} />,
+      await screen.findByRole("button");
+    });
+    it("should submit form and create an item", async () => {
+      const { user } = await renderWithStub(
+        "/items/new",
+        ItemCreate,
+        ["/items/new"],
+        { me: fooUser },
       );
 
-      const user = userEvent.setup();
+      await user.type(
+        screen.getByLabelText(/titre/i),
+        requestValue("items", "create", "success", "title"),
+      );
+      await user.click(screen.getByRole("button"));
+
+      expectContractCall("items", "create", "success");
+    });
+  });
+
+  describe("<ItemDeleteForm />", () => {
+    it("should mount successfully", async () => {
+      await renderWithStub(
+        "/items/:id",
+        ItemDeleteForm,
+        [`/items/${allItems[0].id}`],
+        { me: fooUser },
+      );
+
+      await screen.findByRole("button");
+    });
+    it("should submit form and delete an item", async () => {
+      const { user } = await renderWithStub(
+        "/items/:id",
+        ItemDeleteForm,
+        [`/items/${allItems[0].id}`],
+        { me: fooUser },
+      );
 
       await user.click(screen.getByRole("button"));
 
-      expect(deleteItem).toHaveBeenCalled();
+      expectContractCall("items", "delete", "success");
     });
   });
+
   describe("<ItemEdit />", () => {
     it("should mount successfully", async () => {
-      mockUseItems({ id: mockedItems[0].id.toString() });
-
-      const Stub = stubRoute("/items/:id/edit", ItemEdit);
-
-      await renderAsync(
-        <Stub initialEntries={[`/items/${mockedItems[0].id}/edit`]} />,
+      await renderWithStub(
+        "/items/:id/edit",
+        ItemEdit,
+        [`/items/${allItems[0].id}/edit`],
+        { me: fooUser },
       );
 
-      await waitFor(() => screen.getByRole("button"));
+      await screen.findByRole("button");
     });
     it("should throw 404 when params contain invalid id", async () => {
-      mockUseItems({ id: "0" });
-
-      const Stub = stubRoute("/items/:id/edit", ItemEdit);
-
-      expect(() => render(<Stub initialEntries={["/items/0/edit"]} />)).toThrow(
-        /\b404\b/,
-      );
+      await expect(() =>
+        renderWithStub("/items/:id/edit", ItemEdit, [`/items/${NaN}/edit`], {
+          me: fooUser,
+        }),
+      ).rejects.toThrow(/404/);
     });
-    it("should submit form editing an item", async () => {
-      const [{ editItem }] = mockUseItems({ id: mockedItems[0].id.toString() });
-
-      const Stub = stubRoute("/items/:id/edit", ItemEdit);
-
-      await renderAsync(
-        <Stub initialEntries={[`/items/${mockedItems[0].id}/edit`]} />,
+    it("should submit form and edit an item", async () => {
+      const { user } = await renderWithStub(
+        "/items/:id/edit",
+        ItemEdit,
+        [`/items/${allItems[0].id}/edit`],
+        { me: fooUser },
       );
 
-      const user = userEvent.setup();
-
-      await user.clear(screen.getByLabelText(/title/i));
-      await user.type(screen.getByLabelText(/title/i), "Updated item");
+      await user.clear(screen.getByLabelText(/titre/i));
+      await user.type(
+        screen.getByLabelText(/titre/i),
+        requestValue("items", "edit", "success", "title"),
+      );
       await user.click(screen.getByRole("button"));
 
-      expect(editItem).toHaveBeenCalledWith({ title: "Updated item" });
+      expectContractCall("items", "edit", "success");
     });
   });
+
   describe("<ItemList />", () => {
     it("should mount successfully", async () => {
-      mockUseAuth(null);
-      mockUseItems();
+      await renderWithStub("/items", ItemList, ["/items"], { me: fooUser });
 
-      const Stub = stubRoute("/items", ItemList);
+      await screen.findByRole("heading", { level: 1, name: /items/i });
 
-      await renderAsync(<Stub initialEntries={["/items"]} />);
-
-      await waitFor(() =>
-        screen.getByRole("heading", { level: 1, name: /items/i }),
-      );
+      expectContractCall("items", "browse", "success");
     });
     it("should not display link to create item when anonymous", async () => {
-      mockUseAuth(null);
-      mockUseItems();
+      await renderWithStub("/items", ItemList, ["/items"], { me: null });
 
-      const Stub = stubRoute("/items", ItemList);
+      await screen.findByRole("heading", { level: 1, name: /items/i });
 
-      await renderAsync(<Stub initialEntries={["/items"]} />);
-
-      await waitFor(() => expect(screen.queryByTestId("items-new")).toBeNull());
+      expect(screen.queryByTestId("items-new")).toBeNull();
     });
     it("should display link to create item when authentified", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
-      mockUseItems();
+      await renderWithStub("/items", ItemList, ["/items"], { me: fooUser });
 
-      const Stub = stubRoute("/items", ItemList);
-
-      await renderAsync(<Stub initialEntries={["/items"]} />);
-
-      await waitFor(() => screen.getByTestId("items-new"));
+      await screen.findByTestId("items-new");
     });
   });
+
   describe("<ItemShow />", () => {
     it("should mount successfully", async () => {
-      mockUseAuth(null);
-      mockUseItems({ id: mockedItems[0].id.toString() });
-
-      const Stub = stubRoute("/items/:id", ItemShow);
-
-      await renderAsync(
-        <Stub initialEntries={[`/items/${mockedItems[0].id}`]} />,
+      await renderWithStub(
+        "/items/:id",
+        ItemShow,
+        [`/items/${allItems[0].id}`],
+        { me: fooUser },
       );
 
-      await waitFor(() =>
-        screen.getByRole("heading", { level: 1, name: mockedItems[0].title }),
-      );
+      await screen.findByRole("heading", { level: 1, name: allItems[0].title });
+
+      expectContractCall("items", "read", "success");
     });
     it("should throw 404 when params contain invalid id", async () => {
-      mockUseAuth(null);
-      mockUseItems({ id: "0" });
+      await expect(() =>
+        renderWithStub("/items/:id", ItemShow, [`/items/${NaN}`], {
+          me: fooUser,
+        }),
+      ).rejects.toThrow(/404/);
 
-      const Stub = stubRoute("/items/:id", ItemShow);
-
-      expect(() => render(<Stub initialEntries={["/items/0"]} />)).toThrow(
-        /\b404\b/,
-      );
+      expectContractCall("items", "read", "not_found");
     });
     it("should not display link to edit item when anonymous", async () => {
-      mockUseAuth(null);
-      mockUseItems({ id: mockedItems[0].id.toString() });
-
-      const Stub = stubRoute("/items/:id", ItemShow);
-
-      await renderAsync(
-        <Stub initialEntries={[`/items/${mockedItems[0].id}`]} />,
+      await renderWithStub(
+        "/items/:id",
+        ItemShow,
+        [`/items/${allItems[0].id}`],
+        { me: null },
       );
 
-      await waitFor(() =>
-        expect(
-          screen.queryByTestId(`items-edit-/${mockedItems[0].id}`),
-        ).toBeNull(),
-      );
+      await screen.findByRole("heading", { level: 1, name: allItems[0].title });
+
+      expect(screen.queryByTestId(`items-edit-/${allItems[0].id}`)).toBeNull();
     });
     it("should display link to edit item when authentified", async () => {
-      mockUseAuth({ id: 1, email: "foo@mail.com" });
-      mockUseItems({ id: mockedItems[0].id.toString() });
-
-      const Stub = stubRoute("/items/:id", ItemShow);
-
-      await renderAsync(
-        <Stub initialEntries={[`/items/${mockedItems[0].id}`]} />,
+      await renderWithStub(
+        "/items/:id",
+        ItemShow,
+        [`/items/${allItems[0].id}`],
+        { me: fooUser },
       );
 
-      await waitFor(() =>
-        screen.getByTestId(`items-edit-${mockedItems[0].id}`),
-      );
+      await screen.findByTestId(`items-edit-${allItems[0].id}`);
     });
   });
 });

@@ -32,8 +32,8 @@ const router = Router();
 
 /*
   authActions:
-  - verifyAccessToken injects `req.auth`
-  - `req.auth.sub` contains the authenticated user id
+  - verifyAccessToken injects `req.me`
+  - `req.me` contains the authenticated user
 */
 import authActions from "../auth/authActions";
 
@@ -100,10 +100,10 @@ import type { RequestHandler } from "express";
 
   Assumptions:
   - req.item.user_id is the owner
-  - req.auth.sub is the authenticated user id
+  - req.me.id is the authenticated user id
 */
 const checkAccess: RequestHandler = (req, res, next) => {
-  if (req.item.user_id === Number(req.auth.sub)) {
+  if (req.item.user_id === req.me.id) {
     next();
   } else {
     res.sendStatus(403);
