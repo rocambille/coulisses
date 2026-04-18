@@ -36,3 +36,5 @@ jobs:
       run: npm run test -- --exclude tests/setup/base.test.ts
       env:
         APP_SECRET: dummy_secret_for_testing
+        SMTP_HOST: dummy_host_for_testing
+        SMTP_PORT: dummy_port_for_testing
