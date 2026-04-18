@@ -147,6 +147,8 @@ describe("React item components", () => {
       );
 
       await screen.findByRole("heading", { level: 1, name: allItems[0].title });
+
+      expectContractCall("items", "read", "success");
     });
     it("should throw 404 when params contain invalid id", async () => {
       await expect(() =>
@@ -154,6 +156,8 @@ describe("React item components", () => {
           me: fooUser,
         }),
       ).rejects.toThrow(/404/);
+
+      expectContractCall("items", "read", "not_found");
     });
     it("should not display link to edit item when anonymous", async () => {
       await renderWithStub(

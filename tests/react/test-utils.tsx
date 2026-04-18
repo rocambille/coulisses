@@ -4,6 +4,7 @@ import { createRoutesStub } from "react-router";
 
 import { AuthProvider } from "../../src/react/components/auth/AuthContext";
 import { RefreshProvider } from "../../src/react/components/RefreshContext";
+import { invalidateCache } from "../../src/react/components/utils";
 import { type Contract, contracts, type Json, type Test } from "../contracts";
 
 export * from "../data";
@@ -197,6 +198,8 @@ export const setupMocks = ({
   };
 
   mockFetch(customFetch);
+
+  invalidateCache("*");
 };
 
 export const requestValue = (
@@ -249,5 +252,5 @@ export const expectContractCall = (
     fetchArgs.push(init);
   }
 
-  expect(globalThis.fetch).toHaveBeenCalled();
+  expect(globalThis.fetch).toHaveBeenCalledWith(...fetchArgs);
 };

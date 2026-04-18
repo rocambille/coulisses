@@ -6,7 +6,11 @@ import {
   useMutate,
   useRefresh,
 } from "../../src/react/components/RefreshContext";
-import { cache, mutate } from "../../src/react/components/utils";
+import {
+  cache,
+  invalidateCache,
+  mutate,
+} from "../../src/react/components/utils";
 import {
   allItems,
   expectContractCall,
@@ -69,9 +73,42 @@ describe("React: Base Components & Utilities", () => {
       const data = await cache(`/api/items/${allItems[0].id}`);
       expect(data).toEqual(allItems[0]);
     });
+    it("should not fetch again when data is cached", async () => {
+      invalidateCache(`/api/items/${allItems[0].id}`);
+
+      const data = await cache(`/api/items/${allItems[0].id}`);
+      expect(data).toEqual(allItems[0]);
+
+      const data2 = await cache(`/api/items/${allItems[0].id}`);
+      expect(data2).toEqual(allItems[0]);
+
+      expect(global.fetch).toHaveBeenNthCalledWith(
+        1,
+        `/api/items/${allItems[0].id}`,
+      );
+    });
     it("should return null when data is not available", async () => {
       const data = await cache("/api/404");
       expect(data).toBeNull();
+    });
+  });
+
+  describe("invalidateCache", () => {
+    it("should invalidate cache", async () => {
+      invalidateCache(`/api/items/${allItems[0].id}`);
+
+      const data = await cache(`/api/items/${allItems[0].id}`);
+      expect(data).toEqual(allItems[0]);
+
+      invalidateCache(`/api/items/${allItems[0].id}`);
+
+      const data2 = await cache(`/api/items/${allItems[0].id}`);
+      expect(data2).toEqual(allItems[0]);
+
+      expect(global.fetch).toHaveBeenNthCalledWith(
+        2,
+        `/api/items/${allItems[0].id}`,
+      );
     });
   });
 

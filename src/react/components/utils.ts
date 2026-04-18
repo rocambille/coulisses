@@ -65,6 +65,11 @@ export const cache = (url: string) => {
   - Used after mutations to force refetch on next render
 */
 export const invalidateCache = (basePath: string) => {
+  if (basePath === "*") {
+    cacheData.clear();
+    return;
+  }
+
   cacheData.forEach((_value, key) => {
     if (key.startsWith(basePath)) {
       cacheData.delete(key);
