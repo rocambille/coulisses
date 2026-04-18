@@ -32,9 +32,14 @@ import authRepository from "./authRepository";
   Environment variables.
   Must be defined at startup; failing fast is intentional.
 */
+const appBaseUrl = process.env.APP_BASE_URL;
 const appSecret = process.env.APP_SECRET;
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = process.env.SMTP_PORT;
+
+if (appBaseUrl == null) {
+  throw new Error("process.env.APP_BASE_URL is not defined");
+}
 
 if (appSecret == null) {
   throw new Error("process.env.APP_SECRET is not defined");
@@ -108,6 +113,8 @@ const transporter = nodemailer.createTransport(
   `smtp://${smtpHost}:${smtpPort}`,
 );
 
+const trustedBaseUrl = appBaseUrl.replace(/\/+$/, "");
+
 /* ************************************************************************ */
 /* Actions                                                                  */
 /* ************************************************************************ */
@@ -139,7 +146,7 @@ const sendMagicLink: RequestHandler = async (req, res) => {
   const expiresAt = new Date(Date.now() + magicLinkTimeout);
   await authRepository.insertToken(user.id, tokenHash, expiresAt);
 
-  const magicLink = `${req.protocol}://${req.get("host")}/verify?token=${rawToken}`;
+  const magicLink = `${trustedBaseUrl}/verify?token=${rawToken}`;
 
   await transporter.sendMail({
     from: "starter@mail.com",
