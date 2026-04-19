@@ -12,11 +12,11 @@
     "build:server": "vite build --outDir dist/server --ssr src/entry-server",
     "database:sync": "tsx --env-file=.env bin/database-sync",
     "dev": "tsx --env-file=.env server",
+    "install:check": "vitest run tests/install",
     "make:clone": "tsx  --env-file=.env bin/make-clone",
     "make:purge": "tsx --env-file=.env bin/make-purge",
     "start": "tsx --env-file=.env server",
-    "test": "vitest run --coverage --exclude tests/setup",
-    "test:setup": "vitest run tests/setup",
+    "test": "vitest run --coverage --exclude tests/install",
     "types:check": "tsc --noEmit"
   },
   "devDependencies": {
