@@ -39,7 +39,7 @@ export type JsonObject = { [key: string]: Json };
 export type Case = {
   only?: boolean;
   // Optional path override (useful for IDs)
-  path?: string;
+  specialPath?: string;
   request: {
     body?: JsonObject;
     // Mocked JWT payload to simulate different users
@@ -314,7 +314,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/items/${NaN}`,
+          specialPath: `/api/items/${NaN}`,
           request: { jwtPayload: { sub: fooUser.id } },
           response: { status: 204, body: {} },
         },
@@ -339,7 +339,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/items/${NaN}`,
+          specialPath: `/api/items/${NaN}`,
           request: {
             body: { title: "updated" },
             jwtPayload: { sub: fooUser.id },
@@ -357,7 +357,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 200, body: allItems[0] },
         },
         not_found: {
-          path: `/api/items/${NaN}`,
+          specialPath: `/api/items/${NaN}`,
           request: {},
           response: { status: 404, body: {} },
         },
@@ -392,7 +392,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/users/${NaN}`,
+          specialPath: `/api/users/${NaN}`,
           request: { jwtPayload: { sub: fooUser.id } },
           response: { status: 204, body: {} },
         },
@@ -417,7 +417,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/users/${NaN}`,
+          specialPath: `/api/users/${NaN}`,
           request: {
             body: { email: "updated@mail.com", name: "updated" },
             jwtPayload: { sub: fooUser.id },
@@ -435,7 +435,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 200, body: fooUser },
         },
         not_found: {
-          path: `/api/users/${NaN}`,
+          specialPath: `/api/users/${NaN}`,
           request: {},
           response: { status: 404, body: {} },
         },

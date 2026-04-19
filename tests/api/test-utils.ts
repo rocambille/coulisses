@@ -244,7 +244,7 @@ const api = supertest(app);
 export const check = async (test: Test, caseName: keyof Test["cases"]) => {
   const c = test.cases[caseName];
 
-  const apiCall = api[test.method](c.path ?? test.path);
+  const apiCall = api[test.method](c.specialPath ?? test.path);
 
   if (c.request.body != null) {
     apiCall.send(c.request.body);

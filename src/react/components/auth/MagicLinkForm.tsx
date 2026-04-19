@@ -1,6 +1,6 @@
 /*
   Purpose:
-  Magic Link login form — email input only.
+  Magic Link login form - email input only.
 */
 
 import { useState } from "react";

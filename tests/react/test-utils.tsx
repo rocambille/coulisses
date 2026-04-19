@@ -98,7 +98,10 @@ const mockFetch = (
       for (const [_contractName, contract] of Object.entries(contracts)) {
         for (const [_testName, test] of Object.entries(contract)) {
           for (const [_caseName, c] of Object.entries(test.cases)) {
-            if (path === (c.path ?? test.path) && method === test.method) {
+            if (
+              path === (c.specialPath ?? test.path) &&
+              method === test.method
+            ) {
               if (isDeepEqual(parsedBody, c.request.body)) {
                 return respond(c.response.body, c.response.status);
               }
@@ -189,7 +192,11 @@ export const setupMocks = ({
         if (contractName in contracts && testName in contracts[contractName]) {
           const test = contracts[contractName][testName];
           const c = test.cases[caseName];
-          if (c && path === (c.path ?? test.path) && method === test.method) {
+          if (
+            c &&
+            path === (c.specialPath ?? test.path) &&
+            method === test.method
+          ) {
             return respond(c.response.body, c.response.status);
           }
         }
@@ -246,7 +253,9 @@ export const expectContractCall = (
     ...(c.request.body ? { body: JSON.stringify(c.request.body) } : {}),
   };
 
-  const fetchArgs: Parameters<typeof globalThis.fetch> = [c.path ?? test.path];
+  const fetchArgs: Parameters<typeof globalThis.fetch> = [
+    c.specialPath ?? test.path,
+  ];
 
   if (Object.keys(init).length > 0) {
     fetchArgs.push(init);
