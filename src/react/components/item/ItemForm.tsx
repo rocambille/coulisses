@@ -15,6 +15,11 @@
 */
 
 import { type PropsWithChildren, useId } from "react";
+import { z } from "zod";
+
+const itemSchema = z.object({
+  title: z.string().min(1, "Le titre est requis"),
+});
 
 /*
   Props:
@@ -54,14 +59,18 @@ function ItemForm({ children, defaultValue, action }: ItemFormProps) {
 
         const title = formData.get("title")?.toString();
 
-        if (!title) throw new Error("Invalid form submission");
-
         /*
           Client-side validation can be done here for better UX.
           The API remains the source of truth for data integrity.
         */
+        const parsed = itemSchema.safeParse({ title });
 
-        action({ title });
+        if (!parsed.success) {
+          console.error(parsed.error);
+          return;
+        }
+
+        action(parsed.data);
       }}
     >
       <p>

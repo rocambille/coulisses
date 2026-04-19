@@ -159,6 +159,17 @@ export async function main(argv: string[] = process.argv) {
   } else {
     throw new Error("❌ Source is neither a file nor a directory.");
   }
+
+  // Provide contextual feedback
+  if (destPath.includes(path.normalize("src/express/modules"))) {
+    console.info(
+      `\n💡 Don't forget to import and use your new routes in src/express/routes.ts!`,
+    );
+  } else if (destPath.includes(path.normalize("src/react/components"))) {
+    console.info(
+      `\n💡 Don't forget to add your new routes in src/react/routes.tsx!`,
+    );
+  }
 }
 
 /* v8 ignore next 6 */

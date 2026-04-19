@@ -17,7 +17,7 @@
 */
 
 import type { Request, RequestHandler, RequestParamHandler } from "express";
-import type { ZodError, ZodObject } from "zod";
+import type { ZodObject } from "zod";
 
 /* ************************************************************************ */
 /* createValidator                                                          */
@@ -38,15 +38,19 @@ export const createValidator = (
   extract: (req: Request) => unknown = (req) => req.body,
 ): { validate: RequestHandler } => ({
   validate: (req, res, next) => {
-    try {
-      req.body = schema.parse(extract(req));
+    const parsed = schema.safeParse(extract(req));
 
-      next();
-    } catch (err) {
-      const { issues } = err as ZodError;
+    if (!parsed.success) {
+      const { issues } = parsed.error;
 
       res.status(400).json(issues);
+
+      return;
     }
+
+    req.body = parsed.data;
+
+    next();
   },
 });
 
