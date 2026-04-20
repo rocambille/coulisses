@@ -4,7 +4,6 @@
 
   Design notes:
   - Use a native <form> to keep semantics explicit
-  - Delegates all side effects to the useItems hook
 
   Related docs:
   - https://react.dev/reference/react-dom/components/form
@@ -21,7 +20,10 @@ function ItemDeleteForm() {
   const { id } = useParams();
 
   const deleteItem = useCallback(async () => {
-    const response = await mutate(`/api/items/${id}`, "delete");
+    const response = await mutate(`/api/items/${id}`, "delete", null, [
+      "/api/items",
+      `/api/items/${id}`,
+    ]);
 
     if (response.ok) {
       navigate("/items");

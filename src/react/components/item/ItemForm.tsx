@@ -5,7 +5,6 @@
   Design notes:
   - Uses a native <form> to keep semantics explicit
   - Uses uncontrolled inputs for simplicity (stateless aside from DOM state)
-  - Delegates all side effects to the useItems hook
   - Reusable across create/edit use cases
 
   Related docs:
