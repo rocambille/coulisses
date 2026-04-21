@@ -36,10 +36,10 @@ import userRepository from "./userRepository";
   Response:
   - 200 with an array of users
 */
-const browse: RequestHandler = async (req, res) => {
+const browse: RequestHandler = (req, res) => {
   const offset = Number(req.query.start ?? "0");
 
-  const users = await userRepository.findAll(10, offset);
+  const users = userRepository.findAll(10, offset);
 
   res.json(users);
 };
@@ -55,7 +55,7 @@ const browse: RequestHandler = async (req, res) => {
   Response:
   - 200 with the user payload
 */
-const read: RequestHandler = async (req, res) => {
+const read: RequestHandler = (req, res) => {
   res.json(req.user);
 };
 
@@ -72,8 +72,8 @@ const read: RequestHandler = async (req, res) => {
   Response:
   - 204 No Content on success
 */
-const edit: RequestHandler = async (req, res) => {
-  await userRepository.update(req.user.id, req.body);
+const edit: RequestHandler = (req, res) => {
+  userRepository.update(req.user.id, req.body);
 
   res.sendStatus(204);
 };
@@ -90,8 +90,8 @@ const edit: RequestHandler = async (req, res) => {
   Response:
   - 204 No Content
 */
-const destroy: RequestHandler = async (req, res) => {
-  await userRepository.softDelete(req.user.id);
+const destroy: RequestHandler = (req, res) => {
+  userRepository.softDelete(req.user.id);
 
   res.sendStatus(204);
 };

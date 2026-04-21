@@ -17,7 +17,7 @@
 */
 
 import type { Request, RequestHandler, RequestParamHandler } from "express";
-import type { ZodError, ZodObject } from "zod";
+import type { ZodObject } from "zod";
 
 /* ************************************************************************ */
 /* createValidator                                                          */
@@ -38,15 +38,19 @@ export const createValidator = (
   extract: (req: Request) => unknown = (req) => req.body,
 ): { validate: RequestHandler } => ({
   validate: (req, res, next) => {
-    try {
-      req.body = schema.parse(extract(req));
+    const parsed = schema.safeParse(extract(req));
 
-      next();
-    } catch (err) {
-      const { issues } = err as ZodError;
+    if (!parsed.success) {
+      const { issues } = parsed.error;
 
       res.status(400).json(issues);
+
+      return;
     }
+
+    req.body = parsed.data;
+
+    next();
   },
 });
 
@@ -73,12 +77,12 @@ export const createValidator = (
   - Controllers never deal with "missing entity" cases
 */
 export const createParamConverter = <T>(
-  repository: { find: (id: number) => Promise<T | null> },
+  repository: { find: (id: number) => T | null },
   requestKey: string,
 ): { convert: RequestParamHandler } => {
   return {
-    convert: async (req, res, next, rawId) => {
-      const entity = await repository.find(+rawId);
+    convert: (req, res, next, rawId) => {
+      const entity = repository.find(+rawId);
 
       if (entity == null) {
         res.sendStatus(req.method === "DELETE" ? 204 : 404);

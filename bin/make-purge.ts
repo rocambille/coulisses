@@ -1,14 +1,10 @@
 import path from "node:path";
 import readline from "node:readline/promises";
-import { fileURLToPath } from "node:url";
 
 import fs from "fs-extra";
 
 // Locate the project root directory (one level up from /bin).
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const rootDir = path.join(__dirname, "..");
+const rootDir = path.join(import.meta.dirname, "..");
 
 // Setup readline for interactive confirmation.
 const rl = readline.createInterface({

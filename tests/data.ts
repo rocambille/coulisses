@@ -22,10 +22,16 @@ export const allUsers: User[] = [
     email: "bar@mail.com",
     name: "bar",
   },
+  {
+    id: 3,
+    email: "deleted@mail.com",
+    name: "deleted",
+  },
 ];
 
 export const fooUser = allUsers[0];
 export const barUser = allUsers[1];
+export const deletedUser = allUsers[2];
 
 // ---------------------------------------------------------
 // Items
@@ -43,9 +49,3 @@ export const allItems: Item[] = [
     user_id: barUser.id,
   },
 ];
-
-// ---------------------------------------------------------
-// Other data
-// ---------------------------------------------------------
-
-export const insertId = 42;

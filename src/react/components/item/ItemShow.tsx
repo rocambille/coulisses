@@ -3,7 +3,6 @@
   Display a single item and expose owner-only actions.
 
   Design notes:
-  - Reads item data via useItems
   - Performs UI-level authorization checks
   - Delegates mutations (edit/delete) to dedicated components or pages
 */

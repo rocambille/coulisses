@@ -29,6 +29,7 @@ function ItemEdit() {
     async (partialItem: Omit<Item, "id" | "user_id">) => {
       const response = await mutate(`/api/items/${id}`, "put", partialItem, [
         "/api/items",
+        `/api/items/${id}`,
       ]);
 
       if (response.ok) {
@@ -38,7 +39,7 @@ function ItemEdit() {
     [id, mutate, navigate],
   );
 
-  const item = use(cache(`/api/items/${id}`));
+  const item = use<Item | null>(cache(`/api/items/${id}`));
 
   /*
     Safety guard:

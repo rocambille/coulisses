@@ -120,7 +120,7 @@ const mockFetch = (
     });
 };
 
-// Wrapping render in act is required here because useItems is suspending
+// Wrapping renderHook() in act() because React's use() is suspending
 // see https://github.com/testing-library/react-testing-library/issues/1375#issuecomment-2582198933
 export const renderHookAsync = async <
   Result,
@@ -133,7 +133,7 @@ export const renderHookAsync = async <
 
 type StubRouteObject = Parameters<typeof createRoutesStub>[0][number];
 
-// Wrapping render in act is required here because we use Suspense (cache)
+// Wrapping render() in act() because React's use() is suspending
 // see https://github.com/testing-library/react-testing-library/issues/1375#issuecomment-2582198933
 export const renderWithStub = async (
   path: StubRouteObject["path"],
