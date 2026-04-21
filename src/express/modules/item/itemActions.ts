@@ -36,10 +36,10 @@ import itemRepository from "./itemRepository";
   Response:
   - 200 with an array of items
 */
-const browse: RequestHandler = async (req, res) => {
+const browse: RequestHandler = (req, res) => {
   const offset = Number(req.query.start ?? "0");
 
-  const items = await itemRepository.findAll(10, offset);
+  const items = itemRepository.findAll(10, offset);
 
   res.json(items);
 };
@@ -72,8 +72,8 @@ const read: RequestHandler = (req, res) => {
   Response:
   - 204 No Content on success
 */
-const edit: RequestHandler = async (req, res) => {
-  await itemRepository.update(req.item.id, req.body);
+const edit: RequestHandler = (req, res) => {
+  itemRepository.update(req.item.id, req.body);
 
   res.sendStatus(204);
 };
@@ -90,8 +90,8 @@ const edit: RequestHandler = async (req, res) => {
   Response:
   - 201 Created with the new item's id
 */
-const add: RequestHandler = async (req, res) => {
-  const insertId = await itemRepository.create(req.body);
+const add: RequestHandler = (req, res) => {
+  const insertId = itemRepository.create(req.body);
 
   res.status(201).json({ insertId });
 };
@@ -108,8 +108,8 @@ const add: RequestHandler = async (req, res) => {
   Response:
   - 204 No Content
 */
-const destroy: RequestHandler = async (req, res) => {
-  await itemRepository.softDelete(req.item.id);
+const destroy: RequestHandler = (req, res) => {
+  itemRepository.softDelete(req.item.id);
 
   res.sendStatus(204);
 };

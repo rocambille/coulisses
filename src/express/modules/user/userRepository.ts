@@ -18,10 +18,7 @@
   - Soft delete is the default find behavior
 */
 
-import databaseClient, {
-  type Result,
-  type Rows,
-} from "../../../database/client";
+import database from "../../../database";
 
 /* ************************************************************************ */
 /* Repository                                                               */
@@ -43,13 +40,13 @@ class UserRepository {
     - No validation here (done earlier in the pipeline)
     - Assumes referential integrity (user_id exists)
   */
-  async create(user: Omit<User, "id">) {
-    const [result] = await databaseClient.query<Result>(
+  create(user: Omit<User, "id">): number | bigint {
+    const query = database.prepare(
       "insert into user (email, name) values (?, ?)",
-      [user.email, user.name],
     );
+    const result = query.run(user.email, user.name);
 
-    return result.insertId;
+    return result.lastInsertRowid;
   }
 
   /* ********************************************************************** */
@@ -66,19 +63,19 @@ class UserRepository {
     Why null instead of throwing:
     - Allows upper layers to decide HTTP semantics (404, 204, etc.)
   */
-  async find(byId: number): Promise<User | null> {
-    const [rows] = await databaseClient.query<Rows>(
+  find(byId: number): User | null {
+    const query = database.prepare(
       "select id, email, name from user where id = ? and deleted_at is null",
-      [byId],
     );
+    const row = query.get(byId);
 
-    if (rows[0] == null) {
+    if (row == null) {
       return null;
     }
 
-    const { id, email, name } = rows[0];
+    const { id, email, name } = row;
 
-    return { id, email, name };
+    return { id: Number(id), email: String(email), name: String(name) };
   }
 
   /*
@@ -87,13 +84,17 @@ class UserRepository {
     Notes:
     - Meant to be composed or extended if needed
   */
-  async findAll(limit: number, offset: number): Promise<User[]> {
-    const [rows] = await databaseClient.query<Rows>(
+  findAll(limit: number, offset: number): User[] {
+    const query = database.prepare(
       "select id, email, name from user where deleted_at is null limit ? offset ?",
-      [limit, offset],
     );
+    const rows = query.all(limit, offset);
 
-    return rows.map<User>(({ id, email, name }) => ({ id, email, name }));
+    return rows.map<User>(({ id, email, name }) => ({
+      id: Number(id),
+      email: String(email),
+      name: String(name),
+    }));
   }
 
   /*
@@ -107,19 +108,19 @@ class UserRepository {
     Why null instead of throwing:
     - Allows upper layers to decide HTTP semantics (404, 204, etc.)
   */
-  async findByEmail(byEmail: string): Promise<User | null> {
-    const [rows] = await databaseClient.query<Rows>(
+  findByEmail(byEmail: string): User | null {
+    const query = database.prepare(
       "select id, email, name from user where email = ? and deleted_at is null",
-      [byEmail],
     );
+    const row = query.get(byEmail);
 
-    if (rows[0] == null) {
+    if (row == null) {
       return null;
     }
 
-    const { id, email, name } = rows[0];
+    const { id, email, name } = row;
 
-    return { id, email, name };
+    return { id: Number(id), email: String(email), name: String(name) };
   }
 
   /*
@@ -132,16 +133,20 @@ class UserRepository {
     Why null instead of throwing:
     - Allows upper layers to decide HTTP semantics (404, 204, etc.)
   */
-  async findOrCreateByEmail(email: string, name?: string): Promise<User> {
-    const user = await this.findByEmail(email);
+  findOrCreateByEmail(email: string, name?: string): User {
+    const user = this.findByEmail(email);
     if (user) return user;
 
-    const id = await this.create({
+    const id = this.create({
       email,
       name: name ?? email.split("@")[0],
     });
 
-    return { id, email, name: name ?? email.split("@")[0] };
+    return {
+      id: Number(id),
+      email: String(email),
+      name: String(name ?? email.split("@")[0]),
+    };
   }
 
   /* ********************************************************************** */
@@ -158,13 +163,13 @@ class UserRepository {
     Why:
     - Allows callers to decide how to interpret "0 rows affected"
   */
-  async update(id: number, user: Omit<User, "id">) {
-    const [result] = await databaseClient.query<Result>(
+  update(id: number, user: Omit<User, "id">): number | bigint {
+    const query = database.prepare(
       "update user set email = ?, name = ? where id = ? and deleted_at is null",
-      [user.email, user.name, id],
     );
+    const result = query.run(user.email, user.name, id);
 
-    return result.affectedRows;
+    return result.changes;
   }
 
   /* ********************************************************************** */
@@ -178,25 +183,25 @@ class UserRepository {
     - Marks the row as deleted without removing it
     - Default find queries automatically ignore it
   */
-  async softDelete(id: number) {
-    const [result] = await databaseClient.query<Result>(
-      "update user set deleted_at = now() where id = ?",
-      [id],
+  softDelete(id: number): number | bigint {
+    const query = database.prepare(
+      "update user set deleted_at = datetime('now') where id = ?",
     );
+    const result = query.run(id);
 
-    return result.affectedRows;
+    return result.changes;
   }
 
   /*
     Restore a soft-deleted user.
   */
-  async softUndelete(id: number) {
-    const [result] = await databaseClient.query<Result>(
+  softUndelete(id: number): number | bigint {
+    const query = database.prepare(
       "update user set deleted_at = null where id = ?",
-      [id],
     );
+    const result = query.run(id);
 
-    return result.affectedRows;
+    return result.changes;
   }
 
   /*
@@ -205,13 +210,11 @@ class UserRepository {
     Warning:
     - This permanently removes the row
   */
-  async hardDelete(id: number) {
-    const [result] = await databaseClient.query<Result>(
-      "delete from user where id = ?",
-      [id],
-    );
+  hardDelete(id: number): number | bigint {
+    const query = database.prepare("delete from user where id = ?");
+    const result = query.run(id);
 
-    return result.affectedRows;
+    return result.changes;
   }
 }
 

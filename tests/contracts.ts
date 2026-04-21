@@ -19,7 +19,7 @@
 
 import { cookies } from "supertest";
 
-import { allItems, allUsers, barUser, fooUser, insertId } from "./data";
+import { allItems, allUsers, barUser, deletedUser, fooUser } from "./data";
 
 /* ************************************************************************ */
 /* Types                                                                    */
@@ -285,7 +285,7 @@ export const contracts: Record<string, Contract> = {
             body: { title: "new item" },
             jwtPayload: { sub: fooUser.id },
           },
-          response: { status: 201, body: { insertId } },
+          response: { status: 201, body: { insertId: expect.any(Number) } },
         },
         bad_request: {
           request: { body: {}, jwtPayload: { sub: fooUser.id } },
@@ -371,7 +371,10 @@ export const contracts: Record<string, Contract> = {
       cases: {
         success: {
           request: {},
-          response: { status: 200, body: allUsers },
+          response: {
+            status: 200,
+            body: allUsers.filter((user) => user.id !== deletedUser.id),
+          },
         },
       },
     },

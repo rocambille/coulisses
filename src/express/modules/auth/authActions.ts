@@ -45,12 +45,12 @@ if (appSecret == null) {
   throw new Error("process.env.APP_SECRET is not defined");
 }
 
-if (smtpHost == null) {
-  throw new Error("process.env.SMTP_HOST is not defined");
-}
+const isProduction = process.env.NODE_ENV === "production";
 
-if (smtpPort == null) {
-  throw new Error("process.env.SMTP_PORT is not defined");
+if (isProduction && (smtpHost == null || smtpPort == null)) {
+  throw new Error(
+    "SMTP_HOST and SMTP_PORT must be defined in production environment",
+  );
 }
 
 /*
@@ -109,9 +109,10 @@ class Auth<Payload extends JwtPayload | string = JwtPayload> {
 
 const auth = new Auth(appSecret);
 
-const transporter = nodemailer.createTransport(
-  `smtp://${smtpHost}:${smtpPort}`,
-);
+const transporter =
+  smtpHost && smtpPort
+    ? nodemailer.createTransport(`smtp://${smtpHost}:${smtpPort}`)
+    : null;
 
 const trustedBaseUrl = appBaseUrl.replace(/\/+$/, "");
 
@@ -133,10 +134,10 @@ const sendMagicLink: RequestHandler = async (req, res) => {
   }
 
   // Find or create user to get an ID
-  const user = await userRepository.findOrCreateByEmail(email);
+  const user = userRepository.findOrCreateByEmail(email);
 
   // Clean up old/expired tokens for this user as per request
-  await authRepository.deleteExpiredByUser(user.id);
+  authRepository.deleteExpiredByUser(user.id);
 
   // Generate opaque token
   const rawToken = crypto.randomBytes(32).toString("hex");
@@ -144,16 +145,23 @@ const sendMagicLink: RequestHandler = async (req, res) => {
 
   // Store in DB
   const expiresAt = new Date(Date.now() + magicLinkTimeout);
-  await authRepository.insertToken(user.id, tokenHash, expiresAt);
+  authRepository.insertToken(user.id, tokenHash, expiresAt);
 
   const magicLink = `${trustedBaseUrl}/verify?token=${rawToken}`;
 
-  await transporter.sendMail({
-    from: "starter@mail.com",
-    to: email,
-    subject: "Lien de connexion",
-    html: `<a href="${magicLink}">Cliquez ici pour vous connecter</a>`,
-  });
+  if (transporter) {
+    await transporter.sendMail({
+      from: "starter@mail.com",
+      to: email,
+      subject: "Lien de connexion",
+      html: `<a href="${magicLink}">Cliquez ici pour vous connecter</a>`,
+    });
+  } else {
+    console.info("----------------------------------------------------------");
+    console.info(`Magic Link for ${email}:`);
+    console.info(magicLink);
+    console.info("----------------------------------------------------------");
+  }
 
   res.sendStatus(204);
 };
@@ -167,7 +175,7 @@ const sendMagicLink: RequestHandler = async (req, res) => {
   - 201 with user
   - 401 on error
 */
-const verifyMagicLink: RequestHandler = async (req, res) => {
+const verifyMagicLink: RequestHandler = (req, res) => {
   const { token } = req.body;
 
   if (!token || typeof token !== "string") {
@@ -177,7 +185,7 @@ const verifyMagicLink: RequestHandler = async (req, res) => {
 
   try {
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const storedToken = await authRepository.findByHash(tokenHash);
+    const storedToken = authRepository.findByHash(tokenHash);
 
     if (storedToken == null) {
       throw new Error("Invalid token");
@@ -192,9 +200,9 @@ const verifyMagicLink: RequestHandler = async (req, res) => {
     }
 
     // Mark as consumed
-    await authRepository.markAsConsumed(storedToken.id);
+    authRepository.markAsConsumed(storedToken.id);
 
-    const user = await userRepository.find(storedToken.user_id);
+    const user = userRepository.find(storedToken.user_id);
 
     if (user == null) {
       throw new Error("User not found");
@@ -232,7 +240,7 @@ const destroyAccessToken: RequestHandler = (_req, res) => {
   Preconditions:
   - verifyAccessToken has run successfully
 */
-const readMe: RequestHandler = async (req, res) => {
+const readMe: RequestHandler = (req, res) => {
   res.json(req.me);
 };
 
@@ -249,7 +257,7 @@ const readMe: RequestHandler = async (req, res) => {
   Response:
   - 401 if token is missing or invalid
 */
-const verifyAccessToken: RequestHandler = async (req, res, next) => {
+const verifyAccessToken: RequestHandler = (req, res, next) => {
   try {
     const token = req.cookies["__Host-auth"];
 
@@ -259,7 +267,7 @@ const verifyAccessToken: RequestHandler = async (req, res, next) => {
 
     const payload = auth.verify(token);
 
-    const me = await userRepository.find(Number(payload.sub));
+    const me = userRepository.find(Number(payload.sub));
 
     if (me == null) {
       throw new Error("User not found");

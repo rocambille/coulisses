@@ -43,9 +43,9 @@ Dans l'ordre alphabétique (liste non exhaustive) :
 
 * [**Biome**](https://biomejs.dev/) : linter, formateur et analyseur statique performant pour garantir un code propre.
 * [**Docker**](https://docs.docker.com/) : conteneurisation pour des environnements de développement et de déploiement reproductibles.
-* [**MySQL**](https://dev.mysql.com/doc/refman/8.4/en/) : système de gestion de bases de données relationnelles.
 * [**Pico CSS**](https://picocss.com/) : kit CSS minimaliste et sémantique.
 * [**React Router (Mode Data)**](https://reactrouter.com/home) : gestionnaire de routes pour React.
+* [**SQLite**](https://sqlite.org/index.html) : système de gestion de bases de données relationnelles.
 * [**TypeScript**](https://www.typescriptlang.org/) : superset de JavaScript ajoutant des types statiques.
 * [**Vite**](https://vite.dev/guide/) : outil de build rapide pour le développement et la production.
 * [**Vitest**](https://vitest.dev/guide/) : framework de test intégré à Vite.

@@ -77,12 +77,12 @@ export const createValidator = (
   - Controllers never deal with "missing entity" cases
 */
 export const createParamConverter = <T>(
-  repository: { find: (id: number) => Promise<T | null> },
+  repository: { find: (id: number) => T | null },
   requestKey: string,
 ): { convert: RequestParamHandler } => {
   return {
-    convert: async (req, res, next, rawId) => {
-      const entity = await repository.find(+rawId);
+    convert: (req, res, next, rawId) => {
+      const entity = repository.find(+rawId);
 
       if (entity == null) {
         res.sendStatus(req.method === "DELETE" ? 204 : 404);
