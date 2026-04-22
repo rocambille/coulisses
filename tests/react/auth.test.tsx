@@ -21,31 +21,38 @@ import {
 describe("React auth components", () => {
   beforeEach(() => {
     setupMocks();
-    invalidateCache("/api/me");
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
+
   describe("<AuthProvider />", () => {
     it("should render its children", async () => {
       await renderWithStub(
         "/",
         () => <AuthProvider>hello, world!</AuthProvider>,
         ["/"],
+        { me: null },
       );
+
       await screen.findByText("hello, world!");
     });
     it("should fetch /api/me on mount", async () => {
+      invalidateCache("/api/me");
+
       await renderWithStub(
         "/",
         () => <AuthProvider>hello, world!</AuthProvider>,
         ["/"],
+        { me: null },
       );
+
       await expectContractCall("auth", "me", "teacher");
     });
   });
+
   describe("useAuth()", () => {
     it("should be used within <AuthProvider>", async () => {
       // Avoid exception noise in console
@@ -125,31 +132,38 @@ describe("React auth components", () => {
       expectContractCall("auth", "logout", "anyone");
     });
   });
+
   describe("<MagicLinkForm />", () => {
     it("should mount successfully", async () => {
-      await renderWithStub("/", MagicLinkForm, ["/"]);
+      await renderWithStub("/", MagicLinkForm, ["/"], { me: null });
       await screen.findByRole("button");
     });
     it("should submit email and show confirmation", async () => {
-      const { user } = await renderWithStub("/", MagicLinkForm, ["/"]);
+      const { user } = await renderWithStub("/", MagicLinkForm, ["/"], {
+        me: null,
+      });
       await screen.findByRole("button");
 
-      await user.type(screen.getByLabelText(/^email$/i), teacherUser.email);
+      await user.type(
+        screen.getByLabelText(/^email$/i),
+        requestValue("auth", "magic_link", "teacher", "email"),
+      );
       await user.click(screen.getByRole("button"));
 
       expectContractCall("auth", "magic_link", "teacher");
     });
   });
+
   describe("<LogoutForm />", () => {
     it("should mount successfully", async () => {
       await renderWithStub("/", LogoutForm, ["/"], {
-        user: { id: 1, email: "foo@mail.com", name: "foo" },
+        me: teacherUser,
       });
       await screen.findByRole("button");
     });
     it("should submit form logout", async () => {
       const { user } = await renderWithStub("/", LogoutForm, ["/"], {
-        user: { id: 1, email: "foo@mail.com", name: "foo" },
+        me: teacherUser,
       });
       await screen.findByRole("button");
 
@@ -158,6 +172,7 @@ describe("React auth components", () => {
       expectContractCall("auth", "logout", "anyone");
     });
   });
+
   describe("<VerifyPage />", () => {
     it("should mount successfully", async () => {
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
@@ -165,9 +180,12 @@ describe("React auth components", () => {
         () => mockedNavigate,
       );
 
-      await renderWithStub("/verify", VerifyPage, [
-        `/verify?token=${requestValue("auth", "verify", "teacher", "token")}`,
-      ]);
+      await renderWithStub(
+        "/verify",
+        VerifyPage,
+        [`/verify?token=${requestValue("auth", "verify", "teacher", "token")}`],
+        { me: null },
+      );
 
       await screen.findByText(/en cours/i);
     });
@@ -177,9 +195,12 @@ describe("React auth components", () => {
         () => mockedNavigate,
       );
 
-      await renderWithStub("/verify", VerifyPage, [
-        `/verify?token=${requestValue("auth", "verify", "teacher", "token")}`,
-      ]);
+      await renderWithStub(
+        "/verify",
+        VerifyPage,
+        [`/verify?token=${requestValue("auth", "verify", "teacher", "token")}`],
+        { me: null },
+      );
 
       expectContractCall("auth", "verify", "teacher");
 
@@ -191,9 +212,14 @@ describe("React auth components", () => {
         () => mockedNavigate,
       );
 
-      await renderWithStub("/verify", VerifyPage, [
-        `/verify?token=${requestValue("auth", "verify", "unauthorized", "token")}`,
-      ]);
+      await renderWithStub(
+        "/verify",
+        VerifyPage,
+        [
+          `/verify?token=${requestValue("auth", "verify", "unauthorized", "token")}`,
+        ],
+        { me: null },
+      );
 
       await screen.findByText(/invalide/i);
 
@@ -206,7 +232,7 @@ describe("React auth components", () => {
         () => mockedNavigate,
       );
 
-      await renderWithStub("/verify", VerifyPage, ["/verify"]);
+      await renderWithStub("/verify", VerifyPage, ["/verify"], { me: null });
 
       await screen.findByText(/invalide/i);
 

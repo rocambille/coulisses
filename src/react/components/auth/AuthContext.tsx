@@ -21,7 +21,7 @@ import {
   useState,
 } from "react";
 
-import { cache, csrfToken } from "../utils";
+import { cache, mutate } from "../utils";
 
 /* ************************************************************************ */
 /* Types                                                                    */
@@ -63,25 +63,11 @@ export function AuthProvider({
   /* ********************************************************************** */
 
   const sendMagicLink = useCallback(async (email: string) => {
-    await fetch("/api/auth/magic-link", {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": await csrfToken(),
-      },
-      body: JSON.stringify({ email }),
-    });
+    await mutate("/api/auth/magic-link", "post", { email });
   }, []);
 
   const verifyMagicLink = useCallback(async (token: string) => {
-    const response = await fetch("/api/auth/verify", {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": await csrfToken(),
-      },
-      body: JSON.stringify({ token }),
-    });
+    const response = await mutate("/api/auth/verify", "post", { token });
 
     if (response.ok) {
       const data: User = await response.json();
@@ -92,12 +78,7 @@ export function AuthProvider({
   }, []);
 
   const logout = useCallback(async () => {
-    const response = await fetch("/api/auth/logout", {
-      method: "post",
-      headers: {
-        "X-CSRF-Token": await csrfToken(),
-      },
-    });
+    const response = await mutate("/api/auth/logout", "post");
 
     if (response.ok) {
       setUser(null);

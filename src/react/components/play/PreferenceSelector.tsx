@@ -1,20 +1,20 @@
 import { useId } from "react";
-import { useAction } from "./hooks";
+import { useMutate } from "../RefreshContext";
 
 function PreferenceSelector({
   sceneId,
   playId,
   currentLevel,
 }: {
-  sceneId: number;
+  sceneId: Scene["id"];
   playId: string;
   currentLevel?: string;
 }) {
   const selectId = useId();
-  const runAction = useAction();
+  const mutate = useMutate();
 
   const handleChange = async (level: string) => {
-    await runAction(`/api/scenes/${sceneId}/preferences`, "put", { level }, [
+    await mutate(`/api/scenes/${sceneId}/preferences`, "put", { level }, [
       `/api/plays/${playId}/preferences`,
     ]);
   };

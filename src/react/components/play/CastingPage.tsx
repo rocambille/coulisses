@@ -6,20 +6,21 @@
 
 import { use } from "react";
 import { useParams } from "react-router";
+import { useMutate } from "../RefreshContext";
 import { cache } from "../utils";
-import { useAction, useMembership } from "./hooks";
+import { useMembership } from "./hooks";
 
 function CastingPage() {
   const { playId } = useParams();
-  const runAction = useAction();
+  const mutate = useMutate();
   const { isTeacher, members } = useMembership(playId);
   const matrix: CastingMatrix = use(cache(`/api/plays/${playId}/castings`));
 
-  const handleAssign = async (roleId: number, userId: number | string) => {
+  const handleAssign = async (roleId: Role["id"], userId: string) => {
     if (userId === "") {
       const currentCasting = matrix.roles.find((c) => c.id === roleId)?.user_id;
       if (currentCasting) {
-        await runAction(
+        await mutate(
           `/api/plays/${playId}/castings`,
           "delete",
           {
@@ -30,7 +31,7 @@ function CastingPage() {
         );
       }
     } else {
-      await runAction(
+      await mutate(
         `/api/plays/${playId}/castings`,
         "post",
         {
@@ -59,12 +60,12 @@ function CastingPage() {
                   {isTeacher ? (
                     <select
                       aria-label={`Assigner le rôle ${role.id}`}
-                      defaultValue={role.user_id ?? ""}
+                      defaultValue={role.user_id?.toString() ?? ""}
                       onChange={(e) => handleAssign(role.id, e.target.value)}
                     >
                       <option value="">Non assigné</option>
                       {members.map((member) => (
-                        <option key={member.id} value={member.id}>
+                        <option key={member.id} value={member.id.toString()}>
                           {member.name}
                         </option>
                       ))}

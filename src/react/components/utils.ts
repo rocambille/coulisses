@@ -47,7 +47,7 @@ export const cache = (url: string) => {
     cacheData.set(
       url,
       fetch(url).then((response) => {
-        if (response.status !== 200) {
+        if (!response.ok) {
           return null;
         }
         return response.json();
@@ -65,6 +65,11 @@ export const cache = (url: string) => {
   - Used after mutations to force refetch on next render
 */
 export const invalidateCache = (basePath: string) => {
+  if (basePath === "*") {
+    cacheData.clear();
+    return;
+  }
+
   cacheData.forEach((_value, key) => {
     if (key.startsWith(basePath)) {
       cacheData.delete(key);
@@ -89,7 +94,7 @@ export const mutate = async (
 
   const init: RequestInit = { method, headers };
 
-  if (body !== undefined) {
+  if (body != null) {
     headers["Content-Type"] = "application/json";
     init.body = JSON.stringify(body);
   }

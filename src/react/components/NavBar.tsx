@@ -4,12 +4,16 @@
 
   This component:
   - Exposes the primary navigation links
-  - Adapts links based on authentication state
   - Relies on React Router for active link handling
+
+  Design notes:
+  - No business logic
+  - Purely declarative navigation
 */
 
 import type { ReactNode } from "react";
 import { NavLink } from "react-router";
+
 import { useAuth } from "./auth/AuthContext";
 
 /*

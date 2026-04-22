@@ -3,101 +3,47 @@
   Persistent logic for Events.
 */
 
-import databaseClient, {
-  type Result,
-  type Rows,
-} from "../../../database/client";
+import database from "../../../database";
+
+const mapRawTypeToEventType = (type: string) => {
+  switch (type) {
+    case "SHOW":
+      return "SHOW";
+    case "FIXED_REHEARSAL":
+      return "FIXED_REHEARSAL";
+    case "AUTO_REHEARSAL":
+      return "AUTO_REHEARSAL";
+    default:
+      throw new Error(`Invalid event type: ${type}`);
+  }
+};
 
 class EventRepository {
-  async findByPlay(playId: number): Promise<EventData[]> {
-    const [rows] = await databaseClient.query<Rows>(
-      `select * from event where play_id = ? order by start_time asc`,
-      [playId],
-    );
-    return rows.map<EventData>(
-      ({
-        id,
-        play_id,
-        type,
-        title,
-        description,
-        location,
-        start_time,
-        end_time,
-      }) => ({
-        id,
-        play_id,
-        type,
-        title,
-        description,
-        location,
-        start_time,
-        end_time,
-      }),
-    );
-  }
-
-  async create(event: Omit<EventData, "id">): Promise<number> {
-    const [result] = await databaseClient.query<Result>(
-      `insert into event (play_id, type, title, description, location, start_time, end_time) 
-       values (?, ?, ?, ?, ?, STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%s.%fZ'), STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%s.%fZ'))`,
-      [
+  create(event: Omit<EventData, "id">): number | bigint {
+    const result = database
+      .prepare(
+        `insert into event (play_id, type, title, description, location, start_time, end_time) 
+       values (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
         event.play_id,
         event.type,
         event.title,
-        event.description,
-        event.location,
+        event.description ?? null,
+        event.location ?? null,
         event.start_time,
         event.end_time,
-      ],
-    );
+      );
 
-    return result.insertId;
+    return result.lastInsertRowid;
   }
 
-  async update(
-    eventId: number,
-    event: Omit<EventData, "id" | "play_id">,
-  ): Promise<boolean> {
-    const [result] = await databaseClient.query<Result>(
-      `update event set 
-        type = ?, 
-        title = ?, 
-        description = ?, 
-        location = ?, 
-        start_time = STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%s.%fZ'), 
-        end_time = STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%s.%fZ') 
-       where id = ?`,
-      [
-        event.type,
-        event.title,
-        event.description,
-        event.location,
-        event.start_time,
-        event.end_time,
-        eventId,
-      ],
-    );
+  find(eventId: number | bigint): EventData | null {
+    const row = database
+      .prepare(`select * from event where id = ?`)
+      .get(eventId);
 
-    return result.affectedRows > 0;
-  }
-
-  async destroy(eventId: number): Promise<boolean> {
-    const [result] = await databaseClient.query<Result>(
-      `delete from event where id = ?`,
-      [eventId],
-    );
-
-    return result.affectedRows > 0;
-  }
-
-  async find(eventId: number): Promise<EventData | null> {
-    const [rows] = await databaseClient.query<Rows>(
-      `select * from event where id = ?`,
-      [eventId],
-    );
-
-    if (rows.length === 0) return null;
+    if (row == null) return null;
 
     const {
       id,
@@ -108,18 +54,87 @@ class EventRepository {
       location,
       start_time,
       end_time,
-    } = rows[0];
+    } = row;
 
-    return {
-      id,
-      play_id,
-      type,
-      title,
-      description,
-      location,
-      start_time,
-      end_time,
+    const eventData: EventData = {
+      id: Number(id),
+      play_id: Number(play_id),
+      type: mapRawTypeToEventType(String(type)),
+      title: String(title),
+      start_time: String(start_time),
+      end_time: String(end_time),
     };
+    if (description != null) eventData.description = String(description);
+    if (location != null) eventData.location = String(location);
+
+    return eventData;
+  }
+
+  findByPlay(playId: number | bigint): EventData[] {
+    const rows = database
+      .prepare(`select * from event where play_id = ? order by start_time asc`)
+      .all(playId);
+
+    return rows.map<EventData>(
+      ({
+        id,
+        play_id,
+        type,
+        title,
+        description,
+        location,
+        start_time,
+        end_time,
+      }) => {
+        const eventData: EventData = {
+          id: Number(id),
+          play_id: Number(play_id),
+          type: mapRawTypeToEventType(String(type)),
+          title: String(title),
+          start_time: String(start_time),
+          end_time: String(end_time),
+        };
+        if (description != null) eventData.description = String(description);
+        if (location != null) eventData.location = String(location);
+        return eventData;
+      },
+    );
+  }
+
+  update(
+    eventId: number | bigint,
+    event: Omit<EventData, "id" | "play_id">,
+  ): boolean {
+    const result = database
+      .prepare(
+        `update event set 
+        type = ?, 
+        title = ?, 
+        description = ?, 
+        location = ?, 
+        start_time = ?, 
+        end_time = ? 
+       where id = ?`,
+      )
+      .run(
+        event.type,
+        event.title,
+        event.description ?? null,
+        event.location ?? null,
+        event.start_time,
+        event.end_time,
+        eventId,
+      );
+
+    return result.changes === 1;
+  }
+
+  destroy(eventId: number | bigint): boolean {
+    const result = database
+      .prepare(`delete from event where id = ?`)
+      .run(eventId);
+
+    return result.changes === 1;
   }
 }
 

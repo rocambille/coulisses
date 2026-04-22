@@ -43,9 +43,9 @@ Dans l'ordre alphabétique (liste non exhaustive) :
 
 * [**Biome**](https://biomejs.dev/) : linter, formateur et analyseur statique performant pour garantir un code propre.
 * [**Docker**](https://docs.docker.com/) : conteneurisation pour des environnements de développement et de déploiement reproductibles.
-* [**MySQL**](https://dev.mysql.com/doc/refman/8.4/en/) : système de gestion de bases de données relationnelles.
 * [**Pico CSS**](https://picocss.com/) : kit CSS minimaliste et sémantique.
 * [**React Router (Mode Data)**](https://reactrouter.com/home) : gestionnaire de routes pour React.
+* [**SQLite**](https://sqlite.org/index.html) : système de gestion de bases de données relationnelles.
 * [**TypeScript**](https://www.typescriptlang.org/) : superset de JavaScript ajoutant des types statiques.
 * [**Vite**](https://vite.dev/guide/) : outil de build rapide pour le développement et la production.
 * [**Vitest**](https://vitest.dev/guide/) : framework de test intégré à Vite.
@@ -90,18 +90,18 @@ Pour débuter, consultez les pages principales :
 
 ## Commandes de base
 
-| Commande                                                           | Description                                                                                                          |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `docker compose up --build`                                       | Build et démarre les services (ajouter `-d` pour démarrer en mode détaché).                                          |
-| `docker compose -f compose.prod.yaml up --build -d`               | Build et démarre l'application en mode production.                                                                   |
-| `docker compose logs -t`                                          | Affiche les logs avec timestamps.                                                                                    |
-| `docker compose run --build --rm server npm run database:sync`    | Synchronise la base de données avec `src/database/schema.sql` (`-- --use-seeder` pour remplir avec `seeder.sql`).    |
-| `docker compose run --build --rm server npm run test:setup`       | Exécute les tests d'installation (présence du `.env`, initialisation de la base de données...).                      |
-| `npm run test`                                                    | Exécute les tests autres que ceux d'installation (ne nécessite pas de base de données).                              |
-| `npm run biome:check`                                             | Contrôle la qualité du code avec Biome (exécuté en pre-commit).                                                      |
-| `npm run types:check`                                             | Contrôle la cohérence des types TypeScript (exécuté en pre-commit).                                                  |
-| `npm run make:clone -- <source> <destination> <OldName> <NewName>` | Clone un module ou un fichier en renommant automatiquement les identifiants.                                         |
-| `npm run make:purge`                                              | Supprime les modules par défaut (`-- --keep-auth` pour conserver `user` et `auth`).                                   |
+| Commande                                                        | Description                                                                      |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `docker compose up --build`                                     | Build et démarre les services (ajouter `-d` pour démarrer en mode détaché).      |
+| `docker compose -f compose.prod.yaml up --build -d`             | Build et démarre l'application en mode production.                               |
+| `docker compose logs -t`                                        | Affiche les logs avec timestamps.                                                |
+| `docker compose run --build --rm server npm run database:sync`  | Synchronise la base de données avec `src/database/schema.sql` (`-- --use-seeder` pour remplir la base de données avec `src/database/seeder.sql`).                   |
+| `docker compose run --build --rm server npm run install:check`  | Exécute les tests d'installation (présence du `.env`, initialisation de la base de données...).                      |
+| `npm run biome:check`                                           | Contrôle la qualité du code avec Biome (exécuté en pre-commit).                  |
+| `npm run types:check`                                           | Contrôle la cohérence des types TypeScript (exécuté en pre-commit).              |
+| `npm run test`                                                  | Exécute les tests autres que ceux d'installation (ne nécessite pas de base de données).                              |
+| `npm run make:clone -- <source> <destination> <OldName> <NewName>` | Clone un module ou un fichier en renommant automatiquement les identifiants.     |
+| `npm run make:purge`                                            | Supprime les modules par défaut (`-- --keep-auth` pour conserver `user` et `auth`). |
 
 ## REST cheatsheet
 

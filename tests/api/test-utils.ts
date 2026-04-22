@@ -1,80 +1,233 @@
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import express, { type ErrorRequestHandler } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
-import type { QueryOptions } from "mysql2";
 import supertest from "supertest";
 
-import databaseClient from "../../src/database/client";
-import routes from "../../src/express/routes";
-import { type Contract, contracts, type Test } from "../contracts";
+import database from "../../src/database";
 import {
-  actorUser,
   allPlays,
   allUsers,
+  deletedUser,
   emptyPlay,
-  insertId,
+  emptyPlayMembers,
   mainCastings,
   mainPlay,
+  mainPlayMembers,
   mainPreferences,
   mainRoles,
   mainScenes,
   openingNightEvent,
-  teacherUser,
 } from "../data";
-
-// -------------------------
-// Mocked DB content
-// -------------------------
-
-const playMembers: PlayMember[] = [
-  {
-    id: 1,
-    user_id: teacherUser.id,
-    play_id: mainPlay.id,
-    role: "TEACHER" as const,
-  },
-  {
-    id: 2,
-    user_id: actorUser.id,
-    play_id: mainPlay.id,
-    role: "ACTOR" as const,
-  },
-  {
-    id: 3,
-    user_id: teacherUser.id,
-    play_id: emptyPlay.id,
-    role: "TEACHER" as const,
-  },
-];
-
-const sceneRoles: { scene_id: number; role_id: number }[] = [
-  { scene_id: 1, role_id: 1 },
-];
-
-const mockedData = {
-  user: allUsers,
-  play: allPlays,
-  play_member: playMembers,
-  scene: mainScenes,
-  role: mainRoles,
-  scene_role: sceneRoles,
-  preference: mainPreferences,
-  casting: mainCastings,
-  event: [openingNightEvent],
-  magic_link_token: [] as MagicLinkToken[],
-};
-
-const members = (play: { id: number }) =>
-  mockedData.play_member
-    .filter((pm) => pm.play_id === play.id)
-    .map((pm) => ({
-      ...mockedData.user.find((u) => u.id === pm.user_id),
-      role: pm.role,
-    }));
 
 // -------------------------
 // DB mock
 // -------------------------
+
+vi.mock("../../src/database", () => ({
+  default: new DatabaseSync(":memory:"),
+}));
+
+const mockDatabase = () => {
+  /* drop existing tables */
+  const existingTables = database
+    .prepare(`
+    select name 
+    from sqlite_schema 
+    where type ='table' and name not like 'sqlite_%'`)
+    .all();
+
+  /* prevent errors because of cascade deletion */
+  database.exec("PRAGMA foreign_keys = OFF");
+
+  for (const table of existingTables) {
+    database.exec(`drop table ${table.name}`);
+  }
+
+  /* re-enable cascade deletion */
+  database.exec("PRAGMA foreign_keys = ON");
+
+  /* load schema */
+  const schema = path.join(
+    import.meta.dirname,
+    "../../src/database/schema.sql",
+  );
+
+  const schemaSql = fs.readFileSync(schema, "utf8");
+  database.exec(schemaSql);
+
+  /* insert all users */
+  const insertUser = database.prepare(
+    "insert into user(id, email, name) values(?, ?, ?)",
+  );
+  for (const user of allUsers) {
+    insertUser.run(user.id, user.email, user.name);
+  }
+
+  /* soft delete one user for tests */
+  const deleteUser = database.prepare(
+    "update user set deleted_at = datetime('now') where id = ?",
+  );
+  deleteUser.run(deletedUser.id);
+
+  /* insert all plays */
+  const insertPlay = database.prepare(
+    "insert into play(id, title, description) values(?, ?, ?)",
+  );
+  for (const play of allPlays) {
+    insertPlay.run(play.id, play.title, play.description ?? null);
+  }
+
+  /* insert play members */
+  const insertPlayMember = database.prepare(
+    "insert into member_play(play_id, user_id, role) values(?, ?, ?)",
+  );
+  for (const member of mainPlayMembers) {
+    insertPlayMember.run(mainPlay.id, member.id, member.role);
+  }
+  for (const member of emptyPlayMembers) {
+    insertPlayMember.run(emptyPlay.id, member.id, member.role);
+  }
+
+  /* insert all scenes */
+  const insertScene = database.prepare(
+    "insert into scene(id, play_id, title, description, duration, scene_order, is_active) values(?, ?, ?, ?, ?, ?, ?)",
+  );
+  for (const scene of mainScenes) {
+    insertScene.run(
+      scene.id,
+      scene.play_id,
+      scene.title,
+      scene.description ?? null,
+      scene.duration ?? null,
+      scene.scene_order,
+      scene.is_active ? 1 : 0,
+    );
+  }
+
+  /* insert all roles */
+  const insertRole = database.prepare(
+    "insert into role(id, play_id, name, description) values(?, ?, ?, ?)",
+  );
+  const insertRoleScene = database.prepare(
+    "insert into role_scene(role_id, scene_id) values(?, ?)",
+  );
+  for (const role of mainRoles) {
+    insertRole.run(role.id, role.play_id, role.name, role.description ?? null);
+    for (const scene of role.scenes) {
+      insertRoleScene.run(role.id, scene.id);
+    }
+  }
+
+  /* insert castings */
+  const insertCasting = database.prepare(
+    "insert into casting(user_id, role_id) values(?, ?)",
+  );
+  for (const casting of mainCastings) {
+    insertCasting.run(casting.user_id, casting.role_id);
+  }
+
+  /* insert all events */
+  database
+    .prepare(
+      "insert into event(id, play_id, type, title, description, location, start_time, end_time) values(?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+    .run(
+      openingNightEvent.id,
+      openingNightEvent.play_id,
+      openingNightEvent.type,
+      openingNightEvent.title,
+      openingNightEvent.description ?? null,
+      openingNightEvent.location ?? null,
+      openingNightEvent.start_time,
+      openingNightEvent.end_time,
+    );
+
+  /* insert preferences */
+  const insertPreference = database.prepare(
+    "insert into preference(user_id, scene_id, level) values(?, ?, ?)",
+  );
+  for (const preference of mainPreferences) {
+    insertPreference.run(
+      preference.user_id,
+      preference.scene_id,
+      preference.level,
+    );
+  }
+
+  /* insert magic link tokens */
+  const insertMagicLinkToken = database.prepare(
+    "insert into magic_link_token(user_id, token_hash, expires_at, consumed_at) values(?, ?, ?, ?)",
+  );
+
+  const hash = (token: string) =>
+    crypto.createHash("sha256").update(token).digest("hex");
+
+  /* valid token for testing valid token scenarios */
+  const validDate = new Date(Date.now() + 100000);
+  insertMagicLinkToken.run(
+    allUsers[0].id,
+    hash(requestValue("auth", "verify", "teacher", "token")),
+    validDate.toISOString(),
+    null,
+  );
+
+  /* expired token for testing expired token scenarios */
+  const expiredDate = new Date(Date.now() - 100000);
+  insertMagicLinkToken.run(
+    allUsers[0].id,
+    hash(requestValue("auth", "verify", "expired", "token")),
+    expiredDate.toISOString(),
+    null,
+  );
+
+  /* consumed token for testing consumed token scenarios */
+  insertMagicLinkToken.run(
+    allUsers[0].id,
+    hash(requestValue("auth", "verify", "consumed", "token")),
+    expiredDate.toISOString(),
+    expiredDate.toISOString(),
+  );
+
+  /* deleted user for testing deleted user scenarios */
+  insertMagicLinkToken.run(
+    deletedUser.id,
+    hash(requestValue("auth", "verify", "deleted_user", "token")),
+    validDate.toISOString(),
+    null,
+  );
+};
+
+// -------------------------
+// Nodemailer mock
+// -------------------------
+
+vi.mock("nodemailer", async (importActual) => {
+  const actual = await importActual<typeof import("nodemailer")>();
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      createTransport: vi.fn(() =>
+        actual.createTransport({ jsonTransport: true }),
+      ),
+    },
+  };
+});
+
+// -------------------------
+// Helpers
+// -------------------------
+
+import { type Contract, contracts, type Test } from "../contracts";
+
+export const setupMocks = () => {
+  mockDatabase();
+
+  vi.spyOn(jwt, "sign").mockImplementation(() => "fake_jwt_token");
+};
 
 export const requestValue = (
   contractName: keyof typeof contracts,
@@ -89,262 +242,11 @@ export const requestValue = (
   throw new Error(`Case body is not an object: ${JSON.stringify(body)}`);
 };
 
-/**
- * Normalizes SQL queries by collapsing whitespace and newlines.
- * This ensures robustness against formatting changes while remaining
- * sensitive to structural SQL changes.
- */
-const normalize = (sql: string) => sql.replace(/\s+/g, " ").trim();
-
-const mockDatabaseClient = () => {
-  databaseClient.query = vi
-    .fn()
-    .mockImplementation(
-      async (sqlOrOptions: string | QueryOptions, values?: unknown) => {
-        let sql =
-          typeof sqlOrOptions === "string" ? sqlOrOptions : sqlOrOptions.sql;
-
-        // Interpolate ? placeholders with actual values for strict matching
-        if (Array.isArray(values)) {
-          for (const value of values) {
-            if (typeof value === "string") {
-              sql = sql.replace(/\?/, `'${value}'`);
-            } else {
-              sql = sql.replace(/\?/, String(value));
-            }
-          }
-        }
-
-        const normalizedSql = normalize(sql);
-
-        // --- INSERT / UPDATE / DELETE (Generic handlers) ---
-
-        if (/^insert\b/i.test(normalizedSql)) {
-          return [{ insertId }, []];
-        }
-
-        if (/^update\b/i.test(normalizedSql)) {
-          return [{ affectedRows: 1 }, []];
-        }
-
-        if (/^delete\b/i.test(normalizedSql)) {
-          return [{ affectedRows: 1 }, []];
-        }
-
-        // --- AUTH SPECIAL (Hashing for mock) ---
-        if (
-          /select id, user_id, token_hash, expires_at, consumed_at from magic_link_token where token_hash =/i.test(
-            normalizedSql,
-          )
-        ) {
-          const hash = normalizedSql.match(/token_hash = '([^']+)'/i)?.[1];
-          if (
-            hash ===
-            crypto
-              .createHash("sha256")
-              .update(requestValue("auth", "verify", "teacher", "token"))
-              .digest("hex")
-          ) {
-            return [
-              [
-                {
-                  id: 1,
-                  user_id: teacherUser.id,
-                  token_hash: hash,
-                  expires_at: new Date(Date.now() + 100000),
-                  consumed_at: null,
-                },
-              ],
-              [],
-            ];
-          }
-          if (
-            hash ===
-            crypto
-              .createHash("sha256")
-              .update(requestValue("auth", "verify", "unauthorized", "token"))
-              .digest("hex")
-          ) {
-            return [[], []];
-          }
-          if (
-            hash ===
-            crypto
-              .createHash("sha256")
-              .update(requestValue("auth", "verify", "consumed", "token"))
-              .digest("hex")
-          ) {
-            return [
-              [
-                {
-                  id: 1,
-                  user_id: teacherUser.id,
-                  token_hash: hash,
-                  expires_at: new Date(Date.now() + 100000),
-                  consumed_at: new Date(),
-                },
-              ],
-              [],
-            ];
-          }
-          if (
-            hash ===
-            crypto
-              .createHash("sha256")
-              .update(requestValue("auth", "verify", "expired", "token"))
-              .digest("hex")
-          ) {
-            return [
-              [
-                {
-                  id: 1,
-                  user_id: teacherUser.id,
-                  token_hash: hash,
-                  expires_at: new Date(Date.now() - 100000),
-                  consumed_at: null,
-                },
-              ],
-              [],
-            ];
-          }
-          if (
-            hash ===
-            crypto
-              .createHash("sha256")
-              .update(requestValue("auth", "verify", "deleted_user", "token"))
-              .digest("hex")
-          ) {
-            return [
-              [
-                {
-                  id: 1,
-                  user_id: NaN,
-                  token_hash: hash,
-                  expires_at: new Date(Date.now() + 100000),
-                  consumed_at: null,
-                },
-              ],
-              [],
-            ];
-          }
-        }
-
-        // --- SELECT (Strict Registry) ---
-
-        // playRepository.findByUser
-        if (
-          /select p\.id, p\.title, p\.description from play p join play_member pm on p\.id = pm\.play_id where pm\.user_id =/i.test(
-            normalizedSql,
-          )
-        ) {
-          const userId = Number(
-            normalizedSql.match(/user_id\s*=\s*([^\s]+)/i)?.[1],
-          );
-          const plays = mockedData.play_member
-            .filter((pm) => pm.user_id === userId)
-            .map((pm) => mockedData.play.find((p) => p.id === pm.play_id))
-            .filter(Boolean);
-          return [plays, []];
-        }
-
-        // playRepository.getMembers
-        if (
-          /select u\.id, u\.email, pm\.role, u\.name from user u join play_member pm on u\.id = pm\.user_id where pm\.play_id =/i.test(
-            normalizedSql,
-          )
-        ) {
-          const playId = Number(
-            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
-          );
-          return [members({ id: playId }), []];
-        }
-
-        // roleRepository.findByPlay (Role with scenes)
-        if (
-          /select r\.id, r\.name, r\.description, r\.play_id, json_arrayagg\(json_object\(/i.test(
-            normalizedSql,
-          )
-        ) {
-          const playId = Number(
-            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
-          );
-          return [mockedData.role.filter((r) => r.play_id === playId), []];
-        }
-
-        // castingRepository.getPlayCastingMatrix
-        if (
-          /select r.\*, json_arrayagg\(sr.scene_id\) as scene_ids, c.user_id as user_id/i.test(
-            normalizedSql,
-          )
-        ) {
-          const playId = Number(
-            normalizedSql.match(/play_id\s*=\s*([^\s]+)/i)?.[1],
-          );
-          return [
-            mockedData.role
-              .filter((r) => r.play_id === playId)
-              .map(({ id, name, description, play_id, scenes }) => ({
-                id,
-                name,
-                description,
-                play_id,
-                scene_ids: scenes.map((s) => s.id),
-                user_id:
-                  mockedData.casting.find((c) => c.role_id === id)?.user_id ??
-                  null,
-              })),
-            [],
-          ];
-        }
-
-        // Generic Table Selects (Single Table, e.g., browse, findById)
-        const table = normalizedSql.match(/\bfrom\s+(\w+)\b/i)?.[1];
-
-        if (table && Object.hasOwn(mockedData, table)) {
-          const rows = mockedData[table as keyof typeof mockedData];
-
-          // WHERE id = ?
-          if (/\bwhere id =/i.test(normalizedSql)) {
-            const id = Number(normalizedSql.match(/where id = ([^\s]+)/i)?.[1]);
-            return [rows.filter((row) => "id" in row && row.id === id), []];
-          }
-
-          // WHERE email = ? (for auth)
-          if (/\bwhere email =/i.test(normalizedSql)) {
-            const email = normalizedSql.match(/where email = '([^']+)'/i)?.[1];
-            return [
-              rows.filter((row) => "email" in row && row.email === email),
-              [],
-            ];
-          }
-
-          // WHERE play_id = ?
-          if (/\bwhere play_id =/i.test(normalizedSql)) {
-            const playId = Number(
-              normalizedSql.match(/where play_id = ([^\s]+)/i)?.[1],
-            );
-            return [
-              rows.filter((row) => "play_id" in row && row.play_id === playId),
-              [],
-            ];
-          }
-
-          return [rows, []];
-        }
-
-        throw new Error(`[Strict Mock] Unhandled SQL query: ${normalizedSql}`);
-      },
-    );
-};
-
-export const setupMocks = () => {
-  mockDatabaseClient();
-  vi.spyOn(jwt, "sign").mockImplementation(() => "fake_jwt_token");
-};
-
 // -------------------------
 // Express app for tests
 // -------------------------
+import routes from "../../src/express/routes";
+
 const app = express();
 app.use(routes);
 
@@ -364,7 +266,7 @@ const api = supertest(app);
 export const check = async (test: Test, caseName: keyof Test["cases"]) => {
   const c = test.cases[caseName];
 
-  const apiCall = api[test.method](c.path ?? test.path);
+  const apiCall = api[test.method](c.specialPath ?? test.path);
 
   if (c.request.body != null) {
     apiCall.send(c.request.body);

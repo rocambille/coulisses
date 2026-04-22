@@ -7,18 +7,19 @@
 import { use, useState } from "react";
 import { useParams } from "react-router";
 import { useAuth } from "../auth/AuthContext";
+import { useMutate } from "../RefreshContext";
 import { cache } from "../utils";
-import { useAction, useMembership } from "./hooks";
+import { useMembership } from "./hooks";
 import PreferenceList from "./PreferenceList";
 import PreferenceSelector from "./PreferenceSelector";
 
 function ScenesPage() {
   const { me } = useAuth();
   const { playId } = useParams();
-  const runAction = useAction();
+  const mutate = useMutate();
   const { isTeacher, isActor } = useMembership(playId);
 
-  const [editing, setEditing] = useState<number | null>(null);
+  const [editing, setEditing] = useState<Scene["id"] | null>(null);
 
   if (!playId) return null;
 
@@ -31,7 +32,7 @@ function ScenesPage() {
     const title = formData.get("title")?.toString();
     if (!title) throw new Error("Invalid form submission");
 
-    await runAction(
+    await mutate(
       `/api/plays/${playId}/scenes`,
       "post",
       {
@@ -42,7 +43,7 @@ function ScenesPage() {
     );
   };
 
-  const handleEdit = async (sceneId: number, formData: FormData) => {
+  const handleEdit = async (sceneId: Scene["id"], formData: FormData) => {
     const title = formData.get("title")?.toString();
     const scene_order = Number(formData.get("scene_order"));
 
@@ -50,7 +51,7 @@ function ScenesPage() {
       throw new Error("Invalid form submission");
     }
 
-    const response = await runAction(
+    const response = await mutate(
       `/api/scenes/${sceneId}`,
       "put",
       {
@@ -65,8 +66,8 @@ function ScenesPage() {
     }
   };
 
-  const handleDelete = async (sceneId: number) => {
-    await runAction(`/api/scenes/${sceneId}`, "delete", undefined, [
+  const handleDelete = async (sceneId: Scene["id"]) => {
+    await mutate(`/api/scenes/${sceneId}`, "delete", undefined, [
       `/api/plays/${playId}/scenes`,
     ]);
   };
@@ -84,7 +85,9 @@ function ScenesPage() {
         scenes.map((scene) => (
           <article key={scene.id}>
             {editing === scene.id ? (
-              <form action={(formData) => handleEdit(scene.id, formData)}>
+              <form
+                action={(formData) => handleEdit(Number(scene.id), formData)}
+              >
                 <input
                   name="title"
                   defaultValue={scene.title}

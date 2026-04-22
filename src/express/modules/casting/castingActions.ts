@@ -6,24 +6,24 @@
 import type { RequestHandler } from "express";
 import castingRepository from "./castingRepository";
 
-const assignRole: RequestHandler = async (req, res) => {
+const assignRole: RequestHandler = (req, res) => {
   const { userId, roleId } = req.body;
 
-  await castingRepository.assignRole(userId, roleId);
+  castingRepository.assignRole(userId, roleId);
 
   res.sendStatus(201);
 };
 
-const unassignRole: RequestHandler = async (req, res) => {
+const unassignRole: RequestHandler = (req, res) => {
   const { userId, roleId } = req.body;
 
-  await castingRepository.unassignRole(userId, roleId);
+  castingRepository.unassignRole(userId, roleId);
 
   res.sendStatus(204);
 };
 
-const getMatrix: RequestHandler = async (req, res) => {
-  const matrix = await castingRepository.getPlayCastingMatrix(req.play.id);
+const getMatrix: RequestHandler = (req, res) => {
+  const matrix = castingRepository.getPlayCastingMatrix(req.play.id);
   res.json(matrix);
 };
 

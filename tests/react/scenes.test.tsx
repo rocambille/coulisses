@@ -25,7 +25,7 @@ describe("React: ScenesPage", () => {
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await screen.findByText(new RegExp(mainScenes[0].title, "i"));
@@ -39,7 +39,7 @@ describe("React: ScenesPage", () => {
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.type(
@@ -56,7 +56,7 @@ describe("React: ScenesPage", () => {
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
-      { user: actorUser },
+      { me: actorUser },
     );
 
     await user.selectOptions(
@@ -74,7 +74,7 @@ describe("React: ScenesPage", () => {
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
-      { user: actorUser },
+      { me: actorUser },
     );
 
     await user.selectOptions(
@@ -92,7 +92,7 @@ describe("React: ScenesPage", () => {
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(
@@ -114,7 +114,7 @@ describe("React: ScenesPage", () => {
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(
@@ -144,7 +144,7 @@ describe("React: ScenesPage", () => {
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(
@@ -176,7 +176,7 @@ describe("React: ScenesPage", () => {
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(
@@ -193,7 +193,7 @@ describe("React: ScenesPage", () => {
       "/plays/:playId/scenes",
       ScenesPage,
       [`/plays/${mainPlay.id}/scenes`],
-      { user: actorUser },
+      { me: actorUser },
     );
 
     const label = new RegExp(`envie.*scène.*${mainScenes[2].id}`, "i");

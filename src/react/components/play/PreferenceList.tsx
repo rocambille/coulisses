@@ -7,7 +7,7 @@ function PreferenceList({
   sceneId,
   preferences,
 }: {
-  sceneId: number;
+  sceneId: Scene["id"];
   preferences: PreferenceWithUser[];
 }) {
   const scenePreferences = preferences.filter((p) => p.scene_id === sceneId);

@@ -1,14 +1,10 @@
 import path from "node:path";
 import readline from "node:readline/promises";
-import { fileURLToPath } from "node:url";
 
 import fs from "fs-extra";
 
 // Locate the project root directory (one level up from /bin).
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const rootDir = path.join(__dirname, "..");
+const rootDir = path.join(import.meta.dirname, "..");
 
 // Setup readline for interactive confirmation.
 const rl = readline.createInterface({
@@ -131,10 +127,7 @@ async function purgeAuth() {
   });
 
   await updateFile("src/types/index.d.ts", (content) =>
-    content
-      .replace(/type Credentials = {[\s\S]*?};\n\n/m, "")
-      .replace(/type User = {[\s\S]*?};\n\n/m, "")
-      .replace(/type UserWithPassword = User & {[\s\S]*?};\n/m, ""),
+    content.replace(/type User = {[\s\S]*?};\n\n/m, ""),
   );
 
   // Remove AuthProvider and related imports from Layout.
@@ -142,9 +135,7 @@ async function purgeAuth() {
     content
       .replace(`import { AuthProvider } from "./auth/AuthContext";\n`, "")
       .replace(`import AuthForm from "./auth/AuthForm";\n`, "")
-      .replace(`import BurgerMenu from "./BurgerMenu";\n`, "")
-      .replace(/<AuthProvider>([\s\S]*)<\/AuthProvider>/m, "<>$1</>")
-      .replace(/<BurgerMenu>[\s\S]*?<\/BurgerMenu>\s*/m, ""),
+      .replace(/<AuthProvider>([\s\S]*)<\/AuthProvider>/m, "<>$1</>"),
   );
 }
 

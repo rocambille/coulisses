@@ -21,8 +21,8 @@ const PREFERENCES_BY_PLAY_PATH = "/api/plays/:playId/preferences";
 router.param("sceneId", sceneParamConverter.convert);
 router.param("playId", playParamConverter.convert);
 
-const checkIsMemberBySceneId: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.scene.play_id);
+const checkIsMemberBySceneId: RequestHandler = (req, res, next) => {
+  const members = playRepository.getMembers(req.scene.play_id);
   const isMember = members.some((member) => member.id === req.me.id);
 
   if (isMember) {
@@ -32,8 +32,8 @@ const checkIsMemberBySceneId: RequestHandler = async (req, res, next) => {
   }
 };
 
-const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.play.id);
+const checkIsMemberByPlayId: RequestHandler = (req, res, next) => {
+  const members = playRepository.getMembers(req.play.id);
   const isMember = members.some((member) => member.id === req.me.id);
 
   if (isMember) {

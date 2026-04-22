@@ -25,7 +25,7 @@ describe("React: MembersPage", () => {
       "/plays/:playId/members",
       MembersPage,
       [`/plays/${mainPlay.id}/members`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await screen.findByRole("heading", { level: 2 });
@@ -37,7 +37,7 @@ describe("React: MembersPage", () => {
       "/plays/:playId/members",
       MembersPage,
       [`/plays/${mainPlay.id}/members`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.type(

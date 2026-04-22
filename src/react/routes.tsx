@@ -4,7 +4,11 @@
 
   Responsibilities:
   - Define the root layout of the application
-  - Compose feature modules and pages
+  - Compose feature modules (e.g. items)
+
+  Design notes:
+  - Routes are declared explicitly (no automatic discovery)
+  - Feature modules expose their own route fragments
 
   This file is shared by:
   - entry-client.tsx (client-side routing & hydration)

@@ -3,38 +3,33 @@
   Centralize all persistence logic related to Scene entities.
 */
 
-import databaseClient, {
-  type Result,
-  type Rows,
-} from "../../../database/client";
+import database from "../../../database";
 
 class SceneRepository {
-  async create(
-    playId: number,
+  create(
+    playId: number | bigint,
     scene: Omit<Scene, "id" | "play_id" | "is_active">,
-  ) {
-    const [result] = await databaseClient.query<Result>(
-      `insert into scene (play_id, title, description, duration, scene_order) 
+  ): number | bigint {
+    const result = database
+      .prepare(
+        `insert into scene (play_id, title, description, duration, scene_order) 
        values (?, ?, ?, ?, ?)`,
-      [
+      )
+      .run(
         playId,
         scene.title,
         scene.description ?? null,
         scene.duration ?? null,
         scene.scene_order,
-      ],
-    );
+      );
 
-    return result.insertId;
+    return result.lastInsertRowid;
   }
 
-  async find(byId: number): Promise<Scene | null> {
-    const [rows] = await databaseClient.query<Rows>(
-      "select * from scene where id = ?",
-      [byId],
-    );
+  find(byId: number | bigint): Scene | null {
+    const row = database.prepare("select * from scene where id = ?").get(byId);
 
-    if (rows[0] == null) return null;
+    if (row == null) return null;
 
     const {
       id,
@@ -44,24 +39,26 @@ class SceneRepository {
       duration,
       scene_order,
       is_active,
-    } = rows[0];
+    } = row;
 
-    return {
-      id,
-      title,
-      description,
-      play_id,
-      duration,
-      scene_order,
-      is_active,
+    const scene: Scene = {
+      id: Number(id),
+      title: String(title),
+      play_id: Number(play_id),
+      scene_order: Number(scene_order),
+      is_active: Boolean(is_active),
     };
+    if (description != null) scene.description = String(description);
+    if (duration != null) scene.duration = Number(duration);
+
+    return scene;
   }
 
-  async findByPlay(play: Play): Promise<Scene[]> {
-    const [rows] = await databaseClient.query<Rows>(
-      "select * from scene where play_id = ? order by scene_order asc",
-      [play.id],
-    );
+  findByPlay(play: Play): Scene[] {
+    const rows = database
+      .prepare("select * from scene where play_id = ? order by scene_order asc")
+      .all(play.id);
+
     return rows.map<Scene>(
       ({
         id,
@@ -71,51 +68,51 @@ class SceneRepository {
         duration,
         scene_order,
         is_active,
-      }) => ({
-        id,
-        title,
-        description,
-        play_id,
-        duration,
-        scene_order,
-        is_active,
-      }),
+      }) => {
+        const scene: Scene = {
+          id: Number(id),
+          title: String(title),
+          play_id: Number(play_id),
+          scene_order: Number(scene_order),
+          is_active: Boolean(is_active),
+        };
+        if (description != null) scene.description = String(description);
+        if (duration != null) scene.duration = Number(duration);
+        return scene;
+      },
     );
   }
 
-  async update(id: number, scene: Omit<Scene, "id">) {
+  update(id: number | bigint, scene: Omit<Scene, "id">): boolean {
     // Dynamic update based on provided fields
     const fields: string[] = [];
-    const values: unknown[] = [];
+    const values: (string | number | bigint | null)[] = [];
 
     fields.push("title = ?");
     values.push(scene.title);
 
     fields.push("description = ?");
-    values.push(scene.description);
+    values.push(scene.description ?? null);
 
     fields.push("duration = ?");
-    values.push(scene.duration);
+    values.push(scene.duration ?? null);
 
     fields.push("scene_order = ?");
     values.push(scene.scene_order);
 
     fields.push("is_active = ?");
-    values.push(scene.is_active);
+    values.push(scene.is_active ? 1 : 0);
 
     values.push(id);
     const query = `update scene set ${fields.join(", ")} where id = ?`;
 
-    const [result] = await databaseClient.query<Result>(query, values);
-    return result.affectedRows;
+    const result = database.prepare(query).run(...values);
+    return result.changes === 1;
   }
 
-  async hardDelete(id: number) {
-    const [result] = await databaseClient.query<Result>(
-      "delete from scene where id = ?",
-      [id],
-    );
-    return result.affectedRows;
+  hardDelete(id: number | bigint): boolean {
+    const result = database.prepare("delete from scene where id = ?").run(id);
+    return result.changes === 1;
   }
 }
 

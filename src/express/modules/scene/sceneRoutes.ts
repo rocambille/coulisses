@@ -22,8 +22,8 @@ router.param("playId", playParamConverter.convert);
 router.param("sceneId", sceneParamConverter.convert);
 
 // Reusable middlewares to check permissions
-const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.play.id);
+const checkIsMemberByPlayId: RequestHandler = (req, res, next) => {
+  const members = playRepository.getMembers(req.play.id);
   const isMember = members.some((member) => member.id === req.me.id);
 
   if (isMember) {
@@ -33,8 +33,8 @@ const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
   }
 };
 
-const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.play.id);
+const checkIsTeacherByPlayId: RequestHandler = (req, res, next) => {
+  const members = playRepository.getMembers(req.play.id);
   const member = members.find((member) => member.id === req.me.id);
 
   if (member?.role === "TEACHER") {
@@ -44,8 +44,8 @@ const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
   }
 };
 
-const checkIsMemberBySceneId: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.scene.play_id);
+const checkIsMemberBySceneId: RequestHandler = (req, res, next) => {
+  const members = playRepository.getMembers(req.scene.play_id);
   const isMember = members.some((member) => member.id === req.me.id);
 
   if (isMember) {
@@ -55,8 +55,8 @@ const checkIsMemberBySceneId: RequestHandler = async (req, res, next) => {
   }
 };
 
-const checkIsTeacherBySceneId: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.scene.play_id);
+const checkIsTeacherBySceneId: RequestHandler = (req, res, next) => {
+  const members = playRepository.getMembers(req.scene.play_id);
   const member = members.find((member) => member.id === req.me.id);
 
   if (member?.role === "TEACHER") {

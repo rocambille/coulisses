@@ -11,21 +11,7 @@ declare global {
   }
 }
 
-import type { RequestParamHandler } from "express";
-
+import { createParamConverter } from "../utils";
 import playRepository from "./playRepository";
 
-const convert: RequestParamHandler = async (req, res, next, playId) => {
-  const play = await playRepository.find(+playId);
-
-  if (play == null) {
-    res.sendStatus(req.method === "DELETE" ? 204 : 404);
-    return;
-  }
-
-  req.play = play;
-
-  next();
-};
-
-export default { convert };
+export default createParamConverter(playRepository, "play");

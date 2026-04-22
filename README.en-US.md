@@ -44,9 +44,9 @@ In alphabetical order (non-exhaustive list):
 
 * [**Biome**](https://biomejs.dev/): a powerful linter, formatter, and static analyzer to ensure clean code.
 * [**Docker**](https://docs.docker.com/): containerization for reproducible development and deployment environments.
-* [**MySQL**](https://dev.mysql.com/doc/refman/8.4/en/): relational database management system.
 * [**Pico CSS**](https://picocss.com/): minimalist and semantic CSS kit.
 * [**React Router (Mode Data)**](https://reactrouter.com/home): route manager for React.
+* [**SQLite**](https://sqlite.org/index.html): relational database management system.
 * [**TypeScript**](https://www.typescriptlang.org/): JavaScript superset that adds static types.
 * [**Vite**](https://vite.dev/guide/): a rapid build tool for development and production.
 * [**Vitest**](https://vitest.dev/guide/): testing framework integrated into Vite.
@@ -91,18 +91,18 @@ To get started, see the main pages:
 
 ## Basic commands
 
-| Command                                                           | Description                                                                                      |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `docker compose up --build`                                       | Builds and starts the services (add `-d` to start in detached mode).                             |
-| `docker compose -f compose.prod.yaml up --build -d`               | Builds and starts the application in production mode.                                            |
-| `docker compose logs -t`                                          | Displays logs with timestamps.                                                                   |
-| `docker compose run --build --rm server npm run database:sync`    | Synchronizes the database with `src/database/schema.sql` (`-- --use-seeder` to insert data with `src/database/seeder.sql`). |
-| `docker compose run --build --rm server npm run test:setup`       | Runs setup tests (check for `.env` file, database initialization...).                            |
+| Command | Description |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `docker compose up --build` | Builds and starts the services (add `-d` to start in detached mode). |
+| `docker compose -f compose.prod.yaml up --build -d` | Builds and starts the application in production mode. |
+| `docker compose logs -t` | Displays logs with timestamps. |
+| `docker compose run --build --rm server npm run database:sync` | Synchronizes the database with `src/database/schema.sql` (`-- --use-seeder` to insert data with ``src/database/seeder.sql``). |
+| `docker compose run --build --rm server npm run install:check`       | Runs setup tests (check for `.env` file, database initialization...).                            |
+| `npm run biome:check` | Checks code quality with Biome (executed in pre-commit). |
+| `npm run types:check` | Checks the consistency of TypeScript types (executed in pre-commit). |
 | `npm run test`                                                    | Runs all tests except setup ones (does not require a database).                                  |
-| `npm run biome:check`                                             | Checks code quality with Biome (executed in pre-commit).                                         |
-| `npm run types:check`                                             | Checks the consistency of TypeScript types (executed in pre-commit).                             |
-| `npm run make:clone -- <source> <destination> <OldName> <NewName>` | Clones a module or file, automatically renaming the identifiers.                                 |
-| `npm run make:purge`                                              | Removes default modules (`-- --keep-auth` to keep `user` and `auth`).                            |
+| `npm run make:clone -- <source> <destination> <OldName> <NewName>` | Clones a module or file, automatically renaming the identifiers. |
+| `npm run make:purge` | Removes default modules (`-- --keep-auth` to keep `user` and `auth`). |
 
 ## REST cheatsheet
 

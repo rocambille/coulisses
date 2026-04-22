@@ -6,14 +6,15 @@
 
 import { use } from "react";
 import { useParams } from "react-router";
+import { useMutate } from "../RefreshContext";
 import { cache } from "../utils";
-import { useAction, useMembership } from "./hooks";
+import { useMembership } from "./hooks";
 
 type Member = User & { role: string };
 
 function MembersPage() {
   const { playId } = useParams();
-  const runAction = useAction();
+  const mutate = useMutate();
   const { isTeacher } = useMembership(playId);
   const members: Member[] = use(cache(`/api/plays/${playId}/members`));
 
@@ -23,7 +24,7 @@ function MembersPage() {
 
     if (!email || !role) throw new Error("Invalid form submission");
 
-    await runAction(
+    await mutate(
       `/api/plays/${playId}/members`,
       "post",
       {

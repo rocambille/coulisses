@@ -3,8 +3,7 @@
   Validate and normalize incoming Scene payloads for mutative requests.
 */
 
-import type { RequestHandler } from "express";
-import { type ZodError, z } from "zod";
+import { z } from "zod";
 
 const sceneDTOSchema = z.object({
   title: z.string().max(255),
@@ -14,14 +13,6 @@ const sceneDTOSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-const validate: RequestHandler = (req, res, next) => {
-  try {
-    req.body = sceneDTOSchema.parse(req.body);
-    next();
-  } catch (err) {
-    const { issues } = err as ZodError;
-    res.status(400).json(issues);
-  }
-};
+import { createValidator } from "../utils";
 
-export default { validate };
+export default createValidator(sceneDTOSchema);

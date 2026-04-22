@@ -23,7 +23,7 @@ describe("React: CastingPage", () => {
       "/plays/:playId/casting",
       CastingPage,
       [`/plays/${mainPlay.id}/casting`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await screen.findByRole("heading", { level: 2 });
@@ -35,7 +35,7 @@ describe("React: CastingPage", () => {
       "/plays/:playId/casting",
       CastingPage,
       [`/plays/${mainPlay.id}/casting`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     // Specific label matching the first role
@@ -56,7 +56,7 @@ describe("React: CastingPage", () => {
       "/plays/:playId/casting",
       CastingPage,
       [`/plays/${mainPlay.id}/casting`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     // Specific label matching the first role
@@ -77,7 +77,7 @@ describe("React: CastingPage", () => {
       "/plays/:playId/casting",
       CastingPage,
       [`/plays/${mainPlay.id}/casting`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     const label = new RegExp(

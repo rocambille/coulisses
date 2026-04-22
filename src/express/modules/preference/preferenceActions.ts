@@ -6,18 +6,18 @@
 import type { RequestHandler } from "express";
 import preferenceRepository from "./preferenceRepository";
 
-const upsert: RequestHandler = async (req, res) => {
+const upsert: RequestHandler = (req, res) => {
   const { level } = req.body;
 
-  await preferenceRepository.upsert(req.me.id, req.scene.id, level);
+  preferenceRepository.upsert(req.me.id, req.scene.id, level);
 
   res.sendStatus(204);
 };
 
-const browseByPlay: RequestHandler = async (req, res) => {
+const browseByPlay: RequestHandler = (req, res) => {
   const { playId } = req.params;
 
-  const preferences = await preferenceRepository.findByPlay(Number(playId));
+  const preferences = preferenceRepository.findByPlay(Number(playId));
   res.json(preferences);
 };
 

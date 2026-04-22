@@ -1,29 +1,6 @@
 import { use } from "react";
 import { useAuth } from "../auth/AuthContext";
-import { useRefresh } from "../RefreshContext";
-import { cache, invalidateCache, mutate } from "../utils";
-
-export function useAction() {
-  const { refresh } = useRefresh();
-
-  return async (
-    url: string,
-    method: "post" | "put" | "delete",
-    body?: unknown,
-    invalidatePaths: string[] = [],
-  ) => {
-    const response = await mutate(url, method, body);
-
-    if (response.ok) {
-      for (const path of invalidatePaths) {
-        invalidateCache(path);
-      }
-      refresh();
-    }
-
-    return response;
-  };
-}
+import { cache } from "../utils";
 
 export function useMembership(playId: string | undefined) {
   const { me } = useAuth();

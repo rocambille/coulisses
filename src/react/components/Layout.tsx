@@ -18,6 +18,7 @@
 
 import type { PropsWithChildren } from "react";
 import { useLocation } from "react-router";
+
 import { useAuth } from "./auth/AuthContext";
 import MagicLinkForm from "./auth/MagicLinkForm";
 import NavBar from "./NavBar";
@@ -27,6 +28,11 @@ function Layout({ children }: PropsWithChildren) {
   const location = useLocation();
 
   return (
+    /*
+      Authentication context:
+      Wraps the entire layout so any descendant component
+      can access authentication state and actions.
+    */
     <>
       {/* **************************************************************** */}
       {/* Persistent header                                                */}

@@ -3,56 +3,53 @@
   Centralize all persistence logic related to Authentication tokens.
 */
 
-import databaseClient, {
-  type Result,
-  type Rows,
-} from "../../../database/client";
+import database from "../../../database";
 
 class AuthRepository {
-  async insertToken(userId: number, tokenHash: string, expiresAt: Date) {
-    const [result] = await databaseClient.query<Result>(
+  insertToken(userId: number | bigint, tokenHash: string, expiresAt: Date) {
+    const query = database.prepare(
       "insert into magic_link_token (user_id, token_hash, expires_at) values (?, ?, ?)",
-      [userId, tokenHash, expiresAt],
     );
+    const result = query.run(userId, tokenHash, expiresAt.toISOString());
 
-    return result.insertId;
+    return result.lastInsertRowid;
   }
 
-  async findByHash(tokenHash: string): Promise<MagicLinkToken | null> {
-    const [rows] = await databaseClient.query<Rows>(
+  findByHash(tokenHash: string): MagicLinkToken | null {
+    const query = database.prepare(
       "select id, user_id, token_hash, expires_at, consumed_at from magic_link_token where token_hash = ?",
-      [tokenHash],
     );
+    const row = query.get(tokenHash);
 
-    if (rows[0] == null) return null;
+    if (row == null) return null;
 
-    const { id, user_id, token_hash, expires_at, consumed_at } = rows[0];
+    const { id, user_id, token_hash, expires_at, consumed_at } = row;
 
     return {
-      id,
-      user_id,
-      token_hash,
-      expires_at,
-      consumed_at,
+      id: Number(id),
+      user_id: Number(user_id),
+      token_hash: String(token_hash),
+      expires_at: new Date(String(expires_at)),
+      consumed_at: consumed_at ? new Date(String(consumed_at)) : null,
     };
   }
 
-  async markAsConsumed(tokenId: number) {
-    const [result] = await databaseClient.query<Result>(
-      "update magic_link_token set consumed_at = now() where id = ?",
-      [tokenId],
+  markAsConsumed(tokenId: number | bigint): boolean {
+    const query = database.prepare(
+      "update magic_link_token set consumed_at = datetime('now') where id = ?",
     );
+    const result = query.run(tokenId);
 
-    return result.affectedRows;
+    return result.changes === 1;
   }
 
-  async deleteExpiredByUser(userId: number) {
-    const [result] = await databaseClient.query<Result>(
-      "delete from magic_link_token where user_id = ? and (expires_at < now() or consumed_at is not null)",
-      [userId],
+  deleteExpiredByUser(userId: number | bigint): boolean {
+    const query = database.prepare(
+      "delete from magic_link_token where user_id = ? and (expires_at < datetime('now') or consumed_at is not null)",
     );
+    const result = query.run(userId);
 
-    return result.affectedRows;
+    return result.changes === 1;
   }
 }
 

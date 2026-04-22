@@ -4,7 +4,7 @@ import fs from "fs-extra";
 
 import { main } from "../../bin/make-clone";
 
-describe("CLI: make-clone", () => {
+describe("make-clone.ts", () => {
   let tmpDir: string;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 

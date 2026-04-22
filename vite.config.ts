@@ -27,9 +27,9 @@ export default defineConfig(({ mode }) => ({
     ],
     coverage: {
       exclude: [
-        "tests/**/test-utils.ts",
-        "tests/contracts.ts",
-        "tests/data.ts",
+        "tests/**/contracts.ts",
+        "tests/**/data.ts",
+        "tests/**/test-utils*.ts",
       ],
     },
   },

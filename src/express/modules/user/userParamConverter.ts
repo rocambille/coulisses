@@ -1,6 +1,6 @@
 /*
   Purpose:
-  Convert the `:userId` route parameter into a fully loaded Item.
+  Convert the `:userId` route parameter into a fully loaded User.
 
   This module:
   - Centralizes user lookup logic
@@ -35,44 +35,10 @@ declare global {
   }
 }
 
-/* ************************************************************************ */
-/* Param converter                                                          */
-/* ************************************************************************ */
-
-import type { RequestParamHandler } from "express";
-
+/*
+  Export converter
+*/
+import { createParamConverter } from "../utils";
 import userRepository from "./userRepository";
 
-/*
-  Param middleware for `:userId`.
-
-  Behavior:
-  - Attempts to load the user from the repository
-  - If not found:
-      - DELETE: 204 (idempotent deletion)
-      - Other methods: 404 (resource not found)
-  - If found:
-      - Attaches user to `req`
-      - Continues the middleware chain
-
-  Design note:
-  - HTTP semantics are handled here, not in controllers
-  - Controllers never deal with "missing user" cases
-*/
-const convert: RequestParamHandler = async (req, res, next, userId) => {
-  const user = await userRepository.find(+userId);
-
-  if (user == null) {
-    res.sendStatus(req.method === "DELETE" ? 204 : 404);
-  } else {
-    req.user = user;
-
-    next();
-  }
-};
-
-/* ************************************************************************ */
-/* Export                                                                   */
-/* ************************************************************************ */
-
-export default { convert };
+export default createParamConverter(userRepository, "user");

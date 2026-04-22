@@ -3,9 +3,6 @@
   Convert req.params.eventId into an Event entity directly attached to req.event.
 */
 
-import type { RequestParamHandler } from "express";
-import eventRepository from "./eventRepository";
-
 declare global {
   namespace Express {
     interface Request {
@@ -14,17 +11,7 @@ declare global {
   }
 }
 
-const convert: RequestParamHandler = async (req, res, next, eventId) => {
-  const event = await eventRepository.find(+eventId);
+import { createParamConverter } from "../utils";
+import eventRepository from "./eventRepository";
 
-  if (event == null) {
-    res.sendStatus(req.method === "DELETE" ? 204 : 404);
-    return;
-  }
-
-  req.event = event;
-
-  next();
-};
-
-export default { convert };
+export default createParamConverter(eventRepository, "event");

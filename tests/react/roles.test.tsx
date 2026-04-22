@@ -26,7 +26,7 @@ describe("React: RolesPage", () => {
       "/plays/:playId/roles",
       RolesPage,
       [`/plays/${mainPlay.id}/roles`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await screen.findByRole("heading", { level: 2 });
@@ -38,7 +38,7 @@ describe("React: RolesPage", () => {
       "/plays/:playId/roles",
       RolesPage,
       [`/plays/${emptyPlay.id}/roles`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await screen.findByText(/aucun rôle/i);
@@ -50,7 +50,7 @@ describe("React: RolesPage", () => {
       "/plays/:playId/roles",
       RolesPage,
       [`/plays/${mainPlay.id}/roles`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.type(

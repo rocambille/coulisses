@@ -3,8 +3,7 @@
   Validate and normalize incoming Role payloads for mutative requests.
 */
 
-import type { RequestHandler } from "express";
-import { type ZodError, z } from "zod";
+import { z } from "zod";
 
 const roleDTOSchema = z.object({
   name: z.string().max(255),
@@ -12,14 +11,6 @@ const roleDTOSchema = z.object({
   sceneIds: z.array(z.number()).optional(),
 });
 
-const validate: RequestHandler = (req, res, next) => {
-  try {
-    req.body = roleDTOSchema.parse(req.body);
-    next();
-  } catch (err) {
-    const { issues } = err as ZodError;
-    res.status(400).json(issues);
-  }
-};
+import { createValidator } from "../utils";
 
-export default { validate };
+export default createValidator(roleDTOSchema);

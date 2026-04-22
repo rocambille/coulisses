@@ -6,12 +6,13 @@
 
 import { use } from "react";
 import { useParams } from "react-router";
+import { useMutate } from "../RefreshContext";
 import { cache } from "../utils";
-import { useAction, useMembership } from "./hooks";
+import { useMembership } from "./hooks";
 
 function RolesPage() {
   const { playId } = useParams();
-  const runAction = useAction();
+  const mutate = useMutate();
   const { isTeacher } = useMembership(playId);
 
   const roles: RoleWithScenes[] = use(cache(`/api/plays/${playId}/roles`));
@@ -25,7 +26,7 @@ function RolesPage() {
     const description = formData.get("description")?.toString() || null;
     const sceneIds = formData.getAll("sceneIds").map(Number);
 
-    await runAction(
+    await mutate(
       `/api/plays/${playId}/roles`,
       "post",
       {
@@ -76,7 +77,11 @@ function RolesPage() {
               <legend>Scènes associées</legend>
               {scenes.map((scene) => (
                 <label key={scene.id}>
-                  <input type="checkbox" name="sceneIds" value={scene.id} />
+                  <input
+                    type="checkbox"
+                    name="sceneIds"
+                    value={scene.id.toString()}
+                  />
                   {scene.title}
                 </label>
               ))}

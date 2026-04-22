@@ -7,12 +7,12 @@
 import { use } from "react";
 import { NavLink } from "react-router";
 import { useAuth } from "./auth/AuthContext";
-import { useAction } from "./play/hooks";
+import { useMutate } from "./RefreshContext";
 import { cache } from "./utils";
 
 function DashboardPage() {
   const { me } = useAuth();
-  const runAction = useAction();
+  const mutate = useMutate();
 
   const plays: Play[] = use(cache("/api/plays"));
 
@@ -21,7 +21,7 @@ function DashboardPage() {
 
     if (!title) throw new Error("Invalid form submission");
 
-    await runAction("/api/plays", "post", { title }, ["/api/plays"]);
+    await mutate("/api/plays", "post", { title }, ["/api/plays"]);
   };
 
   return (

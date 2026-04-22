@@ -1,37 +1,39 @@
+declare module "*.css";
+
 type User = {
-  id: number;
+  id: number | bigint;
   email: string;
   name: string;
 };
 
 type Play = {
-  id: number;
+  id: number | bigint;
   title: string;
-  description: string | null;
+  description?: string;
 };
 
 type PlayMember = {
-  id: number;
-  play_id: number;
-  user_id: number;
+  id: number | bigint;
+  play_id: number | bigint;
+  user_id: number | bigint;
   role: "TEACHER" | "ACTOR";
 };
 
 type Scene = {
-  id: number;
-  play_id: number;
+  id: number | bigint;
+  play_id: number | bigint;
   title: string;
-  description: string | null;
-  duration: number | null;
+  description?: string;
+  duration?: number;
   scene_order: number;
   is_active: boolean;
 };
 
 type Role = {
-  id: number;
-  play_id: number;
+  id: number | bigint;
+  play_id: number | bigint;
   name: string;
-  description: string | null;
+  description?: string;
 };
 
 type RoleWithScenes = Role & { scenes: Scene[] };
@@ -39,8 +41,8 @@ type RoleWithScenes = Role & { scenes: Scene[] };
 type PreferenceLevel = "HIGH" | "MEDIUM" | "LOW" | "NOT_INTERESTED";
 
 type Preference = {
-  user_id: number;
-  scene_id: number;
+  user_id: number | bigint;
+  scene_id: number | bigint;
   level: PreferenceLevel;
   created_at?: string;
 };
@@ -48,19 +50,22 @@ type Preference = {
 type PreferenceWithUser = Preference & Omit<User, "id">;
 
 type Casting = {
-  role_id: number;
-  user_id: number;
+  role_id: number | bigint;
+  user_id: number | bigint;
   assigned_at?: string;
 };
 
 type CastingMatrix = {
   scenes: Scene[];
-  roles: (Role & { scene_ids: number[]; user_id: number | null })[];
+  roles: (Role & {
+    scene_ids: (number | bigint)[];
+    user_id: number | bigint | null;
+  })[];
 };
 
 type EventData = {
-  id: number;
-  play_id: number;
+  id: number | bigint;
+  play_id: number | bigint;
   type: "SHOW" | "FIXED_REHEARSAL" | "AUTO_REHEARSAL";
   title: string;
   description?: string;
@@ -70,8 +75,8 @@ type EventData = {
 };
 
 type MagicLinkToken = {
-  id: number;
-  user_id: number;
+  id: number | bigint;
+  user_id: number | bigint;
   token_hash: string;
   expires_at: Date;
   consumed_at: Date | null;

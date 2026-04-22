@@ -3,93 +3,102 @@
   Centralize all persistence logic related to Play entities.
 */
 
-import databaseClient, {
-  type Result,
-  type Rows,
-} from "../../../database/client";
+import database from "../../../database";
 
 class PlayRepository {
-  async create(play: Omit<Play, "id">) {
-    const [result] = await databaseClient.query<Result>(
-      "insert into play (title, description) values (?, ?)",
-      [play.title, play.description],
-    );
+  create(play: Omit<Play, "id">): number | bigint {
+    const result = database
+      .prepare(
+        `insert into play (title, description)
+       values (?, ?)`,
+      )
+      .run(play.title, play.description ?? null);
 
-    return result.insertId;
+    return result.lastInsertRowid;
   }
 
-  async find(byId: number): Promise<Play | null> {
-    const [rows] = await databaseClient.query<Rows>(
-      "select id, title, description from play where id = ?",
-      [byId],
-    );
+  find(byId: number | bigint): Play | null {
+    const row = database.prepare(`select * from play where id = ?`).get(byId);
 
-    if (rows[0] == null) {
+    if (row == null) {
       return null;
     }
 
-    const { id, title, description } = rows[0];
+    const { id, title, description } = row;
 
-    return { id, title, description };
+    const play: Play = {
+      id: Number(id),
+      title: String(title),
+    };
+    if (description != null) play.description = String(description);
+
+    return play;
   }
 
-  // Browse only plays where the user is a member
-  async findByUser(user: User): Promise<Play[]> {
-    const [rows] = await databaseClient.query<Rows>(
-      `select p.id, p.title, p.description 
-       from play p 
-       join play_member pm on p.id = pm.play_id 
-       where pm.user_id = ?`,
-      [user.id],
-    );
+  findByUser(user: User): Play[] {
+    const rows = database
+      .prepare(
+        `select p.* from play p join member_play mp on p.id = mp.play_id where mp.user_id = ?`,
+      )
+      .all(user.id);
 
-    return rows.map<Play>(({ id, title, description }) => ({
-      id,
-      title,
-      description,
-    }));
+    return rows.map<Play>(({ id, title, description }) => {
+      const play: Play = {
+        id: Number(id),
+        title: String(title),
+      };
+      if (description != null) play.description = String(description);
+
+      return play;
+    });
   }
 
-  async update(id: number, play: Omit<Play, "id">) {
-    const [result] = await databaseClient.query<Result>(
-      "update play set title = ?, description = ? where id = ?",
-      [play.title, play.description, id],
-    );
+  update(id: number | bigint, play: Omit<Play, "id">): boolean {
+    const result = database
+      .prepare("update play set title = ?, description = ? where id = ?")
+      .run(play.title, play.description ?? null, id);
 
-    return result.affectedRows;
+    return result.changes === 1;
   }
 
-  async hardDelete(id: number) {
-    const [result] = await databaseClient.query<Result>(
-      "delete from play where id = ?",
-      [id],
-    );
+  hardDelete(id: number | bigint): boolean {
+    const result = database.prepare("delete from play where id = ?").run(id);
 
-    return result.affectedRows;
+    return result.changes === 1;
   }
 
   // --- Members ---
 
-  async addMember(playId: number, userId: number, role: "TEACHER" | "ACTOR") {
-    // Insert IGNORE to avoid errors if they are already in the play
-    const [result] = await databaseClient.query<Result>(
-      "insert ignore into play_member (play_id, user_id, role) values (?, ?, ?)",
-      [playId, userId, role],
-    );
-    return result.insertId;
+  addMember(
+    playId: number | bigint,
+    userId: number | bigint,
+    role: "TEACHER" | "ACTOR",
+  ): number | bigint {
+    // Insert or IGNORE to avoid errors if they are already in the play
+    const result = database
+      .prepare(
+        "insert or ignore into member_play (play_id, user_id, role) values (?, ?, ?)",
+      )
+      .run(playId, userId, role);
+    return result.lastInsertRowid;
   }
 
-  async getMembers(playId: number): Promise<(User & { role: string })[]> {
-    const [rows] = await databaseClient.query<Rows>(
-      `select u.id, u.email, pm.role, u.name
+  getMembers(playId: number | bigint): (User & { role: string })[] {
+    const rows = database
+      .prepare(
+        `select u.id, u.email, pm.role, u.name
        from user u
-       join play_member pm on u.id = pm.user_id
+       join member_play pm on u.id = pm.user_id
        where pm.play_id = ?`,
-      [playId],
-    );
-    return rows.map<{ id: number; email: string; role: string; name: string }>(
-      ({ id, email, role, name }) => ({ id, email, role, name }),
-    );
+      )
+      .all(playId);
+
+    return rows.map<User & { role: string }>(({ id, email, role, name }) => ({
+      id: Number(id),
+      email: String(email),
+      role: String(role),
+      name: String(name),
+    }));
   }
 }
 

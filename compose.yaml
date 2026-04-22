@@ -9,9 +9,6 @@
 # https://github.com/docker/awesome-compose
 services:
   server:
-    depends_on:
-      database:
-        condition: service_healthy
     build:
       context: .
     volumes:
@@ -19,20 +16,19 @@ services:
     ports:
       - ${APP_PORT-5173}:${APP_PORT-5173}
       - 24678:24678
-  database:
-    image: mysql:lts
-    restart: always
+  mailpit:
+    image: axllent/mailpit:v1.29
+    container_name: mailpit
+    restart: unless-stopped
     env_file: ./.env
     volumes:
-      - "./src/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql"
-      - "./src/database/data:/var/lib/mysql"
-    healthcheck:
-      test: '/usr/bin/mysql --user=root --password=$$MYSQL_ROOT_PASSWORD --execute "SHOW DATABASES;"'
-      interval: 2s
-      timeout: 40s
-      retries: 20
-  adminer:
-    image: adminer:5
-    restart: always
+      - ./src/mailpit/data:/data
     ports:
-      - 8081:8080
+      - ${SMTP_API_PORT-8025}:${SMTP_API_PORT-8025}
+      - ${SMTP_PORT-1025}:${SMTP_PORT-1025}
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+      MP_API_CORS: "*"

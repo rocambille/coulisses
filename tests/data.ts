@@ -27,11 +27,17 @@ export const allUsers: User[] = [
     email: "third@mail.com",
     name: "third",
   },
+  {
+    id: 4,
+    email: "deleted@mail.com",
+    name: "deleted",
+  },
 ];
 
 export const teacherUser = allUsers[0];
 export const actorUser = allUsers[1];
 export const thirdUser = allUsers[2];
+export const deletedUser = allUsers[3];
 
 // ---------------------------------------------------------
 // Plays & Members
@@ -149,7 +155,7 @@ export const mainPreferences: PreferenceWithUser[] = [
 
 export const mainCastings: Casting[] = [{ role_id: 1, user_id: actorUser.id }];
 
-export const openingNightEvent = {
+export const openingNightEvent: EventData = {
   id: 1,
   play_id: mainPlay.id,
   type: "SHOW" as const,
@@ -178,5 +184,3 @@ const matrix = (
 export const mainMatrix = matrix(mainScenes, mainRoles, mainCastings);
 
 export const emptyMatrix = matrix([], [], []);
-
-export const insertId = 42;

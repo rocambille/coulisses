@@ -62,13 +62,20 @@ router.use(cookieParser(), csrf(), json());
 /*
   Minimal API sanity check.
   Useful for smoke tests and quick validation that the server is reachable.
+
+  GET:
+  - Returns a JSON payload to confirm the API is alive
+
+  POST:
+  - Echoes the request body to validate CSRF protection is working
+  - Useful for front-end integration testing
 */
 router.get("/api/health", (_req, res) => {
   res.json({ hello: "world" });
 });
 
 router.post("/api/health", (req, res) => {
-  res.json({ hello: req.body.hello });
+  res.json(req.body);
 });
 
 /* ************************************************************************ */

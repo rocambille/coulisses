@@ -18,8 +18,8 @@ const ROLES_BY_PLAY_PATH = "/api/plays/:playId/roles";
 
 router.param("playId", playParamConverter.convert);
 
-const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.play.id);
+const checkIsMemberByPlayId: RequestHandler = (req, res, next) => {
+  const members = playRepository.getMembers(req.play.id);
   const isMember = members.some((member) => member.id === req.me.id);
 
   if (isMember) {
@@ -29,8 +29,8 @@ const checkIsMemberByPlayId: RequestHandler = async (req, res, next) => {
   }
 };
 
-const checkIsTeacherByPlayId: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.play.id);
+const checkIsTeacherByPlayId: RequestHandler = (req, res, next) => {
+  const members = playRepository.getMembers(req.play.id);
   const member = members.find((member) => member.id === req.me.id);
 
   if (member?.role === "TEACHER") {

@@ -3,7 +3,7 @@
   Validate and normalize incoming Play payloads for mutative requests.
 */
 
-import { type ZodError, z } from "zod";
+import { z } from "zod";
 
 const playDTOSchema = z.object({
   id: z.number().optional(),
@@ -11,31 +11,13 @@ const playDTOSchema = z.object({
   description: z.string().nullable().optional(),
 });
 
-import type { RequestHandler } from "express";
+import { createValidator } from "../utils";
 
-const validate: RequestHandler = (req, res, next) => {
-  try {
-    req.body = playDTOSchema.parse(req.body);
-    next();
-  } catch (err) {
-    const { issues } = err as ZodError;
-    res.status(400).json(issues);
-  }
-};
+export default createValidator(playDTOSchema);
 
 const playMemberDTOSchema = z.object({
   email: z.email(),
   role: z.enum(["TEACHER", "ACTOR"]),
 });
 
-const validateMember: RequestHandler = (req, res, next) => {
-  try {
-    req.body = playMemberDTOSchema.parse(req.body);
-    next();
-  } catch (err) {
-    const { issues } = err as ZodError;
-    res.status(400).json(issues);
-  }
-};
-
-export default { validate, validateMember };
+export const playMemberValidator = createValidator(playMemberDTOSchema);

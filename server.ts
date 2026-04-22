@@ -24,11 +24,6 @@ import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { createServer as createViteServer } from "vite";
 
-// NOTE:
-// This import is executed for its side effects only.
-// It ensures the database connection is validated at startup.
-import "./src/database/checkConnection";
-
 /* ************************************************************************ */
 /*                                  Startup                                 */
 /* ************************************************************************ */

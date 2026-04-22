@@ -5,7 +5,6 @@ import {
   emptyMatrix,
   emptyPlay,
   emptyPlayMembers,
-  insertId,
   mainMatrix,
   mainPlay,
   mainPlayMembers,
@@ -20,23 +19,30 @@ import {
 export type Json =
   | string
   | number
+  | bigint
   | boolean
   | null
   | undefined
   | { [key: string]: Json }
   | Json[];
+
 export type JsonObject = { [key: string]: Json };
 
 export type Case = {
-  path?: string;
+  only?: boolean;
+  // Optional path override (useful for IDs)
+  specialPath?: string;
   request: {
     body?: JsonObject;
-    jwtPayload?: { sub: number | string } | null;
+    // Mocked JWT payload to simulate different users
+    jwtPayload?: { sub: number | bigint | string } | null;
+    // Explicitly bypass CSRF to test protection
     withoutCsrfProtection?: boolean;
   };
   response: {
     status: number;
     body: unknown;
+    // Optional hook to run extra assertions on the response
     and?: (response: { headers: { [key: string]: string } }) => void;
   };
 };
@@ -49,11 +55,10 @@ export type Test = {
 
 export type Contract = Record<string, Test>;
 
-/**
- * API Contracts: The Point of Truth for API.
- *
- * Each entry defines a request and the expected response for a given test case.
- */
+/* ************************************************************************ */
+/* Contracts Definitions                                                    */
+/* ************************************************************************ */
+
 export const contracts: Record<string, Contract> = {
   auth: {
     magic_link: {
@@ -67,14 +72,8 @@ export const contracts: Record<string, Contract> = {
             },
           },
           response: {
-            status: 201,
-            body: {
-              message: "Magic link sent to your email",
-              _testing_link: expect.stringMatching(
-                /http:\/\/localhost:5173\/verify\?token=[0-9a-f]{64}/,
-              ),
-              _testing_token: expect.stringMatching(/[0-9a-f]{64}/),
-            },
+            status: 204,
+            body: {},
           },
         },
         new_user: {
@@ -82,14 +81,8 @@ export const contracts: Record<string, Contract> = {
             body: { email: "new_user@mail.com" },
           },
           response: {
-            status: 201,
-            body: {
-              message: "Magic link sent to your email",
-              _testing_link: expect.stringMatching(
-                /http:\/\/localhost:5173\/verify\?token=[0-9a-f]{64}/,
-              ),
-              _testing_token: expect.stringMatching(/[0-9a-f]{64}/),
-            },
+            status: 204,
+            body: {},
           },
         },
         bad_request: {
@@ -248,7 +241,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 200, body: mainMatrix },
         },
         empty: {
-          path: `/api/plays/${emptyPlay.id}/castings`,
+          specialPath: `/api/plays/${emptyPlay.id}/castings`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 200, body: emptyMatrix },
         },
@@ -261,7 +254,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/castings`,
+          specialPath: `/api/plays/${NaN}/castings`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -291,7 +284,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/castings`,
+          specialPath: `/api/plays/${NaN}/castings`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -334,7 +327,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/castings`,
+          specialPath: `/api/plays/${NaN}/castings`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 204, body: {} },
         },
@@ -363,7 +356,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/events`,
+          specialPath: `/api/plays/${NaN}/events`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -385,7 +378,7 @@ export const contracts: Record<string, Contract> = {
             },
             jwtPayload: { sub: teacherUser.id },
           },
-          response: { status: 201, body: { insertId } },
+          response: { status: 201, body: { insertId: expect.any(Number) } },
         },
         bad_request: {
           request: { body: {}, jwtPayload: { sub: teacherUser.id } },
@@ -400,7 +393,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/events`,
+          specialPath: `/api/plays/${NaN}/events`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -437,7 +430,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/events/${NaN}`,
+          specialPath: `/api/events/${NaN}`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -460,7 +453,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/events/${NaN}`,
+          specialPath: `/api/events/${NaN}`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 204, body: {} },
         },
@@ -507,7 +500,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 200, body: mainPlayMembers },
         },
         empty: {
-          path: `/api/plays/${emptyPlay.id}/members`,
+          specialPath: `/api/plays/${emptyPlay.id}/members`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 200, body: emptyPlayMembers },
         },
@@ -520,7 +513,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/members`,
+          specialPath: `/api/plays/${NaN}/members`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -550,7 +543,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/members`,
+          specialPath: `/api/plays/${NaN}/members`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -597,7 +590,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}`,
+          specialPath: `/api/plays/${NaN}`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -614,7 +607,7 @@ export const contracts: Record<string, Contract> = {
             },
             jwtPayload: { sub: teacherUser.id },
           },
-          response: { status: 201, body: { insertId } },
+          response: { status: 201, body: { insertId: expect.any(Number) } },
         },
         bad_request: {
           request: { body: {}, jwtPayload: { sub: teacherUser.id } },
@@ -653,7 +646,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}`,
+          specialPath: `/api/plays/${NaN}`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -676,7 +669,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}`,
+          specialPath: `/api/plays/${NaN}`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 204, body: {} },
         },
@@ -705,7 +698,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/preferences`,
+          specialPath: `/api/plays/${NaN}/preferences`,
           request: { jwtPayload: { sub: actorUser.id } },
           response: { status: 404, body: {} },
         },
@@ -723,7 +716,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 204, body: {} },
         },
         insert: {
-          path: `/api/scenes/${mainScenes[2].id}/preferences`,
+          specialPath: `/api/scenes/${mainScenes[2].id}/preferences`,
           request: {
             body: { level: "HIGH" },
             jwtPayload: { sub: actorUser.id },
@@ -743,7 +736,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/scenes/${NaN}/preferences`,
+          specialPath: `/api/scenes/${NaN}/preferences`,
           request: {},
           response: { status: 404, body: {} },
         },
@@ -764,7 +757,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 200, body: mainRoles },
         },
         empty: {
-          path: `/api/plays/${emptyPlay.id}/roles`,
+          specialPath: `/api/plays/${emptyPlay.id}/roles`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 200, body: [] },
         },
@@ -777,7 +770,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/roles`,
+          specialPath: `/api/plays/${NaN}/roles`,
           request: { jwtPayload: { sub: actorUser.id } },
           response: { status: 404, body: {} },
         },
@@ -796,14 +789,14 @@ export const contracts: Record<string, Contract> = {
             },
             jwtPayload: { sub: teacherUser.id },
           },
-          response: { status: 201, body: { insertId } },
+          response: { status: 201, body: { insertId: expect.any(Number) } },
         },
         no_scene: {
           request: {
             body: { name: "Test", description: null, sceneIds: [] },
             jwtPayload: { sub: teacherUser.id },
           },
-          response: { status: 201, body: { insertId } },
+          response: { status: 201, body: { insertId: expect.any(Number) } },
         },
         bad_request: {
           request: { body: {}, jwtPayload: { sub: teacherUser.id } },
@@ -818,7 +811,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/roles`,
+          specialPath: `/api/plays/${NaN}/roles`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -839,7 +832,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 200, body: mainScenes },
         },
         empty: {
-          path: `/api/plays/${emptyPlay.id}/scenes`,
+          specialPath: `/api/plays/${emptyPlay.id}/scenes`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 200, body: [] },
         },
@@ -852,7 +845,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/scenes`,
+          specialPath: `/api/plays/${NaN}/scenes`,
           request: { jwtPayload: { sub: actorUser.id } },
           response: { status: 404, body: {} },
         },
@@ -875,7 +868,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/scenes/${NaN}`,
+          specialPath: `/api/scenes/${NaN}`,
           request: {},
           response: { status: 404, body: {} },
         },
@@ -890,7 +883,7 @@ export const contracts: Record<string, Contract> = {
             body: { title: "New Scene", scene_order: mainScenes.length + 1 },
             jwtPayload: { sub: teacherUser.id },
           },
-          response: { status: 201, body: { insertId } },
+          response: { status: 201, body: { insertId: expect.any(Number) } },
         },
         bad_request: {
           request: { body: {}, jwtPayload: { sub: teacherUser.id } },
@@ -905,7 +898,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/plays/${NaN}/scenes`,
+          specialPath: `/api/plays/${NaN}/scenes`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -938,7 +931,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/scenes/${NaN}`,
+          specialPath: `/api/scenes/${NaN}`,
           request: {},
           response: { status: 404, body: {} },
         },
@@ -961,7 +954,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/scenes/${NaN}`,
+          specialPath: `/api/scenes/${NaN}`,
           request: {},
           response: { status: 204, body: {} },
         },
@@ -986,7 +979,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/users/${NaN}`,
+          specialPath: `/api/users/${NaN}`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -1019,7 +1012,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/users/${NaN}`,
+          specialPath: `/api/users/${NaN}`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 404, body: {} },
         },
@@ -1042,7 +1035,7 @@ export const contracts: Record<string, Contract> = {
           response: { status: 403, body: {} },
         },
         not_found: {
-          path: `/api/users/${NaN}`,
+          specialPath: `/api/users/${NaN}`,
           request: { jwtPayload: { sub: teacherUser.id } },
           response: { status: 204, body: {} },
         },

@@ -6,8 +6,9 @@
 
 import { use, useState } from "react";
 import { useParams } from "react-router";
+import { useMutate } from "../RefreshContext";
 import { cache } from "../utils";
-import { useAction, useMembership } from "./hooks";
+import { useMembership } from "./hooks";
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -35,7 +36,7 @@ const MONTHS = [
 
 function CalendarPage() {
   const { playId } = useParams();
-  const runAction = useAction();
+  const mutate = useMutate();
   const { isTeacher } = useMembership(playId);
 
   const events: EventData[] = use(cache(`/api/plays/${playId}/events`));
@@ -81,7 +82,7 @@ function CalendarPage() {
     const start_time = new Date(`${startDate}T${startTime}`).toISOString();
     const end_time = new Date(`${endDate}T${endTime}`).toISOString();
 
-    const response = await runAction(
+    const response = await mutate(
       `/api/plays/${playId}/events`,
       "post",
       {
@@ -119,7 +120,7 @@ function CalendarPage() {
     const start_time = `${startDate}T${startTime}:00.000Z`;
     const end_time = `${endDate}T${endTime}:00.000Z`;
 
-    const response = await runAction(
+    const response = await mutate(
       `/api/events/${selectedEvent.id}`,
       "put",
       {
@@ -138,9 +139,9 @@ function CalendarPage() {
     }
   };
 
-  const handleDelete = async (eventId: number) => {
+  const handleDelete = async (eventId: EventData["id"]) => {
     if (!confirm("Delete this event?")) return;
-    const response = await runAction(
+    const response = await mutate(
       `/api/events/${eventId}`,
       "delete",
       undefined,

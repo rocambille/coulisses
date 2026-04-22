@@ -20,7 +20,7 @@ describe("<PlayLayout />", () => {
 
   it("should mount successfully", async () => {
     await renderWithStub("/plays/:playId", () => <PlayLayout />, ["/plays/1"], {
-      user: teacherUser,
+      me: teacherUser,
     });
 
     await waitFor(() => screen.getByRole("heading", { level: 1 }));

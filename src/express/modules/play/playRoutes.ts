@@ -12,7 +12,7 @@ import authActions from "../auth/authActions";
 import playActions from "./playActions";
 import playParamConverter from "./playParamConverter";
 import playRepository from "./playRepository";
-import playValidator from "./playValidator";
+import playValidator, { playMemberValidator } from "./playValidator";
 
 const BASE_PATH = "/api/plays";
 const PLAY_PATH = "/api/plays/:playId";
@@ -61,6 +61,6 @@ router
 router
   .route(MEMBERS_PATH)
   .get(checkIsMember, playActions.browseMembers)
-  .post(checkIsTeacher, playValidator.validateMember, playActions.addMember);
+  .post(checkIsTeacher, playMemberValidator.validate, playActions.addMember);
 
 export default router;

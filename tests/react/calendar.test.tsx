@@ -26,7 +26,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: actorUser },
+      { me: actorUser },
     );
 
     await screen.findByRole("heading", { level: 2 });
@@ -41,7 +41,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: actorUser },
+      { me: actorUser },
     );
 
     await user.click(screen.getByRole("button", { name: /</i }));
@@ -55,7 +55,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: actorUser },
+      { me: actorUser },
     );
 
     await user.click(screen.getByRole("button", { name: />/i }));
@@ -67,7 +67,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await screen.findByLabelText(/ajouter.*28$/i);
@@ -80,7 +80,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: actorUser },
+      { me: actorUser },
     );
 
     await user.click(
@@ -102,7 +102,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: actorUser },
+      { me: actorUser },
     );
 
     await user.click(
@@ -121,7 +121,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(
@@ -146,7 +146,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(
@@ -165,7 +165,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(
@@ -194,7 +194,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(
@@ -212,7 +212,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(screen.getByLabelText(/ajouter.*28$/i));
@@ -226,7 +226,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(screen.getByLabelText(/ajouter.*28$/i));
@@ -247,7 +247,7 @@ describe("React: CalendarPage", () => {
       "/plays/:playId/calendar",
       CalendarPage,
       [`/plays/${mainPlay.id}/calendar`],
-      { user: teacherUser },
+      { me: teacherUser },
     );
 
     await user.click(

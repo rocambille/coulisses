@@ -3,40 +3,58 @@
   Persistent logic for Preferences.
 */
 
-import databaseClient, {
-  type Result,
-  type Rows,
-} from "../../../database/client";
+import database from "../../../database";
+
+const mapLevelToPreferenceLevel = (level: string): PreferenceLevel => {
+  switch (level) {
+    case "HIGH":
+      return "HIGH";
+    case "MEDIUM":
+      return "MEDIUM";
+    case "LOW":
+      return "LOW";
+    case "NOT_INTERESTED":
+      return "NOT_INTERESTED";
+    default:
+      throw new Error(`Invalid preference level: ${level}`);
+  }
+};
 
 class PreferenceRepository {
-  async upsert(userId: number, sceneId: number, level: PreferenceLevel) {
-    // MySQL UPSERT using ON DUPLICATE KEY UPDATE
-    const [result] = await databaseClient.query<Result>(
-      `insert into preference (user_id, scene_id, level) 
+  upsert(
+    userId: number | bigint,
+    sceneId: number | bigint,
+    level: PreferenceLevel,
+  ): boolean {
+    // SQLite UPSERT using ON CONFLICT
+    const result = database
+      .prepare(
+        `insert into preference (user_id, scene_id, level) 
        values (?, ?, ?)
-       on duplicate key update level = ?`,
-      [userId, sceneId, level, level],
-    );
+       on conflict(user_id, scene_id) do update set level = ?`,
+      )
+      .run(userId, sceneId, level, level);
 
-    return result.affectedRows;
+    return result.changes === 1;
   }
 
-  async findByPlay(playId: number) {
-    const [rows] = await databaseClient.query<Rows>(
-      `select p.user_id, u.name, u.email, p.scene_id, p.level 
+  findByPlay(playId: number | bigint): PreferenceWithUser[] {
+    const rows = database
+      .prepare(
+        `select p.user_id, u.name, u.email, p.scene_id, p.level 
        from preference p
        join user u on p.user_id = u.id
        join scene s on p.scene_id = s.id 
        where s.play_id = ?`,
-      [playId],
-    );
+      )
+      .all(playId);
 
     return rows.map<PreferenceWithUser>((row) => ({
-      user_id: row.user_id,
-      name: row.name,
-      email: row.email,
-      scene_id: row.scene_id,
-      level: row.level,
+      user_id: Number(row.user_id),
+      name: String(row.name),
+      email: String(row.email),
+      scene_id: Number(row.scene_id),
+      level: mapLevelToPreferenceLevel(String(row.level)),
     }));
   }
 }
