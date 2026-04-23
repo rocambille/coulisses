@@ -57,7 +57,7 @@ function ItemCreate() {
     */
     <ItemForm defaultValue={newItem} action={addItem}>
       {/* Submit button is injected via composition */}
-      <button type="submit">Ajouter</button>
+      <button type="submit">Add</button>
     </ItemForm>
   );
 }

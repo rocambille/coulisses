@@ -77,7 +77,7 @@ export const createValidator = (
   - Controllers never deal with "missing entity" cases
 */
 export const createParamConverter = <T>(
-  repository: { find: (id: number) => T | null },
+  repository: { find: (id: RowId) => T | null },
   requestKey: string,
 ): { convert: RequestParamHandler } => {
   return {

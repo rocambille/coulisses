@@ -39,11 +39,11 @@ function NavBar() {
     */
     <nav>
       <ul>
-        {link("/", "Accueil")}
+        {link("/", "Home")}
         {check() && (
           <>
             {link("/items", "Items")}
-            {link("/logout", "Déconnexion")}
+            {link("/logout", "Logout")}
           </>
         )}
       </ul>

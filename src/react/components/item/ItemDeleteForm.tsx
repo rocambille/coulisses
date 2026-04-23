@@ -32,7 +32,7 @@ function ItemDeleteForm() {
 
   return (
     <form action={deleteItem}>
-      <button type="submit">Supprimer</button>
+      <button type="submit">Delete</button>
     </form>
   );
 }
