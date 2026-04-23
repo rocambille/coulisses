@@ -42,7 +42,7 @@ function ItemList() {
       {/* Entry point for authenticated users */}
       {auth.check() && (
         <Link to="/items/new" data-testid="items-new">
-          Ajouter
+          Add
         </Link>
       )}
 

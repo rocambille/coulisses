@@ -7,7 +7,14 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import supertest from "supertest";
 
 import database from "../../src/database";
-import { allItems, allUsers, deletedUser } from "../data";
+import {
+  allItems,
+  allUsers,
+  barUser,
+  bazUser,
+  deletedUser,
+  fooUser,
+} from "../data";
 
 // -------------------------
 // DB mock
@@ -72,8 +79,8 @@ const mockDatabase = () => {
   /* valid token for testing valid token scenarios */
   const validDate = new Date(Date.now() + 100000);
   insertMagicLinkToken.run(
-    allUsers[0].id,
-    hash(requestValue("auth", "verify", "teacher", "token")),
+    fooUser.id,
+    hash(requestValue("auth", "verify", "success", "token")),
     validDate.toISOString(),
     null,
   );
@@ -81,7 +88,7 @@ const mockDatabase = () => {
   /* expired token for testing expired token scenarios */
   const expiredDate = new Date(Date.now() - 100000);
   insertMagicLinkToken.run(
-    allUsers[0].id,
+    barUser.id,
     hash(requestValue("auth", "verify", "expired", "token")),
     expiredDate.toISOString(),
     null,
@@ -89,10 +96,10 @@ const mockDatabase = () => {
 
   /* consumed token for testing consumed token scenarios */
   insertMagicLinkToken.run(
-    allUsers[0].id,
+    bazUser.id,
     hash(requestValue("auth", "verify", "consumed", "token")),
-    expiredDate.toISOString(),
-    expiredDate.toISOString(),
+    validDate.toISOString(),
+    validDate.toISOString(),
   );
 
   /* deleted user for testing deleted user scenarios */

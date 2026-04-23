@@ -64,7 +64,7 @@ function ItemEdit() {
     */
     <ItemForm defaultValue={item} action={editItem}>
       {/* Submit button is injected via composition */}
-      <button type="submit">Modifier</button>
+      <button type="submit">Edit</button>
     </ItemForm>
   );
 }

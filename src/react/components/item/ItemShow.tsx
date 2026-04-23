@@ -57,7 +57,7 @@ function ItemShow() {
             to={`/items/${item.id}/edit`}
             data-testid={`items-edit-${item.id}`}
           >
-            Modifier
+            Edit
           </Link>
 
           {/*

@@ -7,8 +7,7 @@ create table user (
 );
 
 create table magic_link_token (
-  id integer primary key not null,
-  user_id integer not null,
+  user_id integer primary key not null,
   token_hash char(64) not null,
   expires_at datetime not null,
   consumed_at datetime default null,

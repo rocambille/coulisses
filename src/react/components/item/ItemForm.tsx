@@ -73,7 +73,7 @@ function ItemForm({ children, defaultValue, action }: ItemFormProps) {
       }}
     >
       <p>
-        <label htmlFor={titleId}>titre</label>
+        <label htmlFor={titleId}>title</label>
         <input
           id={titleId}
           type="text"

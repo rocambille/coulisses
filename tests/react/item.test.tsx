@@ -44,7 +44,7 @@ describe("React item components", () => {
       );
 
       await user.type(
-        screen.getByLabelText(/titre/i),
+        screen.getByLabelText(/title/i),
         requestValue("items", "create", "success", "title"),
       );
       await user.click(screen.getByRole("button"));
@@ -104,9 +104,9 @@ describe("React item components", () => {
         { me: fooUser },
       );
 
-      await user.clear(screen.getByLabelText(/titre/i));
+      await user.clear(screen.getByLabelText(/title/i));
       await user.type(
-        screen.getByLabelText(/titre/i),
+        screen.getByLabelText(/title/i),
         requestValue("items", "edit", "success", "title"),
       );
       await user.click(screen.getByRole("button"));

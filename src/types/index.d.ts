@@ -1,20 +1,21 @@
 declare module "*.css";
 
+type RowId = number | bigint;
+
 type Item = {
-  id: number;
+  id: RowId;
   title: string;
-  user_id: number;
+  user_id: RowId;
 };
 
 type User = {
-  id: number;
+  id: RowId;
   email: string;
   name: string;
 };
 
 type MagicLinkToken = {
-  id: number;
-  user_id: number;
+  user_id: RowId;
   token_hash: string;
   expires_at: Date;
   consumed_at: Date | null;

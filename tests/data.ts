@@ -24,6 +24,11 @@ export const allUsers: User[] = [
   },
   {
     id: 3,
+    email: "baz@mail.com",
+    name: "baz",
+  },
+  {
+    id: 4,
     email: "deleted@mail.com",
     name: "deleted",
   },
@@ -31,7 +36,8 @@ export const allUsers: User[] = [
 
 export const fooUser = allUsers[0];
 export const barUser = allUsers[1];
-export const deletedUser = allUsers[2];
+export const bazUser = allUsers[2];
+export const deletedUser = allUsers[3];
 
 // ---------------------------------------------------------
 // Items

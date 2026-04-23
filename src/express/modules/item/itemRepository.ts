@@ -40,12 +40,10 @@ class ItemRepository {
     - No validation here (done earlier in the pipeline)
     - Assumes referential integrity (user_id exists)
   */
-  create(item: Omit<Item, "id">): number | bigint {
-    const query = database.prepare(
-      "insert into item (title, user_id) values (?, ?)",
-    );
-
-    const result = query.run(item.title, item.user_id);
+  create(item: Omit<Item, "id">): RowId {
+    const result = database
+      .prepare("insert into item (title, user_id) values (?, ?)")
+      .run(item.title, item.user_id);
 
     return result.lastInsertRowid;
   }
@@ -64,12 +62,12 @@ class ItemRepository {
     Why null instead of throwing:
     - Allows upper layers to decide HTTP semantics (404, 204, etc.)
   */
-  find(byId: number): Item | null {
-    const query = database.prepare(
-      "select id, title, user_id from item where id = ? and deleted_at is null",
-    );
-
-    const row = query.get(byId);
+  find(byId: RowId): Item | null {
+    const row = database
+      .prepare(
+        "select id, title, user_id from item where id = ? and deleted_at is null",
+      )
+      .get(byId);
 
     if (row == null) {
       return null;
@@ -87,10 +85,11 @@ class ItemRepository {
     - Meant to be composed or extended if needed
   */
   findAll(limit: number, offset: number): Item[] {
-    const query = database.prepare(
-      "select id, title, user_id from item where deleted_at is null limit ? offset ?",
-    );
-    const rows = query.all(limit, offset);
+    const rows = database
+      .prepare(
+        "select id, title, user_id from item where deleted_at is null limit ? offset ?",
+      )
+      .all(limit, offset);
 
     return rows.map<Item>(({ id, title, user_id }) => ({
       id: Number(id),
@@ -113,13 +112,14 @@ class ItemRepository {
     Why:
     - Allows callers to decide how to interpret "0 rows affected"
   */
-  update(id: number, item: Omit<Item, "id">): number | bigint {
-    const query = database.prepare(
-      "update item set title = ?, user_id = ? where id = ? and deleted_at is null",
-    );
-    const result = query.run(item.title, item.user_id, id);
+  update(id: RowId, item: Omit<Item, "id">): boolean {
+    const result = database
+      .prepare(
+        "update item set title = ?, user_id = ? where id = ? and deleted_at is null",
+      )
+      .run(item.title, item.user_id, id);
 
-    return result.changes;
+    return result.changes > 0;
   }
 
   /* ********************************************************************** */
@@ -133,25 +133,23 @@ class ItemRepository {
     - Marks the row as deleted without removing it
     - Default find queries automatically ignore it
   */
-  softDelete(id: number): number | bigint {
-    const query = database.prepare(
-      "update item set deleted_at = datetime('now') where id = ?",
-    );
-    const result = query.run(id);
+  softDelete(id: RowId): boolean {
+    const result = database
+      .prepare("update item set deleted_at = datetime('now') where id = ?")
+      .run(id);
 
-    return result.changes;
+    return result.changes > 0;
   }
 
   /*
     Restore a soft-deleted item.
   */
-  softUndelete(id: number): number | bigint {
-    const query = database.prepare(
-      "update item set deleted_at = null where id = ?",
-    );
-    const result = query.run(id);
+  softUndelete(id: RowId): boolean {
+    const result = database
+      .prepare("update item set deleted_at = null where id = ?")
+      .run(id);
 
-    return result.changes;
+    return result.changes > 0;
   }
 
   /*
@@ -160,11 +158,10 @@ class ItemRepository {
     Warning:
     - This permanently removes the row
   */
-  hardDelete(id: number): number | bigint {
-    const query = database.prepare("delete from item where id = ?");
-    const result = query.run(id);
+  hardDelete(id: RowId): boolean {
+    const result = database.prepare("delete from item where id = ?").run(id);
 
-    return result.changes;
+    return result.changes > 0;
   }
 }
 
