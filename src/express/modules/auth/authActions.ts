@@ -34,8 +34,7 @@ import authRepository from "./authRepository";
 */
 const appBaseUrl = process.env.APP_BASE_URL;
 const appSecret = process.env.APP_SECRET;
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = process.env.SMTP_PORT;
+const smtpUrl = process.env.SMTP_URL;
 
 if (appBaseUrl == null) {
   throw new Error("process.env.APP_BASE_URL is not defined");
@@ -47,10 +46,8 @@ if (appSecret == null) {
 
 const isProduction = process.env.NODE_ENV === "production";
 
-if (isProduction && (smtpHost == null || smtpPort == null)) {
-  throw new Error(
-    "SMTP_HOST and SMTP_PORT must be defined in production environment",
-  );
+if (isProduction && smtpUrl == null) {
+  throw new Error("SMTP_URL must be defined in production environment");
 }
 
 /*
@@ -109,10 +106,7 @@ class Auth<Payload extends JwtPayload | string = JwtPayload> {
 
 const auth = new Auth(appSecret);
 
-const transporter =
-  smtpHost && smtpPort
-    ? nodemailer.createTransport(`smtp://${smtpHost}:${smtpPort}`)
-    : null;
+const transporter = smtpUrl ? nodemailer.createTransport(smtpUrl) : null;
 
 const trustedBaseUrl = appBaseUrl.replace(/\/+$/, "");
 
