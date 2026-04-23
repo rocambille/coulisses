@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "starter",
-  "version": "2026.04.21",
+  "version": "2026.04.23",
   "main": "server.ts",
   "scripts": {
     "prepare": "git config core.hooksPath .git-hooks || true",
@@ -41,14 +41,14 @@
     "supertest": "^7.2.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
-    "vite": "^8.0.9",
+    "vite": "^8.0.10",
     "vitest": "^4.1.5"
   },
   "dependencies": {
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.3.2",
+    "express-rate-limit": "^8.4.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^8.0.5",
