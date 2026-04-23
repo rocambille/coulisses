@@ -15,9 +15,8 @@
 
 import { use } from "react";
 import { Link } from "react-router";
-
+import { cache } from "../../helpers/cache";
 import { useAuth } from "../auth/AuthContext";
-import { cache } from "../utils";
 
 function ItemList() {
   /*

@@ -40,7 +40,7 @@ const itemDTOSchema = z.object({
 /*
   Export validator
 */
-import { createValidator } from "../utils";
+import { createValidator } from "../../helpers/validation";
 
 export default createValidator(itemDTOSchema, (req) => ({
   ...req.body,

@@ -12,7 +12,7 @@
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 
-import { useMutate } from "../RefreshContext";
+import { useMutate } from "../../helpers/mutate";
 
 function ItemDeleteForm() {
   const mutate = useMutate();

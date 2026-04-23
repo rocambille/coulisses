@@ -24,10 +24,10 @@ import { Outlet, type RouteObject } from "react-router";
 import { AuthProvider } from "./components/auth/AuthContext";
 import LogoutForm from "./components/auth/LogoutForm";
 import VerifyPage from "./components/auth/VerifyPage";
+import { DataRefreshProvider } from "./components/DataRefreshContext";
 import Home from "./components/Home";
 import { itemRoutes } from "./components/item/index";
 import Layout from "./components/Layout";
-import { RefreshProvider } from "./components/RefreshContext";
 
 /*
   Global styles
@@ -49,11 +49,11 @@ const routes: RouteObject[] = [
     */
     element: (
       <AuthProvider>
-        <RefreshProvider>
+        <DataRefreshProvider>
           <Layout>
             <Outlet />
           </Layout>
-        </RefreshProvider>
+        </DataRefreshProvider>
       </AuthProvider>
     ),
 

@@ -1,16 +1,12 @@
 import { act, screen } from "@testing-library/react";
+import {
+  DataRefreshProvider,
+  useRefresh,
+} from "../../src/react/components/DataRefreshContext";
 import Home from "../../src/react/components/Home";
 import Layout from "../../src/react/components/Layout";
-import {
-  RefreshProvider,
-  useMutate,
-  useRefresh,
-} from "../../src/react/components/RefreshContext";
-import {
-  cache,
-  invalidateCache,
-  mutate,
-} from "../../src/react/components/utils";
+import { cache, invalidateCache } from "../../src/react/helpers/cache";
+import { apiMutate as mutate, useMutate } from "../../src/react/helpers/mutate";
 import {
   allItems,
   expectContractCall,
@@ -134,12 +130,12 @@ describe("React: Base Components & Utilities", () => {
     it("should throw an error when used outside of RefreshProvider", async () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
       await expect(renderHookAsync(() => useRefresh())).rejects.toThrow(
-        "useRefresh must be used within a RefreshProvider",
+        "useRefresh must be used within a DataRefreshProvider",
       );
     });
     it("should return a refresh function", async () => {
       const { result } = await renderHookAsync(() => useRefresh(), {
-        wrapper: RefreshProvider,
+        wrapper: DataRefreshProvider,
       });
 
       const { refresh, tick: initialTick } = result.current;
@@ -147,7 +143,7 @@ describe("React: Base Components & Utilities", () => {
       act(() => refresh());
 
       await renderHookAsync(() => useRefresh(), {
-        wrapper: RefreshProvider,
+        wrapper: DataRefreshProvider,
       });
 
       const { tick } = result.current;
@@ -160,12 +156,12 @@ describe("React: Base Components & Utilities", () => {
     it("should throw an error when used outside of RefreshProvider", async () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
       await expect(renderHookAsync(() => useMutate())).rejects.toThrow(
-        "useRefresh must be used within a RefreshProvider",
+        "useRefresh must be used within a DataRefreshProvider",
       );
     });
     it("should return a mutate function", async () => {
       const { result } = await renderHookAsync(() => useMutate(), {
-        wrapper: RefreshProvider,
+        wrapper: DataRefreshProvider,
       });
 
       const mutate = result.current;

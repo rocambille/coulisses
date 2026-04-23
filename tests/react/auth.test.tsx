@@ -8,7 +8,7 @@ import {
 import LogoutForm from "../../src/react/components/auth/LogoutForm";
 import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
 import VerifyPage from "../../src/react/components/auth/VerifyPage";
-import { invalidateCache } from "../../src/react/components/utils";
+import { invalidateCache } from "../../src/react/helpers/cache";
 import {
   expectContractCall,
   fooUser,

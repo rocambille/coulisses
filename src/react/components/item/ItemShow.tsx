@@ -9,9 +9,8 @@
 
 import { use } from "react";
 import { Link, useParams } from "react-router";
-
+import { cache } from "../../helpers/cache";
 import { useAuth } from "../auth/AuthContext";
-import { cache } from "../utils";
 import ItemDeleteForm from "./ItemDeleteForm";
 
 function ItemShow() {

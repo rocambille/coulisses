@@ -1,0 +1,116 @@
+/*
+  Purpose:
+  Provide a CSRF token helper designed for stateless servers and 
+  a mutative fetch wrapper.
+
+  Related docs:
+  - https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
+*/
+
+import { useRefresh } from "../components/DataRefreshContext";
+import { invalidateCache } from "./cache";
+
+/* ************************************************************************ */
+/* CSRF Token                                                               */
+/* ************************************************************************ */
+
+const csrfTokenExpiresIn = 30 * 1000;
+let expires = Date.now();
+
+/*
+  csrfToken():
+  - Returns a valid CSRF token
+  - Renews or regenerates it if needed
+  - Persists it in a secure cookie
+*/
+export const csrfToken = async () => {
+  const getToken = async () => {
+    if (Date.now() > expires) {
+      return crypto.randomUUID();
+    }
+
+    return (
+      (await cookieStore.get("__Host-x-csrf-token"))?.value ??
+      crypto.randomUUID()
+    );
+  };
+
+  const token = await getToken();
+
+  expires = Date.now() + csrfTokenExpiresIn;
+
+  await cookieStore.set({
+    name: "__Host-x-csrf-token",
+    value: token,
+    path: "/",
+    sameSite: "strict",
+    expires,
+  });
+
+  return token;
+};
+
+/* ************************************************************************ */
+/* API Mutation                                                             */
+/* ************************************************************************ */
+
+/*
+  apiMutate(url, method, body):
+  - Performs a mutative fetch (POST, PUT, DELETE)
+  - Automatically attaches CSRF token
+  - Returns the Response for status checking
+*/
+export const apiMutate = async (
+  url: string,
+  method: "post" | "put" | "delete",
+  body?: unknown,
+) => {
+  const headers: Record<string, string> = {
+    "X-CSRF-Token": await csrfToken(),
+  };
+
+  const init: RequestInit = { method, headers };
+
+  if (body != null) {
+    headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(body);
+  }
+
+  return fetch(url, init);
+};
+
+/* ************************************************************************ */
+/* Hooks                                                                    */
+/* ************************************************************************ */
+
+/*
+  useMutate():
+  - Returns a function that performs a mutation and refreshes the UI
+  - Combines apiMutate() + invalidateCache() + refresh()
+  - Keeps components declarative
+
+  Usage:
+    const mutate = useMutate();
+    await mutate("/api/items/1", "put", { title: "New" }, ["/api/items"]);
+*/
+export function useMutate() {
+  const { refresh } = useRefresh();
+
+  return async (
+    url: string,
+    method: "post" | "put" | "delete",
+    body?: unknown,
+    invalidatePaths: string[] = [],
+  ) => {
+    const response = await apiMutate(url, method, body);
+
+    if (response.ok) {
+      for (const path of invalidatePaths) {
+        invalidateCache(path);
+      }
+      refresh();
+    }
+
+    return response;
+  };
+}

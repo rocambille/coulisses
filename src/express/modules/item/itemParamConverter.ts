@@ -34,7 +34,7 @@ declare global {
 /*
   Export converter
 */
-import { createParamConverter } from "../utils";
+import { createParamConverter } from "../../helpers/paramConverter";
 import itemRepository from "./itemRepository";
 
 export default createParamConverter(itemRepository, "item");
