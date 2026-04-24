@@ -107,12 +107,12 @@ class SceneRepository {
     const query = `update scene set ${fields.join(", ")} where id = ?`;
 
     const result = database.prepare(query).run(...values);
-    return result.changes === 1;
+    return result.changes > 0;
   }
 
   hardDelete(id: number | bigint): boolean {
     const result = database.prepare("delete from scene where id = ?").run(id);
-    return result.changes === 1;
+    return result.changes > 0;
   }
 }
 

@@ -40,7 +40,7 @@ class AuthRepository {
     );
     const result = query.run(tokenId);
 
-    return result.changes === 1;
+    return result.changes > 0;
   }
 
   deleteExpiredByUser(userId: number | bigint): boolean {
@@ -49,7 +49,7 @@ class AuthRepository {
     );
     const result = query.run(userId);
 
-    return result.changes === 1;
+    return result.changes > 0;
   }
 }
 

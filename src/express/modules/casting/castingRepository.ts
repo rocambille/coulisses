@@ -16,7 +16,7 @@ class CastingRepository {
       )
       .run(roleId, userId, userId);
 
-    return result.changes === 1;
+    return result.changes > 0;
   }
 
   unassignRole(userId: number | bigint, roleId: number | bigint): boolean {
@@ -24,7 +24,7 @@ class CastingRepository {
       .prepare(`delete from casting where user_id = ? and role_id = ?`)
       .run(userId, roleId);
 
-    return result.changes === 1;
+    return result.changes > 0;
   }
 
   getPlayCastingMatrix(playId: number | bigint): CastingMatrix {

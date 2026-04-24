@@ -126,7 +126,7 @@ class EventRepository {
         eventId,
       );
 
-    return result.changes === 1;
+    return result.changes > 0;
   }
 
   destroy(eventId: number | bigint): boolean {
@@ -134,7 +134,7 @@ class EventRepository {
       .prepare(`delete from event where id = ?`)
       .run(eventId);
 
-    return result.changes === 1;
+    return result.changes > 0;
   }
 }
 

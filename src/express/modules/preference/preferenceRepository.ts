@@ -35,7 +35,7 @@ class PreferenceRepository {
       )
       .run(userId, sceneId, level, level);
 
-    return result.changes === 1;
+    return result.changes > 0;
   }
 
   findByPlay(playId: number | bigint): PreferenceWithUser[] {

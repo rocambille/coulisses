@@ -58,13 +58,13 @@ class PlayRepository {
       .prepare("update play set title = ?, description = ? where id = ?")
       .run(play.title, play.description ?? null, id);
 
-    return result.changes === 1;
+    return result.changes > 0;
   }
 
   hardDelete(id: number | bigint): boolean {
     const result = database.prepare("delete from play where id = ?").run(id);
 
-    return result.changes === 1;
+    return result.changes > 0;
   }
 
   // --- Members ---
