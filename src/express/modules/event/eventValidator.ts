@@ -14,6 +14,6 @@ const eventDTOSchema = z.object({
   end_time: z.iso.datetime(),
 });
 
-import { createValidator } from "../utils";
+import { createValidator } from "../../helpers/validation";
 
 export default createValidator(eventDTOSchema);

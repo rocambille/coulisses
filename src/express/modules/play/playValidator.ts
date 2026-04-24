@@ -11,7 +11,7 @@ const playDTOSchema = z.object({
   description: z.string().nullable().optional(),
 });
 
-import { createValidator } from "../utils";
+import { createValidator } from "../../helpers/validation";
 
 export default createValidator(playDTOSchema);
 

@@ -7,9 +7,9 @@ import database from "../../../database";
 
 class SceneRepository {
   create(
-    playId: number | bigint,
+    playId: RowId,
     scene: Omit<Scene, "id" | "play_id" | "is_active">,
-  ): number | bigint {
+  ): RowId {
     const result = database
       .prepare(
         `insert into scene (play_id, title, description, duration, scene_order) 
@@ -26,7 +26,7 @@ class SceneRepository {
     return result.lastInsertRowid;
   }
 
-  find(byId: number | bigint): Scene | null {
+  find(byId: RowId): Scene | null {
     const row = database.prepare("select * from scene where id = ?").get(byId);
 
     if (row == null) return null;
@@ -83,10 +83,10 @@ class SceneRepository {
     );
   }
 
-  update(id: number | bigint, scene: Omit<Scene, "id">): boolean {
+  update(id: RowId, scene: Omit<Scene, "id">): boolean {
     // Dynamic update based on provided fields
     const fields: string[] = [];
-    const values: (string | number | bigint | null)[] = [];
+    const values: (string | RowId | null)[] = [];
 
     fields.push("title = ?");
     values.push(scene.title);
@@ -110,7 +110,7 @@ class SceneRepository {
     return result.changes > 0;
   }
 
-  hardDelete(id: number | bigint): boolean {
+  hardDelete(id: RowId): boolean {
     const result = database.prepare("delete from scene where id = ?").run(id);
     return result.changes > 0;
   }

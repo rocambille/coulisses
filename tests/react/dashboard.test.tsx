@@ -1,6 +1,5 @@
 import { screen } from "@testing-library/react";
 import DashboardPage from "../../src/react/components/DashboardPage";
-import { invalidateCache } from "../../src/react/components/utils";
 import {
   expectContractCall,
   renderWithStub,
@@ -13,7 +12,6 @@ import {
 describe("<DashboardPage />", () => {
   beforeEach(() => {
     setupMocks();
-    invalidateCache("/api/plays");
   });
 
   afterEach(() => {

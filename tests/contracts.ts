@@ -35,7 +35,7 @@ export type Case = {
   request: {
     body?: JsonObject;
     // Mocked JWT payload to simulate different users
-    jwtPayload?: { sub: number | bigint | string } | null;
+    jwtPayload?: { sub: RowId | string } | null;
     // Explicitly bypass CSRF to test protection
     withoutCsrfProtection?: boolean;
   };
@@ -65,7 +65,7 @@ export const contracts: Record<string, Contract> = {
       method: "post" as const,
       path: "/api/auth/magic-link",
       cases: {
-        teacher: {
+        success: {
           request: {
             body: {
               email: teacherUser.email,
@@ -95,7 +95,7 @@ export const contracts: Record<string, Contract> = {
       method: "get" as const,
       path: "/api/me",
       cases: {
-        teacher: {
+        success: {
           request: {
             jwtPayload: { sub: teacherUser.id },
           },
@@ -118,10 +118,10 @@ export const contracts: Record<string, Contract> = {
       method: "post" as const,
       path: "/api/auth/verify",
       cases: {
-        teacher: {
+        success: {
           request: {
             body: {
-              token: "teacher_token",
+              token: "success_token",
             },
           },
           response: {

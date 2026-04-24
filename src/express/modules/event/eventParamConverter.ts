@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-import { createParamConverter } from "../utils";
+import { createParamConverter } from "../../helpers/paramConverter";
 import eventRepository from "./eventRepository";
 
 export default createParamConverter(eventRepository, "event");

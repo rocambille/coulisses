@@ -40,6 +40,9 @@ jobs:
 =======
         APP_BASE_URL: dummy_url_for_testing
         APP_SECRET: dummy_secret_for_testing
+<<<<<<< HEAD
         SMTP_HOST: dummy_host_for_testing
         SMTP_PORT: dummy_port_for_testing
 >>>>>>> starter/main
+=======
+>>>>>>> ecab2c8ebe6c5b6957e58b9c259e197b1a21dc6a

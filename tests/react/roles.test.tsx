@@ -1,6 +1,5 @@
 import { screen } from "@testing-library/react";
 import RolesPage from "../../src/react/components/play/RolesPage";
-import { invalidateCache } from "../../src/react/components/utils";
 import {
   emptyPlay,
   expectContractCall,
@@ -14,7 +13,6 @@ import {
 describe("React: RolesPage", () => {
   beforeEach(() => {
     setupMocks();
-    invalidateCache(`/api/plays/${mainPlay.id}/roles`);
   });
 
   afterEach(() => {

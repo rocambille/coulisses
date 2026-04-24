@@ -21,7 +21,8 @@ import {
   useState,
 } from "react";
 
-import { cache, mutate } from "../utils";
+import { cache } from "../../helpers/cache";
+import { apiMutate } from "../../helpers/mutate";
 
 /* ************************************************************************ */
 /* Types                                                                    */
@@ -63,11 +64,11 @@ export function AuthProvider({
   /* ********************************************************************** */
 
   const sendMagicLink = useCallback(async (email: string) => {
-    await mutate("/api/auth/magic-link", "post", { email });
+    await apiMutate("/api/auth/magic-link", "post", { email });
   }, []);
 
   const verifyMagicLink = useCallback(async (token: string) => {
-    const response = await mutate("/api/auth/verify", "post", { token });
+    const response = await apiMutate("/api/auth/verify", "post", { token });
 
     if (response.ok) {
       const data: User = await response.json();
@@ -78,7 +79,7 @@ export function AuthProvider({
   }, []);
 
   const logout = useCallback(async () => {
-    const response = await mutate("/api/auth/logout", "post");
+    const response = await apiMutate("/api/auth/logout", "post");
 
     if (response.ok) {
       setUser(null);

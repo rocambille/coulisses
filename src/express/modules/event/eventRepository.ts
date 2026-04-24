@@ -19,7 +19,7 @@ const mapRawTypeToEventType = (type: string) => {
 };
 
 class EventRepository {
-  create(event: Omit<EventData, "id">): number | bigint {
+  create(event: Omit<EventData, "id">): RowId {
     const result = database
       .prepare(
         `insert into event (play_id, type, title, description, location, start_time, end_time) 
@@ -38,7 +38,7 @@ class EventRepository {
     return result.lastInsertRowid;
   }
 
-  find(eventId: number | bigint): EventData | null {
+  find(eventId: RowId): EventData | null {
     const row = database
       .prepare(`select * from event where id = ?`)
       .get(eventId);
@@ -70,7 +70,7 @@ class EventRepository {
     return eventData;
   }
 
-  findByPlay(playId: number | bigint): EventData[] {
+  findByPlay(playId: RowId): EventData[] {
     const rows = database
       .prepare(`select * from event where play_id = ? order by start_time asc`)
       .all(playId);
@@ -101,10 +101,7 @@ class EventRepository {
     );
   }
 
-  update(
-    eventId: number | bigint,
-    event: Omit<EventData, "id" | "play_id">,
-  ): boolean {
+  update(eventId: RowId, event: Omit<EventData, "id" | "play_id">): boolean {
     const result = database
       .prepare(
         `update event set 
@@ -129,7 +126,7 @@ class EventRepository {
     return result.changes > 0;
   }
 
-  destroy(eventId: number | bigint): boolean {
+  destroy(eventId: RowId): boolean {
     const result = database
       .prepare(`delete from event where id = ?`)
       .run(eventId);

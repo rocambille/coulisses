@@ -13,6 +13,6 @@ const sceneDTOSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-import { createValidator } from "../utils";
+import { createValidator } from "../../helpers/validation";
 
 export default createValidator(sceneDTOSchema);

@@ -7,10 +7,10 @@ import database from "../../../database";
 
 class RoleRepository {
   create(
-    playId: number | bigint,
+    playId: RowId,
     role: Omit<Role, "id" | "play_id">,
     sceneIds: number[] = [],
-  ): number | bigint {
+  ): RowId {
     // We need to insert the role and then the associations in role_scene
     const result = database
       .prepare(`insert into role (play_id, name, description) values (?, ?, ?)`)

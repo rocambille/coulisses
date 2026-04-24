@@ -9,6 +9,6 @@ const preferenceDTOSchema = z.object({
   level: z.enum(["HIGH", "MEDIUM", "LOW", "NOT_INTERESTED"]),
 });
 
-import { createValidator } from "../utils";
+import { createValidator } from "../../helpers/validation";
 
 export default createValidator(preferenceDTOSchema);

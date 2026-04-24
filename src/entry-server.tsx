@@ -148,7 +148,9 @@ export const render = async (template: string, req: Request, res: Response) => {
     The template is split around <!--ssr-outlet-->.
     React output is streamed between the two parts.
   */
-  res.status(200).set("Content-Type", "text/html; charset=utf-8");
+  res
+    .status(context.statusCode ?? 200)
+    .set("Content-Type", "text/html; charset=utf-8");
 
   const [htmlStart, htmlEnd] = template.split("<!--ssr-outlet-->");
 

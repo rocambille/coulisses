@@ -1,6 +1,6 @@
 import { use } from "react";
+import { cache } from "../../helpers/cache";
 import { useAuth } from "../auth/AuthContext";
-import { cache } from "../utils";
 
 export function useMembership(playId: string | undefined) {
   const { me } = useAuth();

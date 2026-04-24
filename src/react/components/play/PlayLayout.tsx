@@ -7,7 +7,7 @@
 
 import { use } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
-import { cache } from "../utils";
+import { cache } from "../../helpers/cache";
 
 function PlayLayout() {
   const { playId } = useParams();

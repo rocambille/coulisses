@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { useMutate } from "../RefreshContext";
+import { useMutate } from "../../helpers/mutate";
 
 function PreferenceSelector({
   sceneId,

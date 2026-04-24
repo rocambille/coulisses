@@ -6,7 +6,7 @@
 import database from "../../../database";
 
 class CastingRepository {
-  assignRole(userId: number | bigint, roleId: number | bigint): boolean {
+  assignRole(userId: RowId, roleId: RowId): boolean {
     // SQLite UPSERT to keep only one official casting per user/role pair
     const result = database
       .prepare(
@@ -19,7 +19,7 @@ class CastingRepository {
     return result.changes > 0;
   }
 
-  unassignRole(userId: number | bigint, roleId: number | bigint): boolean {
+  unassignRole(userId: RowId, roleId: RowId): boolean {
     const result = database
       .prepare(`delete from casting where user_id = ? and role_id = ?`)
       .run(userId, roleId);
@@ -27,7 +27,7 @@ class CastingRepository {
     return result.changes > 0;
   }
 
-  getPlayCastingMatrix(playId: number | bigint): CastingMatrix {
+  getPlayCastingMatrix(playId: RowId): CastingMatrix {
     // This is the aggregated endpoint returning Scenes, Roles, Castings, and Preferences
     // To avoid massive unstructured JSON from SQLite, let's fetch individual sets and assemble them.
 

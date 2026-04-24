@@ -11,6 +11,6 @@ const roleDTOSchema = z.object({
   sceneIds: z.array(z.number()).optional(),
 });
 
-import { createValidator } from "../utils";
+import { createValidator } from "../../helpers/validation";
 
 export default createValidator(roleDTOSchema);

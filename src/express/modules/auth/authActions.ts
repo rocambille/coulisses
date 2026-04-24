@@ -34,8 +34,7 @@ import authRepository from "./authRepository";
 */
 const appBaseUrl = process.env.APP_BASE_URL;
 const appSecret = process.env.APP_SECRET;
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = process.env.SMTP_PORT;
+const smtpUrl = process.env.SMTP_URL;
 
 if (appBaseUrl == null) {
   throw new Error("process.env.APP_BASE_URL is not defined");
@@ -47,10 +46,8 @@ if (appSecret == null) {
 
 const isProduction = process.env.NODE_ENV === "production";
 
-if (isProduction && (smtpHost == null || smtpPort == null)) {
-  throw new Error(
-    "SMTP_HOST and SMTP_PORT must be defined in production environment",
-  );
+if (isProduction && smtpUrl == null) {
+  throw new Error("SMTP_URL must be defined in production environment");
 }
 
 /*
@@ -109,10 +106,7 @@ class Auth<Payload extends JwtPayload | string = JwtPayload> {
 
 const auth = new Auth(appSecret);
 
-const transporter =
-  smtpHost && smtpPort
-    ? nodemailer.createTransport(`smtp://${smtpHost}:${smtpPort}`)
-    : null;
+const transporter = smtpUrl ? nodemailer.createTransport(smtpUrl) : null;
 
 const trustedBaseUrl = appBaseUrl.replace(/\/+$/, "");
 
@@ -136,16 +130,13 @@ const sendMagicLink: RequestHandler = async (req, res) => {
   // Find or create user to get an ID
   const user = userRepository.findOrCreateByEmail(email);
 
-  // Clean up old/expired tokens for this user as per request
-  authRepository.deleteExpiredByUser(user.id);
-
   // Generate opaque token
   const rawToken = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
 
   // Store in DB
   const expiresAt = new Date(Date.now() + magicLinkTimeout);
-  authRepository.insertToken(user.id, tokenHash, expiresAt);
+  authRepository.insertOrReplaceToken(user.id, tokenHash, expiresAt);
 
   const magicLink = `${trustedBaseUrl}/verify?token=${rawToken}`;
 
@@ -153,8 +144,8 @@ const sendMagicLink: RequestHandler = async (req, res) => {
     await transporter.sendMail({
       from: "starter@mail.com",
       to: email,
-      subject: "Lien de connexion",
-      html: `<a href="${magicLink}">Cliquez ici pour vous connecter</a>`,
+      subject: "Login link",
+      html: `<a href="${magicLink}">Click here to login</a>`,
     });
   } else {
     console.info("----------------------------------------------------------");
@@ -200,7 +191,7 @@ const verifyMagicLink: RequestHandler = (req, res) => {
     }
 
     // Mark as consumed
-    authRepository.markAsConsumed(storedToken.id);
+    authRepository.markAsConsumed(storedToken.user_id);
 
     const user = userRepository.find(storedToken.user_id);
 

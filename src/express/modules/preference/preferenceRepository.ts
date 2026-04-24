@@ -21,11 +21,7 @@ const mapLevelToPreferenceLevel = (level: string): PreferenceLevel => {
 };
 
 class PreferenceRepository {
-  upsert(
-    userId: number | bigint,
-    sceneId: number | bigint,
-    level: PreferenceLevel,
-  ): boolean {
+  upsert(userId: RowId, sceneId: RowId, level: PreferenceLevel): boolean {
     // SQLite UPSERT using ON CONFLICT
     const result = database
       .prepare(
@@ -38,7 +34,7 @@ class PreferenceRepository {
     return result.changes > 0;
   }
 
-  findByPlay(playId: number | bigint): PreferenceWithUser[] {
+  findByPlay(playId: RowId): PreferenceWithUser[] {
     const rows = database
       .prepare(
         `select p.user_id, u.name, u.email, p.scene_id, p.level 

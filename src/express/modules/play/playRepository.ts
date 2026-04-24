@@ -6,7 +6,7 @@
 import database from "../../../database";
 
 class PlayRepository {
-  create(play: Omit<Play, "id">): number | bigint {
+  create(play: Omit<Play, "id">): RowId {
     const result = database
       .prepare(
         `insert into play (title, description)
@@ -17,7 +17,7 @@ class PlayRepository {
     return result.lastInsertRowid;
   }
 
-  find(byId: number | bigint): Play | null {
+  find(byId: RowId): Play | null {
     const row = database.prepare(`select * from play where id = ?`).get(byId);
 
     if (row == null) {
@@ -53,7 +53,7 @@ class PlayRepository {
     });
   }
 
-  update(id: number | bigint, play: Omit<Play, "id">): boolean {
+  update(id: RowId, play: Omit<Play, "id">): boolean {
     const result = database
       .prepare("update play set title = ?, description = ? where id = ?")
       .run(play.title, play.description ?? null, id);
@@ -61,7 +61,7 @@ class PlayRepository {
     return result.changes > 0;
   }
 
-  hardDelete(id: number | bigint): boolean {
+  hardDelete(id: RowId): boolean {
     const result = database.prepare("delete from play where id = ?").run(id);
 
     return result.changes > 0;
@@ -69,11 +69,7 @@ class PlayRepository {
 
   // --- Members ---
 
-  addMember(
-    playId: number | bigint,
-    userId: number | bigint,
-    role: "TEACHER" | "ACTOR",
-  ): number | bigint {
+  addMember(playId: RowId, userId: RowId, role: "TEACHER" | "ACTOR"): RowId {
     // Insert or IGNORE to avoid errors if they are already in the play
     const result = database
       .prepare(
@@ -83,7 +79,7 @@ class PlayRepository {
     return result.lastInsertRowid;
   }
 
-  getMembers(playId: number | bigint): (User & { role: string })[] {
+  getMembers(playId: RowId): (User & { role: string })[] {
     const rows = database
       .prepare(
         `select u.id, u.email, pm.role, u.name

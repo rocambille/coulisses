@@ -1,15 +1,11 @@
 import { act, screen } from "@testing-library/react";
-import Layout from "../../src/react/components/Layout";
 import {
-  RefreshProvider,
-  useMutate,
+  DataRefreshProvider,
   useRefresh,
-} from "../../src/react/components/RefreshContext";
-import {
-  cache,
-  invalidateCache,
-  mutate,
-} from "../../src/react/components/utils";
+} from "../../src/react/components/DataRefreshContext";
+import Layout from "../../src/react/components/Layout";
+import { cache, invalidateCache } from "../../src/react/helpers/cache";
+import { apiMutate, useMutate } from "../../src/react/helpers/mutate";
 import {
   expectContractCall,
   mainPlay,
@@ -58,8 +54,6 @@ describe("React: Base Components & Utilities", () => {
       expect(data).toEqual(mainPlay);
     });
     it("should not fetch again when data is cached", async () => {
-      invalidateCache(`/api/plays/${mainPlay.id}`);
-
       const data = await cache(`/api/plays/${mainPlay.id}`);
       expect(data).toEqual(mainPlay);
 
@@ -79,8 +73,6 @@ describe("React: Base Components & Utilities", () => {
 
   describe("invalidateCache", () => {
     it("should invalidate cache", async () => {
-      invalidateCache(`/api/plays/${mainPlay.id}`);
-
       const data = await cache(`/api/plays/${mainPlay.id}`);
       expect(data).toEqual(mainPlay);
 
@@ -96,9 +88,9 @@ describe("React: Base Components & Utilities", () => {
     });
   });
 
-  describe("mutate", () => {
+  describe("apiMutate", () => {
     it("should send a mutation request with a body", async () => {
-      await mutate(`/api/plays/${mainPlay.id}`, "put", {
+      await apiMutate(`/api/plays/${mainPlay.id}`, "put", {
         ...mainPlay,
         title: requestValue("plays", "update", "teacher", "title"),
       });
@@ -106,7 +98,7 @@ describe("React: Base Components & Utilities", () => {
       expectContractCall("plays", "update", "teacher");
     });
     it("should send a mutation request without a body", async () => {
-      await mutate(`/api/plays/${mainPlay.id}`, "delete");
+      await apiMutate(`/api/plays/${mainPlay.id}`, "delete");
 
       expectContractCall("plays", "delete", "teacher");
     });
@@ -116,12 +108,12 @@ describe("React: Base Components & Utilities", () => {
     it("should throw an error when used outside of RefreshProvider", async () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
       await expect(renderHookAsync(() => useRefresh())).rejects.toThrow(
-        "useRefresh must be used within a RefreshProvider",
+        "useRefresh must be used within a DataRefreshProvider",
       );
     });
     it("should return a refresh function", async () => {
       const { result } = await renderHookAsync(() => useRefresh(), {
-        wrapper: RefreshProvider,
+        wrapper: DataRefreshProvider,
       });
 
       const { refresh, tick: initialTick } = result.current;
@@ -129,7 +121,7 @@ describe("React: Base Components & Utilities", () => {
       act(() => refresh());
 
       await renderHookAsync(() => useRefresh(), {
-        wrapper: RefreshProvider,
+        wrapper: DataRefreshProvider,
       });
 
       const { tick } = result.current;
@@ -139,15 +131,15 @@ describe("React: Base Components & Utilities", () => {
   });
 
   describe("useMutate", () => {
-    it("should throw an error when used outside of RefreshProvider", async () => {
+    it("should throw an error when used outside of DataRefreshProvider", async () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
       await expect(renderHookAsync(() => useMutate())).rejects.toThrow(
-        "useRefresh must be used within a RefreshProvider",
+        "useRefresh must be used within a DataRefreshProvider",
       );
     });
     it("should return a mutate function", async () => {
       const { result } = await renderHookAsync(() => useMutate(), {
-        wrapper: RefreshProvider,
+        wrapper: DataRefreshProvider,
       });
 
       const mutate = result.current;

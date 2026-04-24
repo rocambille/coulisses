@@ -8,7 +8,6 @@ import {
 import LogoutForm from "../../src/react/components/auth/LogoutForm";
 import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
 import VerifyPage from "../../src/react/components/auth/VerifyPage";
-import { invalidateCache } from "../../src/react/components/utils";
 import {
   expectContractCall,
   renderHookAsync,
@@ -40,8 +39,6 @@ describe("React auth components", () => {
       await screen.findByText("hello, world!");
     });
     it("should fetch /api/me on mount", async () => {
-      invalidateCache("/api/me");
-
       await renderWithStub(
         "/",
         () => <AuthProvider>hello, world!</AuthProvider>,
@@ -49,7 +46,7 @@ describe("React auth components", () => {
         { me: null },
       );
 
-      await expectContractCall("auth", "me", "teacher");
+      await expectContractCall("auth", "me", "success");
     });
   });
 
@@ -87,9 +84,14 @@ describe("React auth components", () => {
 
       const auth = result.current;
 
-      await act(async () => await auth.sendMagicLink(teacherUser.email));
+      await act(
+        async () =>
+          await auth.sendMagicLink(
+            requestValue("auth", "magic_link", "success", "email"),
+          ),
+      );
 
-      expectContractCall("auth", "magic_link", "teacher");
+      expectContractCall("auth", "magic_link", "success");
     });
     it("should return a verifyMagicLink function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
@@ -101,11 +103,11 @@ describe("React auth components", () => {
       await act(
         async () =>
           await auth.verifyMagicLink(
-            requestValue("auth", "verify", "teacher", "token"),
+            requestValue("auth", "verify", "success", "token"),
           ),
       );
 
-      expectContractCall("auth", "verify", "teacher");
+      expectContractCall("auth", "verify", "success");
     });
     it("should return a logout function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
@@ -146,11 +148,11 @@ describe("React auth components", () => {
 
       await user.type(
         screen.getByLabelText(/^email$/i),
-        requestValue("auth", "magic_link", "teacher", "email"),
+        requestValue("auth", "magic_link", "success", "email"),
       );
       await user.click(screen.getByRole("button"));
 
-      expectContractCall("auth", "magic_link", "teacher");
+      expectContractCall("auth", "magic_link", "success");
     });
   });
 
@@ -183,11 +185,11 @@ describe("React auth components", () => {
       await renderWithStub(
         "/verify",
         VerifyPage,
-        [`/verify?token=${requestValue("auth", "verify", "teacher", "token")}`],
+        [`/verify?token=${requestValue("auth", "verify", "success", "token")}`],
         { me: null },
       );
 
-      await screen.findByText(/en cours/i);
+      await screen.findByText(/in progress/i);
     });
     it("should verify token and redirect to dashboard when valid", async () => {
       const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
@@ -198,11 +200,11 @@ describe("React auth components", () => {
       await renderWithStub(
         "/verify",
         VerifyPage,
-        [`/verify?token=${requestValue("auth", "verify", "teacher", "token")}`],
+        [`/verify?token=${requestValue("auth", "verify", "success", "token")}`],
         { me: null },
       );
 
-      expectContractCall("auth", "verify", "teacher");
+      expectContractCall("auth", "verify", "success");
 
       expect(mockedNavigate).toHaveBeenCalledWith("/", { replace: true });
     });
@@ -221,7 +223,7 @@ describe("React auth components", () => {
         { me: null },
       );
 
-      await screen.findByText(/invalide/i);
+      await screen.findByText(/invalid/i);
 
       expectContractCall("auth", "verify", "unauthorized");
       expect(mockedNavigate).not.toHaveBeenCalled();
@@ -234,7 +236,7 @@ describe("React auth components", () => {
 
       await renderWithStub("/verify", VerifyPage, ["/verify"], { me: null });
 
-      await screen.findByText(/invalide/i);
+      await screen.findByText(/invalid/i);
 
       expect(globalThis.fetch).not.toHaveBeenCalledWith(
         "/api/auth/verify",

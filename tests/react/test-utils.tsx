@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 
 import { AuthProvider } from "../../src/react/components/auth/AuthContext";
-import { RefreshProvider } from "../../src/react/components/RefreshContext";
-import { invalidateCache } from "../../src/react/components/utils";
+import { DataRefreshProvider } from "../../src/react/components/DataRefreshContext";
+import { invalidateCache } from "../../src/react/helpers/cache";
 import { type Contract, contracts, type Json, type Test } from "../contracts";
 
 export * from "../data";
@@ -150,9 +150,9 @@ export const renderWithStub = async (
         }
         return (
           <AuthProvider initialUser={options.me}>
-            <RefreshProvider>
+            <DataRefreshProvider>
               <Component {...props} />
-            </RefreshProvider>
+            </DataRefreshProvider>
           </AuthProvider>
         );
       },

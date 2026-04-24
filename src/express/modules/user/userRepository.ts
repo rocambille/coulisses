@@ -40,7 +40,7 @@ class UserRepository {
     - No validation here (done earlier in the pipeline)
     - Assumes referential integrity (user_id exists)
   */
-  create(user: Omit<User, "id">): number | bigint {
+  create(user: Omit<User, "id">): RowId {
     const query = database.prepare(
       "insert into user (email, name) values (?, ?)",
     );
@@ -63,7 +63,7 @@ class UserRepository {
     Why null instead of throwing:
     - Allows upper layers to decide HTTP semantics (404, 204, etc.)
   */
-  find(byId: number | bigint): User | null {
+  find(byId: RowId): User | null {
     const query = database.prepare(
       "select id, email, name from user where id = ? and deleted_at is null",
     );
@@ -144,13 +144,13 @@ class UserRepository {
     Why:
     - Allows callers to decide how to interpret "0 rows affected"
   */
-  update(id: number | bigint, user: Omit<User, "id">): number | bigint {
+  update(id: RowId, user: Omit<User, "id">): boolean {
     const query = database.prepare(
       "update user set email = ?, name = ? where id = ? and deleted_at is null",
     );
     const result = query.run(user.email, user.name, id);
 
-    return result.changes;
+    return result.changes > 0;
   }
 
   /* ********************************************************************** */
@@ -164,25 +164,25 @@ class UserRepository {
     - Marks the row as deleted without removing it
     - Default find queries automatically ignore it
   */
-  softDelete(id: number | bigint): number | bigint {
+  softDelete(id: RowId): boolean {
     const query = database.prepare(
       "update user set deleted_at = datetime('now') where id = ?",
     );
     const result = query.run(id);
 
-    return result.changes;
+    return result.changes > 0;
   }
 
   /*
     Restore a soft-deleted user.
   */
-  softUndelete(id: number | bigint): number | bigint {
+  softUndelete(id: RowId): boolean {
     const query = database.prepare(
       "update user set deleted_at = null where id = ?",
     );
     const result = query.run(id);
 
-    return result.changes;
+    return result.changes > 0;
   }
 
   /*
@@ -191,11 +191,11 @@ class UserRepository {
     Warning:
     - This permanently removes the row
   */
-  hardDelete(id: number | bigint): number | bigint {
+  hardDelete(id: RowId): boolean {
     const query = database.prepare("delete from user where id = ?");
     const result = query.run(id);
 
-    return result.changes;
+    return result.changes > 0;
   }
 }
 

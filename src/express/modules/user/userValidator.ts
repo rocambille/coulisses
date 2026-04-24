@@ -38,6 +38,6 @@ const userDTOSchema = z.object({
 /*
   Export validator
 */
-import { createValidator } from "../utils";
+import { createValidator } from "../../helpers/validation";
 
 export default createValidator(userDTOSchema);

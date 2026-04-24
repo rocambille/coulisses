@@ -1,6 +1,5 @@
 import { screen } from "@testing-library/react";
 import MembersPage from "../../src/react/components/play/MembersPage";
-import { invalidateCache } from "../../src/react/components/utils";
 import {
   expectContractCall,
   mainPlay,
@@ -13,7 +12,6 @@ import {
 describe("React: MembersPage", () => {
   beforeEach(() => {
     setupMocks();
-    invalidateCache(`/api/plays/${mainPlay.id}/members`);
   });
 
   afterEach(() => {

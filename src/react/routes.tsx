@@ -20,9 +20,10 @@ import { AuthProvider } from "./components/auth/AuthContext";
 import LogoutForm from "./components/auth/LogoutForm";
 import VerifyPage from "./components/auth/VerifyPage";
 import DashboardPage from "./components/DashboardPage";
+import { DataRefreshProvider } from "./components/DataRefreshContext";
+import ErrorPage from "./components/ErrorPage";
 import Layout from "./components/Layout";
 import { playRoutes } from "./components/play/index";
-import { RefreshProvider } from "./components/RefreshContext";
 
 import "./index.css";
 
@@ -34,13 +35,14 @@ const routes: RouteObject[] = [
   {
     element: (
       <AuthProvider>
-        <RefreshProvider>
+        <DataRefreshProvider>
           <Layout>
             <Outlet />
           </Layout>
-        </RefreshProvider>
+        </DataRefreshProvider>
       </AuthProvider>
     ),
+    errorElement: <ErrorPage />,
     children: [
       {
         index: true,

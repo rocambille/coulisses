@@ -8,6 +8,7 @@ import supertest from "supertest";
 
 import database from "../../src/database";
 import {
+  actorUser,
   allPlays,
   allUsers,
   deletedUser,
@@ -20,6 +21,8 @@ import {
   mainRoles,
   mainScenes,
   openingNightEvent,
+  teacherUser,
+  thirdUser,
 } from "../data";
 
 // -------------------------
@@ -168,8 +171,8 @@ const mockDatabase = () => {
   /* valid token for testing valid token scenarios */
   const validDate = new Date(Date.now() + 100000);
   insertMagicLinkToken.run(
-    allUsers[0].id,
-    hash(requestValue("auth", "verify", "teacher", "token")),
+    teacherUser.id,
+    hash(requestValue("auth", "verify", "success", "token")),
     validDate.toISOString(),
     null,
   );
@@ -177,7 +180,7 @@ const mockDatabase = () => {
   /* expired token for testing expired token scenarios */
   const expiredDate = new Date(Date.now() - 100000);
   insertMagicLinkToken.run(
-    allUsers[0].id,
+    actorUser.id,
     hash(requestValue("auth", "verify", "expired", "token")),
     expiredDate.toISOString(),
     null,
@@ -185,10 +188,10 @@ const mockDatabase = () => {
 
   /* consumed token for testing consumed token scenarios */
   insertMagicLinkToken.run(
-    allUsers[0].id,
+    thirdUser.id,
     hash(requestValue("auth", "verify", "consumed", "token")),
-    expiredDate.toISOString(),
-    expiredDate.toISOString(),
+    validDate.toISOString(),
+    validDate.toISOString(),
   );
 
   /* deleted user for testing deleted user scenarios */

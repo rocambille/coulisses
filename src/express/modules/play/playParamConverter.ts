@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-import { createParamConverter } from "../utils";
+import { createParamConverter } from "../../helpers/paramConverter";
 import playRepository from "./playRepository";
 
 export default createParamConverter(playRepository, "play");

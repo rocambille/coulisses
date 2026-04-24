@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-import { createParamConverter } from "../utils";
+import { createParamConverter } from "../../helpers/paramConverter";
 import sceneRepository from "./sceneRepository";
 
 export default createParamConverter(sceneRepository, "scene");
