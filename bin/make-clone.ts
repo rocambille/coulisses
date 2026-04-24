@@ -7,13 +7,13 @@ function escapeRegExp(str: string): string {
 }
 
 function getSafeReplacement(
-  content: string,
+  token: string,
   oldStr: string,
   newStr: string,
 ): string {
   const regex = new RegExp(escapeRegExp(oldStr), "ig");
 
-  return content.replace(regex, (match: string) => {
+  return token.replace(regex, (match: string) => {
     // Simple checks for casing
     const isAllUpperCase =
       match === match.toUpperCase() && match !== match.toLowerCase();
@@ -31,6 +31,48 @@ function getSafeReplacement(
 }
 
 /**
+ * Replaces oldName with newName in a string, respecting CamelCase,
+ * snake_case, and plural forms.
+ */
+function smartReplace(str: string, oldName: string, newName: string): string {
+  const oldNamePlural = pluralize(oldName);
+  const newNamePlural = pluralize(newName);
+
+  // Split into tokens (words or separators or CamelCase transitions)
+  const regex = /([a-zA-Z0-9]+)|([^a-zA-Z0-9]+)/g;
+  let match = regex.exec(str);
+  let result = "";
+
+  while (match !== null) {
+    const [_fullMatch, word, separator] = match;
+    if (word) {
+      // Within a word, we might still have CamelCase
+      const subTokens = word.split(/(?=[A-Z][a-z])|(?<=[a-z])(?=[A-Z])/);
+      result += subTokens
+        .map((token) => {
+          // Try plural first
+          let replaced = getSafeReplacement(
+            token,
+            oldNamePlural,
+            newNamePlural,
+          );
+          if (replaced === token) {
+            // Then singular
+            replaced = getSafeReplacement(token, oldName, newName);
+          }
+          return replaced;
+        })
+        .join("");
+    } else {
+      result += separator;
+    }
+
+    match = regex.exec(str);
+  }
+  return result;
+}
+
+/**
  * Recursively walks through a directory,
  * renames files and replaces content.
  */
@@ -39,25 +81,13 @@ async function walkAndReplace(
   oldName: string,
   newName: string,
 ): Promise<void> {
-  const oldNamePlural = pluralize(oldName);
-  const newNamePlural = pluralize(newName);
-
   const files = await fs.readdir(dir);
 
   for (const file of files) {
     const fullPath = path.join(dir, file);
     const stat = await fs.stat(fullPath);
 
-    const newFileBasePluralFirst = getSafeReplacement(
-      file,
-      oldNamePlural,
-      newNamePlural,
-    );
-    const newFileBase = getSafeReplacement(
-      newFileBasePluralFirst,
-      oldName,
-      newName,
-    );
+    const newFileBase = smartReplace(file, oldName, newName);
 
     const newFilePath = path.join(dir, newFileBase);
 
@@ -96,19 +126,7 @@ async function replaceInsideFile(
 
   const content = await fs.readFile(filePath, "utf8");
 
-  const oldNamePlural = pluralize(oldName);
-  const newNamePlural = pluralize(newName);
-
-  const newContentPluralFirst = getSafeReplacement(
-    content,
-    oldNamePlural,
-    newNamePlural,
-  );
-  const newContent = getSafeReplacement(
-    newContentPluralFirst,
-    oldName,
-    newName,
-  );
+  const newContent = smartReplace(content, oldName, newName);
 
   if (content !== newContent) {
     await fs.writeFile(filePath, newContent, "utf8");
@@ -160,16 +178,45 @@ export async function main(argv: string[] = process.argv) {
     throw new Error("❌ Source is neither a file nor a directory.");
   }
 
-  // Provide contextual feedback
-  if (destPath.includes(path.normalize("src/express/modules"))) {
-    console.info(
-      `\n💡 Don't forget to import and use your new routes in src/express/routes.ts!`,
-    );
-  } else if (destPath.includes(path.normalize("src/react/components"))) {
-    console.info(
-      `\n💡 Don't forget to add your new routes in src/react/routes.tsx!`,
-    );
+  // Provide contextual feedback via a pedagogical checklist
+  const isExpress = destPath.includes(path.normalize("src/express/modules"));
+  const isReact = destPath.includes(path.normalize("src/react/components"));
+
+  const singular = newName[0].toUpperCase() + newName.slice(1);
+
+  console.info(`
+--- 📋 Post-cloning Checklist ---
+
+[ ] Register the new table in src/database/schema.sql
+[ ] (Optional) Add dummy data in src/database/seeder.sql
+[ ] Initialize the database:
+
+      npm run database:sync -- --use-seeder
+
+[ ] Define the "${singular}" type in src/types/index.d.ts`);
+
+  if (isExpress) {
+    console.info(`[ ] Register the Express module in src/express/routes.ts:
+
+      await importAndUse("./modules/${newName.toLowerCase()}/${newName.toLowerCase()}Routes");
+`);
   }
+
+  if (isReact) {
+    console.info(`[ ] Register the React routes in src/react/routes.tsx:
+
+      import { ${newName.toLowerCase()}Routes } from "./components/${newName.toLowerCase()}/index";
+
+      ...
+
+      children: [
+        ...,
+        ...${newName.toLowerCase()}Routes,
+      ]
+`);
+  }
+
+  console.info("---------------------------------\n");
 }
 
 /* v8 ignore next 6 */
