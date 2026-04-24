@@ -59,9 +59,7 @@ Full documentation is available in the [project wiki](https://github.com/rocambi
 To get started, see the main pages:
 
 * [Installation](https://github.com/rocambille/start-express-react/wiki/Installation-en-US)
-* [Database](https://github.com/rocambille/start-express-react/wiki/Database-en-US)
-* [Express](https://github.com/rocambille/start-express-react/wiki/Express-en-US)
-* [React](https://github.com/rocambille/start-express-react/wiki/React-en-US)
+* [Deployment](https://github.com/rocambille/start-express-react/wiki/Deployment-en-US)
 
 ## Directory structure
 

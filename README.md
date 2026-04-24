@@ -58,9 +58,7 @@ Une documentation complète est disponible dans le [wiki du projet](https://gith
 Pour débuter, consultez les pages principales :
 
 * [Installation](https://github.com/rocambille/start-express-react/wiki/Installation)
-* [Database](https://github.com/rocambille/start-express-react/wiki/Database)
-* [Express](https://github.com/rocambille/start-express-react/wiki/Express)
-* [React](https://github.com/rocambille/start-express-react/wiki/React)
+* [Déploiement](https://github.com/rocambille/start-express-react/wiki/D%C3%A9ploiement)
 
 ## Structure des fichiers sources
 

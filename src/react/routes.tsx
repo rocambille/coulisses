@@ -25,6 +25,7 @@ import { AuthProvider } from "./components/auth/AuthContext";
 import LogoutForm from "./components/auth/LogoutForm";
 import VerifyPage from "./components/auth/VerifyPage";
 import { DataRefreshProvider } from "./components/DataRefreshContext";
+import ErrorPage from "./components/ErrorPage";
 import Home from "./components/Home";
 import { itemRoutes } from "./components/item/index";
 import Layout from "./components/Layout";
@@ -46,6 +47,7 @@ const routes: RouteObject[] = [
       Root route:
       - Wraps all pages with the global <Layout>
       - Uses <Outlet> to render child routes
+      - Provides an <ErrorPage> for 400s and 500s
     */
     element: (
       <AuthProvider>
@@ -56,6 +58,7 @@ const routes: RouteObject[] = [
         </DataRefreshProvider>
       </AuthProvider>
     ),
+    errorElement: <ErrorPage />,
 
     /*
       Nested routes:
