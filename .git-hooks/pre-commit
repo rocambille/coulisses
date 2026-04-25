@@ -1,4 +1,5 @@
 #!/bin/sh
 
-npm run biome:check
 npm run types:check
+npm run biome:check
+npx vitest run --exclude tests/install
