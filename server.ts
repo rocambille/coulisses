@@ -43,7 +43,7 @@ createServer().then((server) => {
 /*                             Server creation                              */
 /* ************************************************************************ */
 
-async function createServer() {
+export async function createServer() {
   const app = express();
 
   /* ********************************************************************** */
@@ -97,88 +97,63 @@ async function createServer() {
   // Catch-all handler for SSR
   app.use(/(.*)/, async (req, res, next) => {
     const url = req.originalUrl;
+    const base = `http://localhost:${port}${url}`;
 
-    /* ******************************************************************** */
-    /* Fix fetch behavior during SSR                                        */
-    /* ******************************************************************** */
+    /* ****************************************************************** */
+    /* Load HTML template and SSR renderer                                */
+    /* ****************************************************************** */
 
-    // NOTE:
-    // The Fetch API behaves differently depending on the runtime:
-    //
-    // - Browser: fetch("/api") works (relative to current origin)
-    // - Node.js: fetch("/api") is invalid (no implicit base URL)
-    //
-    // During SSR, we run in Node.js, so we patch fetch to resolve
-    // relative URLs against the current request URL.
+    const getTemplateAndRender = async () => {
+      const indexHtml = readIndexHtml();
 
-    {
-      const nodeFetch = globalThis.fetch;
+      // Production mode:
+      // SSR bundle is prebuilt and loaded from dist/
+      if (maybeVite == null) {
+        // NOTE:
+        // This file does not exist before the build step.
+        // @ts-expect-error - runtime-only import
+        const { render } = await import("./dist/server/entry-server");
 
-      globalThis.fetch = (resource) =>
-        nodeFetch(
-          new URL(resource.toString(), `http://localhost:${port}${url}`),
-        );
-
-      // TIP:
-      // The URL constructor handles absolute vs relative paths automatically:
-      //
-      // base = http://localhost:5173/some/page
-      // - "/foo"        -> http://localhost:5173/foo
-      // - "./bar"       -> http://localhost:5173/some/page/bar
-      // - "http://x.y"  -> http://x.y
-    }
-
-    try {
-      /* **************************************************************** */
-      /* Load HTML template and SSR renderer                              */
-      /* **************************************************************** */
-
-      const getTemplateAndRender = async () => {
-        const indexHtml = readIndexHtml();
-
-        // Production mode:
-        // SSR bundle is prebuilt and loaded from dist/
-        if (maybeVite == null) {
-          // NOTE:
-          // This file does not exist before the build step.
-          // @ts-expect-error - runtime-only import
-          const { render } = await import("./dist/server/entry-server");
-
-          return { template: indexHtml, render };
-        }
-
-        // Development mode:
-        // Vite handles on-the-fly module loading and HMR
-        const vite = maybeVite;
-
-        // 1. Apply Vite HTML transforms (HMR client, plugin hooks, etc.)
-        const template = await vite.transformIndexHtml(url, indexHtml);
-
-        // 2. Load the SSR entry module via Vite
-        const { render } = await vite.ssrLoadModule("/src/entry-server");
-
-        return { template, render };
-      };
-
-      const { template, render } = await getTemplateAndRender();
-
-      /* **************************************************************** */
-      /* Render application                                               */
-      /* **************************************************************** */
-
-      // The render function is responsible for:
-      // - Rendering the React app
-      // - Injecting HTML into the template
-      // - Sending the response
-      await render(template, req, res);
-    } catch (err) {
-      // DEV EXPERIENCE:
-      // Let Vite rewrite stack traces so they map to source files.
-      if (err instanceof Error) {
-        maybeVite?.ssrFixStacktrace(err);
+        return { template: indexHtml, render };
       }
-      next(err);
-    }
+
+      // Development mode:
+      // Vite handles on-the-fly module loading and HMR
+      const vite = maybeVite;
+
+      // 1. Apply Vite HTML transforms (HMR client, plugin hooks, etc.)
+      const template = await vite.transformIndexHtml(url, indexHtml);
+
+      // 2. Load the SSR entry module via Vite
+      const { render } = await vite.ssrLoadModule("/src/entry-server");
+
+      return { template, render };
+    };
+
+    fetchBaseStorage.run(base, async () => {
+      try {
+        // Prevent caching of the HTML page
+        // SSR is auth-aware and must not be cached
+        res.set("Cache-Control", "private, no-store");
+
+        /* **************************************************************** */
+        /* Render application                                               */
+        /* **************************************************************** */
+
+        const { template, render } = await getTemplateAndRender();
+
+        // The render function is responsible for:
+        // - Rendering the React app
+        // - Injecting HTML into the template
+        // - Sending the response
+        await render(template, req, res);
+      } catch (err) {
+        // DEV EXPERIENCE:
+        // Let Vite rewrite stack traces so they map to source files.
+        if (err instanceof Error) maybeVite?.ssrFixStacktrace(err);
+        next(err);
+      }
+    });
   });
 
   /* ********************************************************************** */
@@ -200,6 +175,30 @@ async function createServer() {
 /* ************************************************************************ */
 /*                              Helper utils                                */
 /* ************************************************************************ */
+
+/**
+ * Patch globalThis.fetch to support relative URLs during SSR.
+ *
+ * In Node.js:
+ * - fetch("/api") throws "Absolute URL required"
+ * - We need to resolve relative URLs against the request URL
+ *
+ * Solution:
+ * - Create a storage that holds the base URL for the current request
+ * - Patch fetch to resolve relative URLs against this base URL
+ */
+
+import { AsyncLocalStorage } from "node:async_hooks";
+
+const fetchBaseStorage = new AsyncLocalStorage<string>();
+
+const nodeFetch = globalThis.fetch;
+
+globalThis.fetch = (resource, init) => {
+  const base = fetchBaseStorage.getStore();
+  const url = base ? new URL(resource.toString(), base) : resource;
+  return nodeFetch(url, init);
+};
 
 /**
  * Reads the HTML template depending on the environment.

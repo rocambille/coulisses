@@ -19,12 +19,10 @@
   - https://reactrouter.com/en/main/start/overview
 */
 
-import { Outlet, type RouteObject } from "react-router";
+import { type RouteObject, useLoaderData } from "react-router";
 
-import { AuthProvider } from "./components/auth/AuthContext";
 import LogoutForm from "./components/auth/LogoutForm";
 import VerifyPage from "./components/auth/VerifyPage";
-import { DataRefreshProvider } from "./components/DataRefreshContext";
 import ErrorPage from "./components/ErrorPage";
 import Home from "./components/Home";
 import { itemRoutes } from "./components/item/index";
@@ -36,6 +34,8 @@ import Layout from "./components/Layout";
   across all routes and layouts
 */
 import "./index.css";
+import { AuthProvider } from "./components/auth/AuthContext";
+import { DataRefreshProvider } from "./components/DataRefreshContext";
 
 /* ************************************************************************ */
 /* Routes definition                                                        */
@@ -44,22 +44,45 @@ import "./index.css";
 const routes: RouteObject[] = [
   {
     /*
-      Root route:
-      - Wraps all pages with the global <Layout>
-      - Uses <Outlet> to render child routes
-      - Provides an <ErrorPage> for 400s and 500s
+      Root component:
+      Wraps all pages with the global <Layout> and providers
     */
-    element: (
-      <AuthProvider>
-        <DataRefreshProvider>
-          <Layout>
-            <Outlet />
-          </Layout>
-        </DataRefreshProvider>
-      </AuthProvider>
-    ),
-    errorElement: <ErrorPage />,
+    Component: () => {
+      const { me } = useLoaderData<{ me: User | null }>();
 
+      return (
+        <AuthProvider initialUser={me}>
+          <DataRefreshProvider>
+            <Layout />
+          </DataRefreshProvider>
+        </AuthProvider>
+      );
+    },
+    /*
+      Error element: provides an <ErrorPage> for 400s and 500s
+    */
+    errorElement: <ErrorPage />,
+    /*
+      Root loader:
+      - Fetches the current user from the /api/me endpoint
+      - Returns the user to the root component
+
+      This loader runs on both server and client, so we need to use fetch
+      with the appropriate headers:
+      - cookie forwarding for server (req.headers.get("cookie") ?? "")
+      - attached cookies for client (already attached: invisible here)
+    */
+    loader: async ({ request }) => {
+      // On the server: forward cookies explicitly (Node has no cookie jar)
+      // On the client: browser attaches cookies automatically, this is a no-op
+      const response = await fetch("/api/me", {
+        headers: { cookie: request.headers.get("cookie") ?? "" },
+      });
+
+      const me: User | null = response.ok ? await response.json() : null;
+
+      return { me };
+    },
     /*
       Nested routes:
       - index route: Home page

@@ -34,18 +34,14 @@ describe("React: Base Components & Utilities", () => {
       await screen.findByRole("navigation");
     });
     it("should render magic link form when not authenticated", async () => {
-      await renderWithStub("/", () => <Layout>hello, world!</Layout>, ["/"], {
-        me: null,
-      });
+      await renderWithStub("/", () => <Layout />, ["/"], { me: null });
 
       await screen.findByLabelText(/email/i);
     });
-    it("should render its children when authenticated", async () => {
-      await renderWithStub("/", () => <Layout>hello, world!</Layout>, ["/"], {
-        me: fooUser,
-      });
+    it("should render logout when authenticated", async () => {
+      await renderWithStub("/", () => <Layout />, ["/"], { me: fooUser });
 
-      await screen.findByText("hello, world!");
+      await screen.findByText(/logout/i);
     });
   });
 

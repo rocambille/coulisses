@@ -8,7 +8,6 @@ import {
 import LogoutForm from "../../src/react/components/auth/LogoutForm";
 import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
 import VerifyPage from "../../src/react/components/auth/VerifyPage";
-import { invalidateCache } from "../../src/react/helpers/cache";
 import {
   expectContractCall,
   fooUser,
@@ -32,24 +31,12 @@ describe("React auth components", () => {
     it("should render its children", async () => {
       await renderWithStub(
         "/",
-        () => <AuthProvider>hello, world!</AuthProvider>,
+        () => <AuthProvider initialUser={null}>hello, world!</AuthProvider>,
         ["/"],
         { me: null },
       );
 
       await screen.findByText("hello, world!");
-    });
-    it("should fetch /api/me on mount", async () => {
-      invalidateCache("/api/me");
-
-      await renderWithStub(
-        "/",
-        () => <AuthProvider>hello, world!</AuthProvider>,
-        ["/"],
-        { me: null },
-      );
-
-      await expectContractCall("auth", "me", "success");
     });
   });
 

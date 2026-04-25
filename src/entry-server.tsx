@@ -59,7 +59,21 @@ export const render = async (template: string, req: Request, res: Response) => {
     The URL must be absolute for loaders relying on fetch().
   */
   const context = await query(
-    new Request(`${req.protocol}://${req.get("host")}${req.originalUrl}`),
+    new Request(`${req.protocol}://${req.get("host")}${req.originalUrl}`, {
+      headers: new Headers(
+        Object.fromEntries(
+          Object.entries(req.headers)
+            .filter(
+              ([, v]: [string, string | string[] | undefined]) => v != null,
+            )
+            .map<[string, string]>(([k, v]) => [
+              k,
+              Array.isArray(v) ? v.join(", ") : String(v),
+            ]),
+        ),
+      ),
+      method: req.method,
+    }),
   );
 
   /* ********************************************************************** */
