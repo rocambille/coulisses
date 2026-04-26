@@ -6,7 +6,7 @@ import {
 import Home from "../../src/react/components/Home";
 import Layout from "../../src/react/components/Layout";
 import { cache, invalidateCache } from "../../src/react/helpers/cache";
-import { apiMutate as mutate, useMutate } from "../../src/react/helpers/mutate";
+import { apiMutate, useMutate } from "../../src/react/helpers/mutate";
 import {
   allItems,
   expectContractCall,
@@ -34,18 +34,14 @@ describe("React: Base Components & Utilities", () => {
       await screen.findByRole("navigation");
     });
     it("should render magic link form when not authenticated", async () => {
-      await renderWithStub("/", () => <Layout>hello, world!</Layout>, ["/"], {
-        me: null,
-      });
+      await renderWithStub("/", () => <Layout />, ["/"], { me: null });
 
       await screen.findByLabelText(/email/i);
     });
-    it("should render its children when authenticated", async () => {
-      await renderWithStub("/", () => <Layout>hello, world!</Layout>, ["/"], {
-        me: fooUser,
-      });
+    it("should render logout when authenticated", async () => {
+      await renderWithStub("/", () => <Layout />, ["/"], { me: fooUser });
 
-      await screen.findByText("hello, world!");
+      await screen.findByText(/logout/i);
     });
   });
 
@@ -68,6 +64,7 @@ describe("React: Base Components & Utilities", () => {
     it("should return cached data", async () => {
       const data = await cache(`/api/items/${allItems[0].id}`);
       expect(data).toEqual(allItems[0]);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
     it("should not fetch again when data is cached", async () => {
       invalidateCache(`/api/items/${allItems[0].id}`);
@@ -75,9 +72,12 @@ describe("React: Base Components & Utilities", () => {
       const data = await cache(`/api/items/${allItems[0].id}`);
       expect(data).toEqual(allItems[0]);
 
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
       const data2 = await cache(`/api/items/${allItems[0].id}`);
       expect(data2).toEqual(allItems[0]);
 
+      expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
         `/api/items/${allItems[0].id}`,
@@ -86,6 +86,7 @@ describe("React: Base Components & Utilities", () => {
     it("should return null when data is not available", async () => {
       const data = await cache("/api/404");
       expect(data).toBeNull();
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -96,23 +97,60 @@ describe("React: Base Components & Utilities", () => {
       const data = await cache(`/api/items/${allItems[0].id}`);
       expect(data).toEqual(allItems[0]);
 
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
       invalidateCache(`/api/items/${allItems[0].id}`);
 
       const data2 = await cache(`/api/items/${allItems[0].id}`);
       expect(data2).toEqual(allItems[0]);
 
+      expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
         `/api/items/${allItems[0].id}`,
       );
     });
+    it("should invalidate all cache when '*' is provided", async () => {
+      const data = await cache(`/api/items/${allItems[0].id}`);
+      expect(data).toEqual(allItems[0]);
+      const data2 = await cache(`/api/users/${fooUser.id}`);
+      expect(data2).toEqual(fooUser);
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+
+      invalidateCache("*");
+
+      const data3 = await cache(`/api/users/${fooUser.id}`);
+      expect(data3).toEqual(fooUser);
+
+      expect(global.fetch).toHaveBeenCalledTimes(3);
+      expect(global.fetch).toHaveBeenNthCalledWith(
+        3,
+        `/api/users/${fooUser.id}`,
+      );
+    });
+    it("should not invalidate cache for paths that do not match", async () => {
+      const data = await cache(`/api/items/${allItems[0].id}`);
+      expect(data).toEqual(allItems[0]);
+      const data2 = await cache(`/api/users/${fooUser.id}`);
+      expect(data2).toEqual(fooUser);
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+
+      invalidateCache("/api/items");
+
+      const data3 = await cache(`/api/users/${fooUser.id}`);
+      expect(data3).toEqual(fooUser);
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
   });
 
-  describe("mutate", () => {
+  describe("apiMutate", () => {
     it("should send a mutation request with a body", async () => {
       const { id, user_id, ...itemFields } = allItems[0];
 
-      await mutate(`/api/items/${allItems[0].id}`, "put", {
+      await apiMutate(`/api/items/${allItems[0].id}`, "put", {
         ...itemFields,
         title: requestValue("items", "edit", "success", "title"),
       });
@@ -120,7 +158,29 @@ describe("React: Base Components & Utilities", () => {
       expectContractCall("items", "edit", "success");
     });
     it("should send a mutation request without a body", async () => {
-      await mutate(`/api/items/${allItems[0].id}`, "delete");
+      await apiMutate(`/api/items/${allItems[0].id}`, "delete");
+
+      expectContractCall("items", "delete", "success");
+    });
+  });
+
+  describe("useMutate", () => {
+    it("should throw an error when used outside of RefreshProvider", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      await expect(renderHookAsync(() => useMutate())).rejects.toThrow(
+        "useRefresh must be used within a DataRefreshProvider",
+      );
+    });
+    it("should return a mutate function", async () => {
+      const { result } = await renderHookAsync(() => useMutate(), {
+        wrapper: DataRefreshProvider,
+      });
+
+      const mutate = result.current;
+
+      await act(() =>
+        mutate(`/api/items/${allItems[0].id}`, "delete", null, ["/api/items"]),
+      );
 
       expectContractCall("items", "delete", "success");
     });
@@ -149,28 +209,6 @@ describe("React: Base Components & Utilities", () => {
       const { tick } = result.current;
 
       expect(tick).toBe(initialTick + 1);
-    });
-  });
-
-  describe("useMutate", () => {
-    it("should throw an error when used outside of RefreshProvider", async () => {
-      vi.spyOn(console, "error").mockImplementation(() => {});
-      await expect(renderHookAsync(() => useMutate())).rejects.toThrow(
-        "useRefresh must be used within a DataRefreshProvider",
-      );
-    });
-    it("should return a mutate function", async () => {
-      const { result } = await renderHookAsync(() => useMutate(), {
-        wrapper: DataRefreshProvider,
-      });
-
-      const mutate = result.current;
-
-      await act(() =>
-        mutate(`/api/items/${allItems[0].id}`, "delete", null, ["/api/items"]),
-      );
-
-      expectContractCall("items", "delete", "success");
     });
   });
 });

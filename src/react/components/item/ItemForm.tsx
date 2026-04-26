@@ -47,6 +47,7 @@ function ItemForm({ children, defaultValue, action }: ItemFormProps) {
 
   return (
     <form
+      aria-label="item form"
       action={(formData) => {
         /*
           Form submission flow:

@@ -1,4 +1,4 @@
-import { act, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import * as ReactRouter from "react-router";
 
 import {
@@ -8,7 +8,6 @@ import {
 import LogoutForm from "../../src/react/components/auth/LogoutForm";
 import MagicLinkForm from "../../src/react/components/auth/MagicLinkForm";
 import VerifyPage from "../../src/react/components/auth/VerifyPage";
-import { invalidateCache } from "../../src/react/helpers/cache";
 import {
   expectContractCall,
   fooUser,
@@ -32,24 +31,12 @@ describe("React auth components", () => {
     it("should render its children", async () => {
       await renderWithStub(
         "/",
-        () => <AuthProvider>hello, world!</AuthProvider>,
+        () => <AuthProvider initialUser={null}>hello, world!</AuthProvider>,
         ["/"],
         { me: null },
       );
 
       await screen.findByText("hello, world!");
-    });
-    it("should fetch /api/me on mount", async () => {
-      invalidateCache("/api/me");
-
-      await renderWithStub(
-        "/",
-        () => <AuthProvider>hello, world!</AuthProvider>,
-        ["/"],
-        { me: null },
-      );
-
-      await expectContractCall("auth", "me", "success");
     });
   });
 
@@ -141,13 +128,12 @@ describe("React auth components", () => {
   describe("<MagicLinkForm />", () => {
     it("should mount successfully", async () => {
       await renderWithStub("/", MagicLinkForm, ["/"], { me: null });
-      await screen.findByRole("button");
+      await screen.findByRole("form");
     });
     it("should submit email and show confirmation", async () => {
       const { user } = await renderWithStub("/", MagicLinkForm, ["/"], {
         me: null,
       });
-      await screen.findByRole("button");
 
       await user.type(
         screen.getByLabelText(/^email$/i),
@@ -156,6 +142,17 @@ describe("React auth components", () => {
       await user.click(screen.getByRole("button"));
 
       expectContractCall("auth", "magic_link", "success");
+    });
+    it("should fail when email is invalid", async () => {
+      vi.spyOn(console, "error").mockImplementationOnce(() => {});
+
+      await renderWithStub("/", MagicLinkForm, ["/"], {
+        me: null,
+      });
+
+      await fireEvent.submit(screen.getByRole("form"));
+
+      expect(console.error).toHaveBeenCalled();
     });
   });
 
