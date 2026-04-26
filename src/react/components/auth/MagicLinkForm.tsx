@@ -8,7 +8,7 @@ import { z } from "zod";
 import { useAuth } from "./AuthContext";
 
 const emailSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 
 function MagicLinkForm() {
