@@ -17,7 +17,7 @@ import { type PropsWithChildren, useId } from "react";
 import { z } from "zod";
 
 const itemSchema = z.object({
-  title: z.string().min(1, "Le titre est requis"),
+  title: z.string().min(1, "Title is required"),
 });
 
 /*

@@ -48,7 +48,7 @@ function MagicLinkForm() {
         type="email"
         name="email"
         defaultValue=""
-        placeholder="ton.adresse@mail.com"
+        placeholder="your.address@mail.com"
         required
       />
       <button type="submit">Receive my login link</button>

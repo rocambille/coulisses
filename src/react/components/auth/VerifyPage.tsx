@@ -46,7 +46,7 @@ function VerifyPage() {
           This login link is no longer valid. It may have expired or already
           been used.
         </p>
-        <Link to="/login">Request a new link</Link>
+        <Link to="/">Request a new link</Link>
       </article>
     );
   }
