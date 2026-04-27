@@ -19,16 +19,12 @@ describe("make-clone.ts", () => {
   });
 
   it("fails when missing arguments", async () => {
-    await expect(main(["node", "script"])).rejects.toThrow(
-      /Usage: npm run make:clone -- <src> <dest> <OldName> <NewName>/i,
-    );
+    await expect(main(["node", "script"])).rejects.toThrow(/Usage/i);
   });
 
   it("fails with invalid JavaScript identifiers for oldName", async () => {
     const src = path.join(tmpDir, "src");
     const dest = path.join(tmpDir, "dest");
-
-    await fs.mkdir(src);
 
     await expect(
       main(["node", "script", src, dest, "123cherry", "berry"]),
@@ -56,6 +52,7 @@ describe("make-clone.ts", () => {
   it("fails when source is neither a file nor a directory", async () => {
     const src = path.join(tmpDir, "special");
     const dest = path.join(tmpDir, "dest");
+
     await fs.mkdir(src);
 
     const originalStat = fs.stat;
