@@ -27,12 +27,10 @@ import { z } from "zod";
   Item Data Transfer Object (DTO)
 
   Notes:
-  - `id` is optional to allow reuse for different operations
   - `user_id` is NOT trusted from the client:
-    it will always be overridden by the authenticated user
+    it will always be overridden with the authenticated user id
 */
 const itemDTOSchema = z.object({
-  id: z.number().optional(),
   title: z.string().max(255),
   user_id: z.number(),
 });
