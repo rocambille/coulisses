@@ -58,6 +58,9 @@ export async function main(
   // Delete the existing database file if it exists
   await fs.remove(sqlite);
 
+  // Ensure the parent directory exists
+  await fs.ensureDir(path.dirname(sqlite));
+
   // Create a new database with the specified name
   const database = new DatabaseSync(sqlite);
 
