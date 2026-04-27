@@ -4,7 +4,12 @@
 */
 
 import { useState } from "react";
+import { z } from "zod";
 import { useAuth } from "./AuthContext";
+
+const emailSchema = z.object({
+  email: z.email(),
+});
 
 function MagicLinkForm() {
   const { sendMagicLink } = useAuth();
@@ -18,12 +23,18 @@ function MagicLinkForm() {
     </p>
   ) : (
     <form
+      aria-label="login form"
       action={(formData) => {
         const email = formData.get("email")?.toString();
 
-        if (!email) throw new Error("Invalid form submission");
+        const parsed = emailSchema.safeParse({ email });
 
-        sendMagicLink(email);
+        if (!parsed.success) {
+          console.error(parsed.error);
+          return;
+        }
+
+        sendMagicLink(parsed.data.email);
         setSent(true);
       }}
     >
@@ -37,7 +48,7 @@ function MagicLinkForm() {
         type="email"
         name="email"
         defaultValue=""
-        placeholder="ton.adresse@mail.com"
+        placeholder="your.address@mail.com"
         required
       />
       <button type="submit">Receive my login link</button>

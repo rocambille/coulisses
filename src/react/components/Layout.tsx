@@ -16,14 +16,13 @@
     regardless of the active route.
 */
 
-import type { PropsWithChildren } from "react";
-import { useLocation } from "react-router";
+import { Outlet, useLocation } from "react-router";
 
 import { useAuth } from "./auth/AuthContext";
 import MagicLinkForm from "./auth/MagicLinkForm";
 import NavBar from "./NavBar";
 
-function Layout({ children }: PropsWithChildren) {
+function Layout() {
   const { check } = useAuth();
   const location = useLocation();
 
@@ -48,7 +47,7 @@ function Layout({ children }: PropsWithChildren) {
 
       <main>
         {check() || location.pathname === "/verify" ? (
-          children
+          <Outlet />
         ) : (
           <MagicLinkForm />
         )}

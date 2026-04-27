@@ -626,8 +626,8 @@ export const contracts: Record<string, Contract> = {
         teacher: {
           request: {
             body: {
-              ...mainPlay,
               title: "Updated Play",
+              description: mainPlay.description,
             },
             jwtPayload: { sub: teacherUser.id },
           },

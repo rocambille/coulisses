@@ -15,13 +15,11 @@
 import {
   createContext,
   type PropsWithChildren,
-  use,
   useCallback,
   useContext,
   useState,
 } from "react";
 
-import { cache } from "../../helpers/cache";
 import { apiMutate } from "../../helpers/mutate";
 
 /* ************************************************************************ */
@@ -51,13 +49,10 @@ export function AuthProvider({
   initialUser,
 }: PropsWithChildren<{ initialUser?: User | null }>) {
   /* ********************************************************************** */
-  /* Initial session check                                                 */
+  /* User state                                                             */
   /* ********************************************************************** */
 
-  const sessionUser = initialUser ?? use(cache("/api/me"));
-  const [user, setUser] = useState<User | null>(
-    initialUser !== undefined ? initialUser : sessionUser,
-  );
+  const [user, setUser] = useState<User | null>(initialUser ?? null);
 
   /* ********************************************************************** */
   /* Actions                                                                */

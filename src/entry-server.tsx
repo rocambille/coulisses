@@ -58,9 +58,19 @@ export const render = async (template: string, req: Request, res: Response) => {
 
     The URL must be absolute for loaders relying on fetch().
   */
-  const context = await query(
-    new Request(`${req.protocol}://${req.get("host")}${req.originalUrl}`),
+  const whatwgRequest = new Request(
+    `${req.protocol}://${req.get("host")}${req.originalUrl}`,
   );
+  // Forward headers (including cookies)
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value != null) {
+      whatwgRequest.headers.set(
+        key,
+        Array.isArray(value) ? value.join(", ") : String(value),
+      );
+    }
+  }
+  const context = await query(whatwgRequest);
 
   /* ********************************************************************** */
   /* Early response handling                                                */
