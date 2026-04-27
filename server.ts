@@ -54,6 +54,8 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const port = +(process.env.APP_PORT ?? 5173);
 
+const indexHtml = readIndexHtml();
+
 // Server creation is async because it may initialize Vite in dev mode
 createServer().then((server) => {
   server.listen(port, () => {
@@ -121,8 +123,6 @@ export async function createServer() {
   /* ****************************************************************** */
 
   const getTemplateAndRender = async (url: string) => {
-    const indexHtml = readIndexHtml();
-
     // Production mode:
     // SSR bundle is prebuilt and loaded from dist/
     if (maybeVite == null) {
@@ -182,6 +182,10 @@ export async function createServer() {
   /* Error handling                                                         */
   /* ********************************************************************** */
 
+  /*
+    Error logging middleware:
+    Logs errors for debugging, then passes them to the error response handler.
+  */
   const logErrors: ErrorRequestHandler = (err, req, _res, next) => {
     console.error(err);
     console.error("on req:", req.method, req.path);
@@ -189,7 +193,22 @@ export async function createServer() {
     next(err);
   };
 
+  /*
+    Final error handler:
+    Sends a structured JSON response instead of Express's default HTML page.
+    Stack traces are hidden in production to avoid leaking implementation details.
+  */
+  const sendErrors: ErrorRequestHandler = (err, _req, res, _next) => {
+    const status = err.status ?? err.statusCode ?? 500;
+
+    res.status(status).json({
+      message: err.message ?? "Internal Server Error",
+      ...(isProduction ? {} : { stack: err.stack }),
+    });
+  };
+
   app.use(logErrors);
+  app.use(sendErrors);
 
   return app;
 }
