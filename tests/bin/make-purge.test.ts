@@ -38,14 +38,14 @@ describe.skipIf(isAlreadyPurged)("make-purge.ts", () => {
 
   it("fails when given unexpected arguments", async () => {
     await expect(main(["node", "script", "--unknown-flag"])).rejects.toThrow(
-      /Usage/,
+      /usage/i,
     );
   });
 
   it("fails when given extra arguments", async () => {
     await expect(
       main(["node", "script", "--keep-auth", "--extra"]),
-    ).rejects.toThrow(/Usage/);
+    ).rejects.toThrow(/usage/i);
   });
 
   describe("purge logic", () => {

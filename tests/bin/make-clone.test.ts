@@ -19,7 +19,7 @@ describe("make-clone.ts", () => {
   });
 
   it("fails when missing arguments", async () => {
-    await expect(main(["node", "script"])).rejects.toThrow(/Usage/i);
+    await expect(main(["node", "script"])).rejects.toThrow(/usage/i);
   });
 
   it("fails with invalid JavaScript identifiers for oldName", async () => {

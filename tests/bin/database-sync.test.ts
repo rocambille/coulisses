@@ -73,44 +73,116 @@ describe("database-sync.ts", () => {
     }
   });
 
+  it("fails when no target is provided", async () => {
+    await expect(main(["node", "script"])).rejects.toThrow(/usage/i);
+  });
+
   it("fails when given unexpected arguments", async () => {
     await expect(main(["node", "script", "--unknown-flag"])).rejects.toThrow(
-      /Usage/,
+      /usage/i,
     );
   });
 
-  it("cancels sync when user answers no interactively", async () => {
+  it("cancels when user answers no interactively", async () => {
     const readline = await import("node:readline/promises");
     readline.default.createInterface = vi.fn().mockReturnValue({
       question: () => "n",
       close: vi.fn(),
     });
 
-    await main(["node", "script"]);
+    await main(["node", "script", "both"]);
 
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringMatching(/cancelled/));
   });
 
-  it("syncs the database with schema in interactive mode", async () => {
+  it("loads schema in interactive mode", async () => {
     const readline = await import("node:readline/promises");
     readline.default.createInterface = vi.fn().mockReturnValue({
       question: () => "y",
       close: vi.fn(),
     });
 
-    await runMainWith(["node", "script"]);
+    await runMainWith(["node", "script", "schema"]);
 
     checkSchema();
+
+    check((db) => {
+      const users = db.prepare("select * from user").all();
+
+      expect(users.length).toBe(0);
+
+      const items = db.prepare("select * from item").all();
+
+      expect(items.length).toBe(0);
+    });
   });
 
-  it("syncs the database with schema in non-interactive mode", async () => {
-    await runMainWith(["node", "script", "-n"]);
+  it("loads schema in non-interactive mode", async () => {
+    await runMainWith(["node", "script", "schema", "-n"]);
 
     checkSchema();
+
+    check((db) => {
+      const users = db.prepare("select * from user").all();
+
+      expect(users.length).toBe(0);
+
+      const items = db.prepare("select * from item").all();
+
+      expect(items.length).toBe(0);
+    });
   });
 
-  it("seeds the database when --use-seeder is passed", async () => {
-    await runMainWith(["node", "script", "--use-seeder", "-n"]);
+  it("loads seeder in interactive mode", async () => {
+    await runMainWith(["node", "script", "schema", "-n"]);
+
+    checkSchema();
+
+    const readline = await import("node:readline/promises");
+    readline.default.createInterface = vi.fn().mockReturnValue({
+      question: () => "y",
+      close: vi.fn(),
+    });
+
+    await runMainWith(["node", "script", "seeder"]);
+
+    check((db) => {
+      const users = db.prepare("select * from user").all();
+
+      expect(users.length).toBeGreaterThan(0);
+
+      const items = db.prepare("select * from item").all();
+
+      expect(items.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("loads seeder in non-interactive mode", async () => {
+    await runMainWith(["node", "script", "schema", "-n"]);
+
+    checkSchema();
+
+    await runMainWith(["node", "script", "seeder", "-n"]);
+
+    check((db) => {
+      const users = db.prepare("select * from user").all();
+
+      expect(users.length).toBeGreaterThan(0);
+
+      const items = db.prepare("select * from item").all();
+
+      expect(items.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("loads both in interactive mode", async () => {
+    const readline = await import("node:readline/promises");
+    readline.default.createInterface = vi.fn().mockReturnValue({
+      question: () => "y",
+      close: vi.fn(),
+    });
+
+    await runMainWith(["node", "script", "both"]);
 
     checkSchema();
 
@@ -123,9 +195,21 @@ describe("database-sync.ts", () => {
 
       expect(items.length).toBeGreaterThan(0);
     });
+  });
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringMatching(/Seeded using/),
-    );
+  it("loads both in non-interactive mode", async () => {
+    await runMainWith(["node", "script", "both", "-n"]);
+
+    checkSchema();
+
+    check((db) => {
+      const users = db.prepare("select * from user").all();
+
+      expect(users.length).toBeGreaterThan(0);
+
+      const items = db.prepare("select * from item").all();
+
+      expect(items.length).toBeGreaterThan(0);
+    });
   });
 });
