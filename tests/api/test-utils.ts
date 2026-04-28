@@ -33,9 +33,15 @@ const mockDatabase = () => {
     where type ='table' and name not like 'sqlite_%'`)
     .all();
 
+  /* prevent errors because of cascade deletion */
+  database.exec("PRAGMA foreign_keys = OFF");
+
   for (const table of existingTables) {
     database.exec(`drop table ${table.name}`);
   }
+
+  /* re-enable cascade deletion */
+  database.exec("PRAGMA foreign_keys = ON");
 
   /* load schema */
   const schema = path.join(

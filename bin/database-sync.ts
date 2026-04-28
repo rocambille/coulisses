@@ -1,7 +1,7 @@
 import path from "node:path";
 import readline from "node:readline/promises";
-import { DatabaseSync } from "node:sqlite";
 import fs from "fs-extra";
+import database from "../src/database";
 
 export async function main(
   argv: string[] = process.argv,
@@ -9,30 +9,34 @@ export async function main(
 ) {
   const rootDir = rootDirOverride ?? path.join(import.meta.dirname, "..");
 
-  // Build the paths to the schema, seeder and database files
-  const schema = path.join(rootDir, "src/database/schema.sql");
-  const seeder = path.join(rootDir, "src/database/seeder.sql");
-  const sqlite = path.join(rootDir, "src/database/data/database.sqlite");
+  // Locate the schema, seeder and database files
+  const schemaFile = path.join(rootDir, "src/database/schema.sql");
+  const seederFile = path.join(rootDir, "src/database/seeder.sql");
+  const databaseFile = database.location() ?? ":memory:";
 
   const args = argv.slice(2);
 
-  const useSeeder = args.includes("--use-seeder");
+  const target = args.includes("schema")
+    ? "schema"
+    : args.includes("seeder")
+      ? "seeder"
+      : args.includes("both")
+        ? "both"
+        : null;
+
   const noInteraction =
     args.includes("--no-interaction") || args.includes("-n");
 
-  const expectedArgs = [
-    ...(useSeeder ? ["--use-seeder"] : []),
-    ...(noInteraction ? ["--no-interaction"] : []),
-  ];
+  const expectedArgs = [target, ...(noInteraction ? ["--no-interaction"] : [])];
 
-  if (args.length !== expectedArgs.length) {
+  if (target == null || args.length !== expectedArgs.length) {
     throw new Error(
-      "Usage: npm run database:sync [-- --use-seeder] [--no-interaction|-n]",
+      "Usage: database-sync [--no-interaction|-n] schema|seeder|both",
     );
   }
 
   console.info(
-    `This script will drop existing '${path.normalize(sqlite)}' to create a new one.`,
+    `This script will drop existing data in '${path.normalize(databaseFile)}'.`,
   );
 
   if (!noInteraction) {
@@ -55,37 +59,57 @@ export async function main(
     }
   }
 
-  // Delete the existing database file if it exists
-  await fs.remove(sqlite);
+  if (target === "schema" || target === "both") {
+    // Drop existing tables
+    const existingTables = database
+      .prepare(
+        "select name from sqlite_schema where type ='table' and name not like 'sqlite_%'",
+      )
+      .all() as { name: string }[];
 
-  // Ensure the parent directory exists
-  await fs.ensureDir(path.dirname(sqlite));
+    // Prevent errors because of cascade deletion
+    database.exec("PRAGMA foreign_keys = OFF");
 
-  // Create a new database with the specified name
-  const database = new DatabaseSync(sqlite);
+    for (const table of existingTables) {
+      database.exec(`drop table ${table.name}`);
+    }
 
-  try {
+    // Re-enable cascade deletion
+    database.exec("PRAGMA foreign_keys = ON");
+
     // Read the SQL statements from the schema file
-    const sql = await fs.readFile(schema, "utf8");
+    const sql = await fs.readFile(schemaFile, "utf8");
 
     // Execute the SQL statements to update the database schema
     database.exec(sql);
 
     console.info(
-      `\nDatabase '${path.normalize(sqlite)}' in sync with '${path.normalize(schema)}' 🆙`,
+      `\nSchema '${path.normalize(schemaFile)}' loaded in '${path.normalize(databaseFile)}' 🆙`,
     );
+  }
 
-    if (useSeeder) {
-      // Read the SQL statements from the seeder file
-      const sql = await fs.readFile(seeder, "utf8");
+  if (target === "seeder" || target === "both") {
+    // truncate existing tables
+    const existingTables = database
+      .prepare(`
+        select name 
+        from sqlite_schema 
+        where type ='table' and name not like 'sqlite_%'`)
+      .all();
 
-      // Execute the SQL statements to seed the database
-      database.exec(sql);
-
-      console.info(`\nSeeded using '${path.normalize(seeder)}' 🌱`);
+    for (const table of existingTables) {
+      database.exec(`delete from ${table.name}`);
     }
-  } finally {
-    database.close();
+
+    // Read the SQL statements from the seeder file
+    const sql = await fs.readFile(seederFile, "utf8");
+
+    // Execute the SQL statements to seed the database
+    database.exec(sql);
+
+    console.info(
+      `\nSeeder '${path.normalize(seederFile)}' loaded in '${path.normalize(databaseFile)}' 🌱`,
+    );
   }
 }
 
