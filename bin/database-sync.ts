@@ -1,6 +1,5 @@
 import path from "node:path";
 import readline from "node:readline/promises";
-import { DatabaseSync } from "node:sqlite";
 import fs from "fs-extra";
 import database from "../src/database";
 
@@ -61,59 +60,56 @@ export async function main(
   }
 
   if (target === "schema" || target === "both") {
-    // Delete the existing database file if it exists
-    await fs.remove(databaseFile);
+    // Drop existing tables
+    const existingTables = database
+      .prepare(
+        "select name from sqlite_schema where type ='table' and name not like 'sqlite_%'",
+      )
+      .all() as { name: string }[];
 
-    // Ensure the parent directory exists
-    await fs.ensureDir(path.dirname(databaseFile));
+    // Prevent errors because of cascade deletion
+    database.exec("PRAGMA foreign_keys = OFF");
 
-    // Create a new database with the specified name
-    const database = new DatabaseSync(databaseFile);
-
-    try {
-      // Read the SQL statements from the schema file
-      const sql = await fs.readFile(schemaFile, "utf8");
-
-      // Execute the SQL statements to update the database schema
-      database.exec(sql);
-
-      console.info(
-        `\nSchema '${path.normalize(schemaFile)}' loaded in '${path.normalize(databaseFile)}' 🆙`,
-      );
-    } finally {
-      database.close();
+    for (const table of existingTables) {
+      database.exec(`drop table ${table.name}`);
     }
+
+    // Re-enable cascade deletion
+    database.exec("PRAGMA foreign_keys = ON");
+
+    // Read the SQL statements from the schema file
+    const sql = await fs.readFile(schemaFile, "utf8");
+
+    // Execute the SQL statements to update the database schema
+    database.exec(sql);
+
+    console.info(
+      `\nSchema '${path.normalize(schemaFile)}' loaded in '${path.normalize(databaseFile)}' 🆙`,
+    );
   }
 
   if (target === "seeder" || target === "both") {
-    // Open database with the specified name
-    const database = new DatabaseSync(databaseFile);
+    // truncate existing tables
+    const existingTables = database
+      .prepare(`
+        select name 
+        from sqlite_schema 
+        where type ='table' and name not like 'sqlite_%'`)
+      .all();
 
-    try {
-      // truncate existing tables
-      const existingTables = database
-        .prepare(`
-          select name 
-          from sqlite_schema 
-          where type ='table' and name not like 'sqlite_%'`)
-        .all();
-
-      for (const table of existingTables) {
-        database.exec(`delete from ${table.name}`);
-      }
-
-      // Read the SQL statements from the seeder file
-      const sql = await fs.readFile(seederFile, "utf8");
-
-      // Execute the SQL statements to seed the database
-      database.exec(sql);
-
-      console.info(
-        `\nSeeder '${path.normalize(seederFile)}' loaded in '${path.normalize(databaseFile)}' 🌱`,
-      );
-    } finally {
-      database.close();
+    for (const table of existingTables) {
+      database.exec(`delete from ${table.name}`);
     }
+
+    // Read the SQL statements from the seeder file
+    const sql = await fs.readFile(seederFile, "utf8");
+
+    // Execute the SQL statements to seed the database
+    database.exec(sql);
+
+    console.info(
+      `\nSeeder '${path.normalize(seederFile)}' loaded in '${path.normalize(databaseFile)}' 🌱`,
+    );
   }
 }
 
