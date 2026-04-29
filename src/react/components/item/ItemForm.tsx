@@ -66,7 +66,7 @@ function ItemForm({ children, defaultValue, action }: ItemFormProps) {
         const parsed = itemSchema.safeParse({ title });
 
         if (!parsed.success) {
-          console.error(parsed.error);
+          alert(z.prettifyError(parsed.error));
           return;
         }
 

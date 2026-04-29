@@ -30,7 +30,7 @@ function MagicLinkForm() {
         const parsed = emailSchema.safeParse({ email });
 
         if (!parsed.success) {
-          console.error(parsed.error);
+          alert(z.prettifyError(parsed.error));
           return;
         }
 
