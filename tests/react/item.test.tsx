@@ -132,7 +132,7 @@ describe("React item components", () => {
       await screen.findByRole("form", { name: /item form/i });
     });
     it("should raise validation errors when submitting", async () => {
-      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.spyOn(globalThis, "alert").mockImplementation(() => {});
 
       await renderWithStub(
         "/items/new",
@@ -147,7 +147,7 @@ describe("React item components", () => {
 
       await fireEvent.submit(screen.getByRole("form", { name: /item form/i }));
 
-      expect(console.error).toHaveBeenCalled();
+      expect(alert).toHaveBeenCalled();
     });
   });
 
