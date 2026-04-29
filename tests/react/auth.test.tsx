@@ -144,7 +144,7 @@ describe("React auth components", () => {
       expectContractCall("auth", "magic_link", "success");
     });
     it("should fail when email is invalid", async () => {
-      vi.spyOn(console, "error").mockImplementationOnce(() => {});
+      vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
 
       await renderWithStub("/", MagicLinkForm, ["/"], {
         me: null,
@@ -152,7 +152,7 @@ describe("React auth components", () => {
 
       await fireEvent.submit(screen.getByRole("form"));
 
-      expect(console.error).toHaveBeenCalled();
+      expect(alert).toHaveBeenCalled();
     });
   });
 

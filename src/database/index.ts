@@ -16,8 +16,12 @@
 
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import fs from "fs-extra";
 
 const dbPath = path.join(import.meta.dirname, "data/database.sqlite");
+
+// Ensure the parent directory exists
+await fs.ensureDir(path.dirname(dbPath));
 
 // Open the SQLite database file in synchronous mode
 const database = new DatabaseSync(dbPath);

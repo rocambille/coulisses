@@ -1,128 +1,84 @@
-[![GitHub tag](https://img.shields.io/github/tag/rocambille/start-express-react?include_prereleases=&sort=semver&color=white)](https://github.com/rocambille/start-express-react/tags/)
-[![License](https://img.shields.io/badge/license-MIT-white)](https://github.com/rocambille/start-express-react/blob/main/LICENSE.md)
-[![Issues - start-express-react](https://img.shields.io/github/issues/rocambille/start-express-react)](https://github.com/rocambille/start-express-react/issues)
-
 <div align="right">
 
-[in english?](./README.en-US.md)
+[en français ?](./README.fr-FR.md)
 
 </div>
 
 <div align="center">
 
-# StartER - Un framework Express + React complet et lisible
+# StartER 🚀
 
-Framework React + Express pensé pour le prototypage rapide et l’apprentissage.  
-Conçu pour être compris avant tout, et facilement adaptable grâce à un système de clonage de modules.
+**The readable Express + React fullstack starter**
 
-⭐️ Si vous trouvez ce projet utile, **laissez une étoile** pour soutenir le projet ! [![GitHub Stars](https://img.shields.io/github/stars/rocambille/start-express-react.svg?style=social)](https://github.com/rocambille/start-express-react)
+[![GitHub tag](https://img.shields.io/github/tag/rocambille/start-express-react?include_prereleases=&sort=semver&color=white)](https://github.com/rocambille/start-express-react/tags/)
+[![License](https://img.shields.io/badge/license-MIT-white)](https://github.com/rocambille/start-express-react/blob/main/LICENSE.md)
+[![Issues - start-express-react](https://img.shields.io/github/issues/rocambille/start-express-react)](https://github.com/rocambille/start-express-react/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/rocambille/start-express-react.svg?style=social)](https://github.com/rocambille/start-express-react)
 
-[![Use this template](https://img.shields.io/badge/Démarrer-Use_this_template-2ea44f?style=for-the-badge)](https://github.com/rocambille/start-express-react/generate)
+[![Use this template](https://img.shields.io/badge/Start-Use_this_template-2ea44f?style=for-the-badge)](https://github.com/rocambille/start-express-react/generate)
+[![Read the manual](https://img.shields.io/badge/Learn-Read_the_manual-blue?style=for-the-badge)](https://github.com/rocambille/start-express-react/wiki)
 
-[![Read the manual](https://img.shields.io/badge/Apprendre-Read_the_manual-blue?style=for-the-badge)](https://github.com/rocambille/start-express-react/wiki)
-
-</div>
-
-## Vue d'ensemble
+<br/>
 
 ![](https://raw.githubusercontent.com/rocambille/start-express-react/refs/heads/main/src/react/assets/images/architecture.png)
 
-StartER est un **starter full-stack** combinant Express (backend) et React (frontend) dans un seul projet cohérent.
-Il est conçu à la fois comme un **outil pédagogique** et comme une base de production solide pour **prototyper** rapidement des applications web modernes.
+</div>
 
-## Technologies incluses
+## ⚡ Quick Start
 
-### Côté serveur et client
+```bash
+# 1. Clone the project (or use the "Use this template" button)
+git clone https://github.com/rocambille/start-express-react.git my-project
+cd my-project
 
-* [**Express**](https://expressjs.com/) : framework minimaliste pour créer des serveurs web et des API avec Node.js.
-* [**React**](https://fr.react.dev/learn) : bibliothèque JavaScript pour construire des interfaces utilisateur interactives et modulaires.
+# 2. Install dependencies and initialize the database
+npm install
+cp .env.sample .env
+npm run database:sync
 
-### Outils et écosystème
-
-Dans l'ordre alphabétique (liste non exhaustive) :
-
-* [**Biome**](https://biomejs.dev/) : linter, formateur et analyseur statique performant pour garantir un code propre.
-* [**Docker**](https://docs.docker.com/) : conteneurisation pour des environnements de développement et de déploiement reproductibles.
-* [**Pico CSS**](https://picocss.com/) : kit CSS minimaliste et sémantique.
-* [**React Router (Mode Data)**](https://reactrouter.com/home) : gestionnaire de routes pour React.
-* [**SQLite**](https://sqlite.org/index.html) : système de gestion de bases de données relationnelles.
-* [**TypeScript**](https://www.typescriptlang.org/) : superset de JavaScript ajoutant des types statiques.
-* [**Vite**](https://vite.dev/guide/) : outil de build rapide pour le développement et la production.
-* [**Vitest**](https://vitest.dev/guide/) : framework de test intégré à Vite.
-* [**Zod**](https://zod.dev/) : validation et typage de schémas TypeScript.
-
-## Installation et utilisation
-
-Une documentation complète est disponible dans le [wiki du projet](https://github.com/rocambille/start-express-react/wiki).
-
-Pour débuter, consultez les pages principales :
-
-* [Installation](https://github.com/rocambille/start-express-react/wiki/Installation)
-* [Déploiement](https://github.com/rocambille/start-express-react/wiki/D%C3%A9ploiement)
-
-## Structure des fichiers sources
-
-```
-.
-├── .env
-├── .env.sample
-├── compose.yaml
-├── compose.prod.yaml
-├── Dockerfile
-├── index.html
-├── server.ts
-└── src
-    ├── database
-    │   └── schema.sql
-    ├── express
-    │   ├── routes.ts
-    │   └── modules
-    │       └── ...
-    ├── react
-    │   ├── routes.tsx
-    │   └── components
-    │       └── ...
-    └── types
-        └── index.d.ts
+# 3. Start the application
+npm run dev
 ```
 
-## Commandes de base
+> The application is available at `http://localhost:5173`
 
-| Commande                                                        | Description                                                                      |
-| --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `npm run install:check`                                         | Exécute les tests d'installation (présence du `.env`, initialisation de la base de données...).                      |
-| `npm run biome:check`                                           | Contrôle la qualité du code avec Biome (exécuté en pre-commit).                  |
-| `npm run types:check`                                           | Contrôle la cohérence des types TypeScript (exécuté en pre-commit).              |
-| `npm run test`                                                  | Exécute les tests autres que ceux d'installation (ne nécessite pas de base de données).                              |
-| `npm run database:sync`                                         | Synchronise la base de données avec `src/database/schema.sql` (`-- --use-seeder` pour remplir la base de données avec `src/database/seeder.sql`).                   |
-| `npm run make:clone -- <source> <destination> <OldName> <NewName>` | Clone un module ou un fichier en renommant automatiquement les identifiants.     |
-| `npm run make:purge`                                            | Supprime les modules par défaut (`-- --keep-auth` pour conserver `user` et `auth`). |
-| `docker compose up --build`                                     | Build et démarre les services (ajouter `-d` pour démarrer en mode détaché).      |
-| `docker compose -f compose.prod.yaml up --build -d`             | Build et démarre l'application en mode production.                               |
-| `docker compose logs -t`                                        | Affiche les logs avec timestamps.                                                |
+## 🤔 Why StartER?
 
-## REST cheatsheet
+We designed StartER around a simple philosophy: **zero hidden magic**.
+It is a framework built for learning, rapid prototyping, and *hacking*. Heavy solutions tend to hide their complexity. StartER offers a readable and modifiable fullstack architecture (Express + React). You understand every line of code and keep control over your application.
 
-StartER repose sur une architecture **RESTful**, où chaque ressource (par exemple `items` ou `users`) expose un ensemble d'*endpoints* structurés autour des opérations CRUD/BREAD classiques :
+## ✨ Key Features
 
-* **Browse** : parcourir toutes les ressources
-* **Read** : lire une ressource spécifique
-* **Add** : créer une nouvelle ressource
-* **Edit** : modifier une ressource existante
-* **Destroy** : supprimer une ressource
+* **100% readable codebase**: a clear architecture with no black boxes. Use it to learn and master fullstack development.
+* **"Magic Link" authentication**: a secure, passwordless login system included out of the box.
+* **Minimalist architecture**: the simplicity of Express balanced with the modularity of React.
+* **Ready to use**: TypeScript, SQLite, and Docker for a smooth *Developer Experience*.
 
-Ce tableau récapitule les conventions utilisées dans les modules Express du projet (comme `itemRoutes`), les méthodes HTTP associées et les réponses attendues.
-Il sert de référence rapide lorsque vous développez vos propres modules ou testez vos API.
+## 🧬 Don't generate, clone! (`make:clone`)
 
-| Opération | Méthode | Chemin d'URL   | Corps de la requête | SQL    | Réponse (succès)               | Réponse (erreur)                                                        |
-| --------- | ------- | -------------- | ------------------- | ------ | ------------------------------ | ----------------------------------------------------------------------- |
-| Browse    | GET     | /api/items     | —                   | SELECT | 200 (OK), liste des items.     | —                                                                       |
-| Read      | GET     | /api/items/:id | —                   | SELECT | 200 (OK), un item.             | 404 (Not Found), si id invalide.                                        |
-| Add       | POST    | /api/items     | Données de l'item   | INSERT | 201 (Created), id d'insertion. | 400 (Bad Request), si corps invalide.                                   |
-| Edit      | PUT     | /api/items/:id | Données de l'item   | UPDATE | 204 (No Content).              | 400 (Bad Request), si corps invalide ; 404 (Not Found), si id invalide. |
-| Destroy   | DELETE  | /api/items/:id | —                   | DELETE | 204 (No Content).              | —                                                                       |
+StartER introduces the `make:clone` command. Unlike a CRUD generator, you **clone your own logic**.
 
-## Licence
+Need a new resource? Clone an existing module, like `item`. The command duplicates the files and renames variables and references. You get complete, immediately functional, and customizable code.
 
-Ce projet est distribué sous licence [MIT](./LICENSE.md).
-Vous êtes libre de l'utiliser, le modifier et le redistribuer à des fins éducatives ou professionnelles.
+## 🧪 Contract-Based API Testing
+
+StartER simplifies code reliability with an innovative contract-based approach.
+
+Define your API structure once. We use the contracts to **generate API tests**, while **mocking API calls on the React side**. Less *boilerplate*, more reliability.
+
+## 💻 Tech Stack
+
+* **Backend**: Node.js, Express 5, Zod
+* **Frontend**: React 19, React Router, Vite, Pico CSS
+* **Database**: SQLite
+* **Tooling**: TypeScript, Biome, Vitest, Docker
+
+## 📖 Documentation
+
+All documentation, deployment guides, and technical concepts are on the wiki.
+
+👉 **[Read the official Wiki](https://github.com/rocambille/start-express-react/wiki)**
+
+## 📄 License
+
+Distributed under the [MIT](./LICENSE.md) license. You are free to use, modify, and redistribute it for educational or professional purposes.

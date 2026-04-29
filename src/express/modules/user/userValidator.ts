@@ -25,9 +25,6 @@ import { z } from "zod";
 
 /*
   User Data Transfer Object (DTO)
-
-  Notes:
-  - `id` is optional to allow reuse for different operations
 */
 const userDTOSchema = z.object({
   email: z.email().max(255),
