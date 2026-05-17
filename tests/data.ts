@@ -166,6 +166,34 @@ export const openingNightEvent: EventData = {
   end_time: "2026-06-01T22:30:00.000Z",
 };
 
+export const autoRehearsalEvent: EventData = {
+  id: 2,
+  play_id: mainPlay.id,
+  type: "AUTO_REHEARSAL",
+  title: "Auto Rehearsal",
+  description: "Auto Rehearsal description",
+  location: "Main Stage",
+  start_time: "2026-06-01T20:00:00.000Z",
+  end_time: "2026-06-01T22:30:00.000Z",
+};
+
+export const fixedRehearsalEvent: EventData = {
+  id: 3,
+  play_id: mainPlay.id,
+  type: "FIXED_REHEARSAL",
+  title: "Fixed Rehearsal",
+  description: "Fixed Rehearsal description",
+  location: "Main Stage",
+  start_time: "2026-06-01T20:00:00.000Z",
+  end_time: "2026-06-01T22:30:00.000Z",
+};
+
+export const allEvents = [
+  openingNightEvent,
+  autoRehearsalEvent,
+  fixedRehearsalEvent,
+];
+
 const matrix = (
   scenes: Scene[],
   roles: RoleWithScenes[],

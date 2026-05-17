@@ -9,6 +9,7 @@ import supertest from "supertest";
 import database from "../../src/database";
 import {
   actorUser,
+  allEvents,
   allPlays,
   allUsers,
   deletedUser,
@@ -20,7 +21,6 @@ import {
   mainPreferences,
   mainRoles,
   mainScenes,
-  openingNightEvent,
   teacherUser,
   thirdUser,
 } from "../data";
@@ -133,20 +133,21 @@ const mockDatabase = () => {
   }
 
   /* insert all events */
-  database
-    .prepare(
-      "insert into event(id, play_id, type, title, description, location, start_time, end_time) values(?, ?, ?, ?, ?, ?, ?, ?)",
-    )
-    .run(
-      openingNightEvent.id,
-      openingNightEvent.play_id,
-      openingNightEvent.type,
-      openingNightEvent.title,
-      openingNightEvent.description ?? null,
-      openingNightEvent.location ?? null,
-      openingNightEvent.start_time,
-      openingNightEvent.end_time,
+  const insertEvent = database.prepare(
+    "insert into event(id, play_id, type, title, description, location, start_time, end_time) values(?, ?, ?, ?, ?, ?, ?, ?)",
+  );
+  for (const event of allEvents) {
+    insertEvent.run(
+      event.id,
+      event.play_id,
+      event.type,
+      event.title,
+      event.description ?? null,
+      event.location ?? null,
+      event.start_time,
+      event.end_time,
     );
+  }
 
   /* insert preferences */
   const insertPreference = database.prepare(

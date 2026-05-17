@@ -6,9 +6,15 @@
 
 import { use } from "react";
 import { NavLink } from "react-router";
+import z from "zod";
+
 import { cache } from "../helpers/cache";
 import { useMutate } from "../helpers/mutate";
 import { useAuth } from "./auth/AuthContext";
+
+const playSchema = z.object({
+  title: z.string().min(1, "Le titre est requis"),
+});
 
 function DashboardPage() {
   const { me } = useAuth();
@@ -19,9 +25,14 @@ function DashboardPage() {
   const handleAdd = async (formData: FormData) => {
     const title = formData.get("title")?.toString();
 
-    if (!title) throw new Error("Invalid form submission");
+    const parsed = playSchema.safeParse({ title });
 
-    await mutate("/api/plays", "post", { title }, ["/api/plays"]);
+    if (!parsed.success) {
+      alert(z.prettifyError(parsed.error));
+      return;
+    }
+
+    await mutate("/api/plays", "post", parsed.data, ["/api/plays"]);
   };
 
   return (
@@ -50,7 +61,7 @@ function DashboardPage() {
 
       <details>
         <summary>Ajouter une pièce</summary>
-        <form action={handleAdd}>
+        <form aria-label="play form" action={handleAdd}>
           <input
             name="title"
             placeholder="Titre de la pièce"

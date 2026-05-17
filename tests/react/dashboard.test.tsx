@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import DashboardPage from "../../src/react/components/DashboardPage";
 import {
   expectContractCall,
@@ -48,5 +48,19 @@ describe("<DashboardPage />", () => {
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
     expectContractCall("plays", "create", "teacher");
+  });
+
+  it("should alert when submitted data is invalid", async () => {
+    vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+
+    await renderWithStub("/", DashboardPage, ["/"], {
+      me: teacherUser,
+    });
+
+    await act(async () => {
+      await fireEvent.submit(screen.getByRole("form"));
+    });
+
+    expect(alert).toHaveBeenCalled();
   });
 });

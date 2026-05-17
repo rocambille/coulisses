@@ -6,9 +6,80 @@
 
 import { use, useState } from "react";
 import { useParams } from "react-router";
+import z, { ZodError } from "zod";
+
 import { cache } from "../../helpers/cache";
+import {
+  fromInputParts,
+  toDisplayString,
+  toInputDate,
+  toInputTime,
+} from "../../helpers/datetime";
 import { useMutate } from "../../helpers/mutate";
 import { useMembership } from "./hooks";
+
+type EventData = {
+  id: RowId;
+  play_id: RowId;
+  type: "SHOW" | "FIXED_REHEARSAL" | "AUTO_REHEARSAL";
+  title: string;
+  description?: string;
+  location?: string;
+  start_time: string;
+  end_time: string;
+};
+
+const eventSchema = z.object({
+  title: z.string().min(1, "Le titre est requis"),
+  type: z.enum(["SHOW", "FIXED_REHEARSAL", "AUTO_REHEARSAL"]),
+  start_date: z.iso.date(),
+  start_time: z.iso.time(),
+  end_date: z.iso.date(),
+  end_time: z.iso.time(),
+  location: z.string().nullable(),
+  description: z.string().nullable(),
+});
+
+const validate = (data: FormData) => {
+  const title = data.get("title")?.toString();
+  const type = data.get("type")?.toString();
+  const startDate = data.get("start_date")?.toString();
+  const startTime = data.get("start_time")?.toString();
+  const endDate = data.get("end_date")?.toString();
+  const endTime = data.get("end_time")?.toString();
+  const location = data.get("location")?.toString();
+  const description = data.get("description")?.toString();
+
+  const parsed = eventSchema.safeParse({
+    title,
+    type,
+    start_date: startDate,
+    start_time: startTime,
+    end_date: endDate,
+    end_time: endTime,
+    location,
+    description,
+  });
+
+  if (!parsed.success) {
+    throw parsed.error;
+  }
+
+  return {
+    type: parsed.data.type,
+    title: parsed.data.title,
+    description: parsed.data.description,
+    location: parsed.data.location,
+    start_time: fromInputParts(
+      parsed.data.start_date,
+      parsed.data.start_time,
+    ).toISOString(),
+    end_time: fromInputParts(
+      parsed.data.end_date,
+      parsed.data.end_time,
+    ).toISOString(),
+  };
+};
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -66,76 +137,46 @@ function CalendarPage() {
   });
 
   const handleAdd = async (formData: FormData) => {
-    const title = formData.get("title")?.toString();
-    const type = formData.get("type")?.toString();
-    const startDate = formData.get("start_date")?.toString();
-    const startTime = formData.get("start_time")?.toString();
-    const endDate = formData.get("end_date")?.toString();
-    const endTime = formData.get("end_time")?.toString();
-    const location = formData.get("location")?.toString();
-    const description = formData.get("description")?.toString();
+    try {
+      const parsedData = validate(formData);
 
-    if (!title || !type || !startDate || !startTime || !endDate || !endTime) {
-      throw new Error("Invalid form submission");
-    }
+      const response = await mutate(
+        `/api/plays/${playId}/events`,
+        "post",
+        parsedData,
+        [`/api/plays/${playId}/events`],
+      );
 
-    const start_time = new Date(`${startDate}T${startTime}`).toISOString();
-    const end_time = new Date(`${endDate}T${endTime}`).toISOString();
-
-    const response = await mutate(
-      `/api/plays/${playId}/events`,
-      "post",
-      {
-        title,
-        type,
-        start_time,
-        end_time,
-        location,
-        description,
-      },
-      [`/api/plays/${playId}/events`],
-    );
-
-    if (response.ok) {
-      setShowAddModal(false);
+      if (response.ok) {
+        setShowAddModal(false);
+      }
+    } catch (err) {
+      if (err instanceof ZodError) {
+        alert(z.prettifyError(err));
+      }
     }
   };
 
   const handleEdit = async (formData: FormData) => {
     if (!selectedEvent) return;
 
-    const title = formData.get("title")?.toString();
-    const type = formData.get("type")?.toString();
-    const startDate = formData.get("start_date")?.toString();
-    const startTime = formData.get("start_time")?.toString();
-    const endDate = formData.get("end_date")?.toString();
-    const endTime = formData.get("end_time")?.toString();
-    const location = formData.get("location")?.toString();
-    const description = formData.get("description")?.toString();
+    try {
+      const parsedData = validate(formData);
 
-    if (!title || !type || !startDate || !startTime || !endDate || !endTime) {
-      throw new Error("Invalid form submission");
-    }
+      const response = await mutate(
+        `/api/events/${selectedEvent.id}`,
+        "put",
+        parsedData,
+        [`/api/plays/${playId}/events`],
+      );
 
-    const start_time = `${startDate}T${startTime}:00.000Z`;
-    const end_time = `${endDate}T${endTime}:00.000Z`;
-
-    const response = await mutate(
-      `/api/events/${selectedEvent.id}`,
-      "put",
-      {
-        type,
-        title,
-        description,
-        location,
-        start_time,
-        end_time,
-      },
-      [`/api/plays/${playId}/events`],
-    );
-
-    if (response.ok) {
-      setSelectedEvent(null);
+      if (response.ok) {
+        setSelectedEvent(null);
+      }
+    } catch (err) {
+      if (err instanceof ZodError) {
+        alert(z.prettifyError(err));
+      }
     }
   };
 
@@ -157,7 +198,11 @@ function CalendarPage() {
     <>
       <hgroup>
         <h2>Calendrier</h2>
-        <p>Répétitions et représentations.</p>
+        <p>
+          Répétitions et représentations.
+          <br />
+          <small>Tous les horaires sont affichés à l'heure de Paris.</small>
+        </p>
       </hgroup>
 
       <div
@@ -230,10 +275,8 @@ function CalendarPage() {
 
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
-          const timeZoneOffset = new Date().getTimezoneOffset() / 60;
-          const currentDayDate = new Date(
-            `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T${12 - timeZoneOffset}:00:00.000Z`,
-          );
+          // Create a local date for the current day (noon to avoid DST edge cases)
+          const currentDayDate = new Date(currentYear, currentMonth, day, 12);
           const dayEvents = currentMonthEvents.filter(
             (e) => new Date(e.start_time).getDate() === day,
           );
@@ -255,7 +298,7 @@ function CalendarPage() {
               {isTeacher && (
                 <button
                   type="button"
-                  aria-label={`Ajouter un événement le ${currentDayDate.toISOString().split("T")[0]}`}
+                  aria-label={`Ajouter un événement le ${toInputDate(currentDayDate)}`}
                   onClick={() => {
                     setSelectedDate(currentDayDate);
                     setShowAddModal(true);
@@ -343,7 +386,7 @@ function CalendarPage() {
               ></button>
               Nouvel événement
             </header>
-            <form action={handleAdd}>
+            <form aria-label="event form" action={handleAdd}>
               <label>
                 Titre
                 <input name="title" required />
@@ -363,7 +406,9 @@ function CalendarPage() {
                   <input
                     name="start_date"
                     type="date"
-                    defaultValue={selectedDate?.toISOString().split("T")[0]}
+                    defaultValue={
+                      selectedDate ? toInputDate(selectedDate) : undefined
+                    }
                     required
                   />
                 </label>
@@ -372,10 +417,9 @@ function CalendarPage() {
                   <input
                     name="start_time"
                     type="time"
-                    defaultValue={selectedDate
-                      ?.toISOString()
-                      .split("T")[1]
-                      .slice(0, 5)}
+                    defaultValue={
+                      selectedDate ? toInputTime(selectedDate) : undefined
+                    }
                     required
                   />
                 </label>
@@ -387,7 +431,9 @@ function CalendarPage() {
                   <input
                     name="end_date"
                     type="date"
-                    defaultValue={selectedDate?.toISOString().split("T")[0]}
+                    defaultValue={
+                      selectedDate ? toInputDate(selectedDate) : undefined
+                    }
                     required
                   />
                 </label>
@@ -396,10 +442,9 @@ function CalendarPage() {
                   <input
                     name="end_time"
                     type="time"
-                    defaultValue={selectedDate
-                      ?.toISOString()
-                      .split("T")[1]
-                      .slice(0, 5)}
+                    defaultValue={
+                      selectedDate ? toInputTime(selectedDate) : undefined
+                    }
                     required
                   />
                 </label>
@@ -437,7 +482,7 @@ function CalendarPage() {
               ></button>
             </header>
             {isTeacher ? (
-              <form action={handleEdit}>
+              <form aria-label="event form" action={handleEdit}>
                 <label>
                   Titre
                   <input
@@ -465,7 +510,7 @@ function CalendarPage() {
                     <input
                       name="start_date"
                       type="date"
-                      defaultValue={selectedEvent.start_time.split("T")[0]}
+                      defaultValue={toInputDate(selectedEvent.start_time)}
                       required
                     />
                   </label>
@@ -474,9 +519,7 @@ function CalendarPage() {
                     <input
                       name="start_time"
                       type="time"
-                      defaultValue={selectedEvent.start_time
-                        .split("T")[1]
-                        .slice(0, 5)}
+                      defaultValue={toInputTime(selectedEvent.start_time)}
                       required
                     />
                   </label>
@@ -488,7 +531,7 @@ function CalendarPage() {
                     <input
                       name="end_date"
                       type="date"
-                      defaultValue={selectedEvent.end_time.split("T")[0]}
+                      defaultValue={toInputDate(selectedEvent.end_time)}
                       required
                     />
                   </label>
@@ -497,9 +540,7 @@ function CalendarPage() {
                     <input
                       name="end_time"
                       type="time"
-                      defaultValue={selectedEvent.end_time
-                        .split("T")[1]
-                        .slice(0, 5)}
+                      defaultValue={toInputTime(selectedEvent.end_time)}
                       required
                     />
                   </label>
@@ -540,10 +581,9 @@ function CalendarPage() {
                   : "📅 Répétition"}
                 <br />
                 <strong>Début:</strong>{" "}
-                {new Date(selectedEvent.start_time).toLocaleString()}
+                {toDisplayString(selectedEvent.start_time)}
                 <br />
-                <strong>Fin:</strong>{" "}
-                {new Date(selectedEvent.end_time).toLocaleString()}
+                <strong>Fin:</strong> {toDisplayString(selectedEvent.end_time)}
                 <br />
                 {selectedEvent.location && (
                   <>

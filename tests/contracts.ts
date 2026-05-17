@@ -1,6 +1,7 @@
 import { cookies } from "supertest";
 import {
   actorUser,
+  allEvents,
   allPlays,
   emptyMatrix,
   emptyPlay,
@@ -341,11 +342,11 @@ export const contracts: Record<string, Contract> = {
       cases: {
         teacher: {
           request: { jwtPayload: { sub: teacherUser.id } },
-          response: { status: 200, body: [openingNightEvent] },
+          response: { status: 200, body: allEvents },
         },
         actor: {
           request: { jwtPayload: { sub: actorUser.id } },
-          response: { status: 200, body: [openingNightEvent] },
+          response: { status: 200, body: allEvents },
         },
         unauthorized: {
           request: { jwtPayload: null },
@@ -369,12 +370,12 @@ export const contracts: Record<string, Contract> = {
         opening_night: {
           request: {
             body: {
-              title: "Opening Night",
               type: "SHOW",
-              start_time: "2026-05-05T12:00:00.000Z",
-              end_time: "2026-05-05T12:00:00.000Z",
-              location: "",
+              title: "Opening Night",
               description: "",
+              location: "",
+              start_time: "2026-05-05T10:00:00.000Z",
+              end_time: "2026-05-05T10:00:00.000Z",
             },
             jwtPayload: { sub: teacherUser.id },
           },
@@ -913,6 +914,28 @@ export const contracts: Record<string, Contract> = {
             body: {
               title: "Updated Scene",
               scene_order: mainScenes[0].scene_order,
+            },
+            jwtPayload: { sub: teacherUser.id },
+          },
+          response: { status: 204, body: {} },
+        },
+        activate: {
+          request: {
+            body: {
+              title: mainScenes[0].title,
+              scene_order: mainScenes[0].scene_order,
+              is_active: true,
+            },
+            jwtPayload: { sub: teacherUser.id },
+          },
+          response: { status: 204, body: {} },
+        },
+        deactivate: {
+          request: {
+            body: {
+              title: mainScenes[0].title,
+              scene_order: mainScenes[0].scene_order,
+              is_active: false,
             },
             jwtPayload: { sub: teacherUser.id },
           },

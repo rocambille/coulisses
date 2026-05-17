@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import CalendarPage from "../../src/react/components/play/CalendarPage";
 import {
   actorUser,
@@ -260,7 +260,7 @@ describe("React: CalendarPage", () => {
     );
 
     await user.type(
-      await screen.findByLabelText(/titre/i),
+      screen.getByLabelText(/titre/i),
       requestValue("events", "create", "opening_night", "title"),
     );
 
@@ -268,5 +268,24 @@ describe("React: CalendarPage", () => {
 
     expectContractCall("events", "create", "opening_night");
     await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
+  });
+
+  it("should alert when submitted data is invalid (teacher)", async () => {
+    vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+
+    const { user } = await renderWithStub(
+      "/plays/:playId/calendar",
+      CalendarPage,
+      [`/plays/${mainPlay.id}/calendar`],
+      { me: teacherUser },
+    );
+
+    await user.click(screen.getByLabelText(/ajouter.*28$/i));
+
+    await act(async () => {
+      await fireEvent.submit(screen.getByRole("form"));
+    });
+
+    expect(alert).toHaveBeenCalled();
   });
 });

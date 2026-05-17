@@ -5,7 +5,7 @@
 
 import database from "../../../database";
 
-const mapRawTypeToEventType = (type: string) => {
+const mapRawTypeToEventType = (type: string): EventData["type"] => {
   switch (type) {
     case "SHOW":
       return "SHOW";
