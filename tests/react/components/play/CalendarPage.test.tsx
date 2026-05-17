@@ -1,5 +1,5 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
-import CalendarPage from "../../src/react/components/play/CalendarPage";
+import CalendarPage from "../../../../src/react/components/play/CalendarPage";
 import {
   actorUser,
   expectContractCall,
@@ -9,7 +9,7 @@ import {
   requestValue,
   setupMocks,
   teacherUser,
-} from "./test-utils";
+} from "../../test-utils";
 
 describe("React: CalendarPage", () => {
   beforeEach(() => {

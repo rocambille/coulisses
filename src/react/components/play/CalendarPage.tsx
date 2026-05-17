@@ -114,7 +114,6 @@ function CalendarPage() {
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const currentYear = currentDate.getFullYear();
@@ -136,6 +135,8 @@ function CalendarPage() {
     return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
   });
 
+  const showAddModal = selectedDate != null;
+
   const handleAdd = async (formData: FormData) => {
     try {
       const parsedData = validate(formData);
@@ -148,7 +149,7 @@ function CalendarPage() {
       );
 
       if (response.ok) {
-        setShowAddModal(false);
+        setSelectedDate(null);
       }
     } catch (err) {
       if (err instanceof ZodError) {
@@ -298,10 +299,9 @@ function CalendarPage() {
               {isTeacher && (
                 <button
                   type="button"
-                  aria-label={`Ajouter un événement le ${toInputDate(currentDayDate)}`}
+                  aria-label={`Ajouter un événement le ${toInputDate(currentDayDate.toISOString())}`}
                   onClick={() => {
                     setSelectedDate(currentDayDate);
-                    setShowAddModal(true);
                   }}
                   style={{
                     position: "absolute",
@@ -382,7 +382,7 @@ function CalendarPage() {
                 type="button"
                 rel="prev"
                 aria-label="Fermer"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => setSelectedDate(null)}
               ></button>
               Nouvel événement
             </header>
@@ -406,9 +406,7 @@ function CalendarPage() {
                   <input
                     name="start_date"
                     type="date"
-                    defaultValue={
-                      selectedDate ? toInputDate(selectedDate) : undefined
-                    }
+                    defaultValue={toInputDate(selectedDate.toISOString())}
                     required
                   />
                 </label>
@@ -417,9 +415,7 @@ function CalendarPage() {
                   <input
                     name="start_time"
                     type="time"
-                    defaultValue={
-                      selectedDate ? toInputTime(selectedDate) : undefined
-                    }
+                    defaultValue={toInputTime(selectedDate.toISOString())}
                     required
                   />
                 </label>
@@ -431,9 +427,7 @@ function CalendarPage() {
                   <input
                     name="end_date"
                     type="date"
-                    defaultValue={
-                      selectedDate ? toInputDate(selectedDate) : undefined
-                    }
+                    defaultValue={toInputDate(selectedDate.toISOString())}
                     required
                   />
                 </label>
@@ -442,9 +436,7 @@ function CalendarPage() {
                   <input
                     name="end_time"
                     type="time"
-                    defaultValue={
-                      selectedDate ? toInputTime(selectedDate) : undefined
-                    }
+                    defaultValue={toInputTime(selectedDate.toISOString())}
                     required
                   />
                 </label>

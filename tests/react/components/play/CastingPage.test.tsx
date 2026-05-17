@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import CastingPage from "../../src/react/components/play/CastingPage";
+import CastingPage from "../../../../src/react/components/play/CastingPage";
 import {
   expectContractCall,
   mainPlay,
@@ -7,7 +7,7 @@ import {
   requestValue,
   setupMocks,
   teacherUser,
-} from "./test-utils";
+} from "../../test-utils";
 
 describe("React: CastingPage", () => {
   beforeEach(() => {

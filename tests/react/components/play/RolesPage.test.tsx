@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import RolesPage from "../../src/react/components/play/RolesPage";
+import RolesPage from "../../../../src/react/components/play/RolesPage";
 import {
   emptyPlay,
   expectContractCall,
@@ -8,7 +8,7 @@ import {
   requestValue,
   setupMocks,
   teacherUser,
-} from "./test-utils";
+} from "../../test-utils";
 
 describe("React: RolesPage", () => {
   beforeEach(() => {

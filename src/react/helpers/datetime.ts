@@ -20,55 +20,66 @@
   ```
 */
 
-const DEFAULT_TIMEZONE = "Europe/Paris";
-
 /**
- * Normalizes input to a Date object.
+ * The default timezone to use for date and time operations.
  */
-function toDate(input: string | Date): Date {
-  return typeof input === "string" ? new Date(input) : input;
+export const DEFAULT_TIMEZONE = import.meta.env.VITE_TIMEZONE ?? "Europe/Paris";
+
+function toParts(
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+): Record<string, string> {
+  return Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", options)
+      .formatToParts(date)
+      .map(({ type, value }) => [type, value]),
+  );
 }
 
 /**
  * Parses local date and time strings (from <input type="date|time">)
  * into a native Date object, interpreted in the target timezone.
+ *
+ * @param dateStr Format "YYYY-MM-DD"
+ * @param timeStr Format "HH:mm"
+ * @param timeZone Target timezone (defaults to VITE_TIMEZONE)
+ * @returns A Date object representing the moment in UTC.
  */
 export function fromInputParts(
   dateStr: string,
   timeStr: string,
   timeZone: string = DEFAULT_TIMEZONE,
 ): Date {
-  // 1. Create a UTC date representing the "naive" parts
-  const naiveUtc = new Date(`${dateStr}T${timeStr}:00Z`);
+  // 1. Create a UTC date representing the "naive" parts.
+  // We append 'Z' to treat the input as if it were UTC initially,
+  // then we calculate the offset difference to "shift" it to the target timezone.
+  const naiveUtc = new Date(`${dateStr}T${timeStr}Z`);
 
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  /**
+   * Native JS Dates don't provide an easy way to get the offset of a SPECIFIC timezone
+   * at a specific moment (especially with DST).
+   * We use Intl.DateTimeFormat to "render" the date in the target timezone,
+   * then we parse those parts back into a UTC timestamp to see the difference.
+   */
+  const { year, month, day, hour, minute } = toParts(naiveUtc, {
     timeZone,
-    hour12: false,
+    hourCycle: "h23",
     year: "numeric",
     month: "numeric",
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
-    second: "numeric",
   });
+  const localized = Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+  );
+  const offset = localized - naiveUtc.getTime();
 
-  const getOffsetMinutes = (d: Date) => {
-    const parts = formatter.formatToParts(d);
-    const p = (type: string) => parts.find((it) => it.type === type)?.value;
-    const localized = Date.UTC(
-      Number(p("year")),
-      Number(p("month")) - 1,
-      Number(p("day")),
-      Number(p("hour")) % 24,
-      Number(p("minute")),
-      Number(p("second")),
-    );
-    return (localized - d.getTime()) / 60000;
-  };
-
-  // The UTC time we want is: naiveUtc - offset
-  const offset = getOffsetMinutes(naiveUtc);
-  return new Date(naiveUtc.getTime() - offset * 60000);
+  return new Date(naiveUtc.getTime() - offset);
 }
 
 /**
@@ -76,19 +87,16 @@ export function fromInputParts(
  * Suitable for <input type="date">.
  */
 export function toInputDate(
-  input: string | Date,
+  input: string,
   timeZone: string = DEFAULT_TIMEZONE,
 ): string {
-  const date = toDate(input);
-  const parts = new Intl.DateTimeFormat("en-US", {
+  const { year, month, day } = toParts(new Date(input), {
     timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(date);
-
-  const f = (type: string) => parts.find((p) => p.type === type)?.value;
-  return `${f("year")}-${f("month")}-${f("day")}`;
+  });
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -96,34 +104,55 @@ export function toInputDate(
  * Suitable for <input type="time">.
  */
 export function toInputTime(
-  input: string | Date,
+  input: string,
   timeZone: string = DEFAULT_TIMEZONE,
 ): string {
-  const date = toDate(input);
-  const parts = new Intl.DateTimeFormat("en-US", {
+  const { hour, minute } = toParts(new Date(input), {
     timeZone,
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
-  }).formatToParts(date);
+    hourCycle: "h23",
+  });
+  return `${hour}:${minute}`;
+}
 
-  const f = (type: string) => parts.find((p) => p.type === type)?.value;
-  const hour = String(Number(f("hour")) % 24).padStart(2, "0");
-  return `${hour}:${f("minute")}`;
+type DisplayOptions = {
+  timeZone: string;
+  locale: string;
+  dateStyle: "full" | "long" | "medium" | "short";
+  timeStyle: "full" | "long" | "medium" | "short";
+};
+
+const globalDisplayOptions: DisplayOptions = {
+  timeZone: DEFAULT_TIMEZONE,
+  locale: "fr-FR",
+  dateStyle: "long",
+  timeStyle: "short",
+};
+
+export function setDisplayOptions(options: Partial<DisplayOptions>) {
+  Object.assign(globalDisplayOptions, options);
+}
+
+export function getDisplayOptions(): DisplayOptions {
+  return globalDisplayOptions;
 }
 
 /**
  * Formats an ISO string or Date into a human-readable localized string.
  */
 export function toDisplayString(
-  input: string | Date,
-  timeZone: string = DEFAULT_TIMEZONE,
+  input: string,
+  options?: Partial<DisplayOptions>,
 ): string {
-  const date = toDate(input);
+  const { timeZone, locale, dateStyle, timeStyle } = {
+    ...globalDisplayOptions,
+    ...options,
+  };
 
-  return new Intl.DateTimeFormat("fr-FR", {
-    dateStyle: "long",
-    timeStyle: "short",
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle,
+    timeStyle,
     timeZone,
-  }).format(date);
+  }).format(new Date(input));
 }

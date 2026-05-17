@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import MembersPage from "../../src/react/components/play/MembersPage";
+import MembersPage from "../../../../src/react/components/play/MembersPage";
 import {
   expectContractCall,
   mainPlay,
@@ -7,7 +7,7 @@ import {
   requestValue,
   setupMocks,
   teacherUser,
-} from "./test-utils";
+} from "../../test-utils";
 
 describe("React: MembersPage", () => {
   beforeEach(() => {

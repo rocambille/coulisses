@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import ScenesPage from "../../src/react/components/play/ScenesPage";
+import ScenesPage from "../../../../src/react/components/play/ScenesPage";
 import {
   actorUser,
   expectContractCall,
@@ -9,7 +9,7 @@ import {
   requestValue,
   setupMocks,
   teacherUser,
-} from "./test-utils";
+} from "../../test-utils";
 
 describe("React: ScenesPage", () => {
   beforeEach(() => {

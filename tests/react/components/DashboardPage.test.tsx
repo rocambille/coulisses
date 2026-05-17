@@ -1,5 +1,5 @@
 import { act, fireEvent, screen } from "@testing-library/react";
-import DashboardPage from "../../src/react/components/DashboardPage";
+import DashboardPage from "../../../src/react/components/DashboardPage";
 import {
   expectContractCall,
   renderWithStub,
@@ -7,7 +7,7 @@ import {
   setupMocks,
   teacherUser,
   thirdUser,
-} from "./test-utils";
+} from "../test-utils";
 
 describe("<DashboardPage />", () => {
   beforeEach(() => {
