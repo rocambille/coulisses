@@ -19,24 +19,24 @@ describe("React: MembersPage", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub(
-      "/plays/:playId/members",
-      MembersPage,
-      [`/plays/${mainPlay.id}/members`],
-      { me: teacherUser },
-    );
+    await renderWithStub({
+      path: "/plays/:playId/members",
+      Component: MembersPage,
+      initialEntries: [`/plays/${mainPlay.id}/members`],
+      me: teacherUser,
+    });
 
     await screen.findByRole("heading", { level: 2 });
     expect(screen.getByText(/membres/i)).toBeDefined();
   });
 
   it("should add a new member successfully", async () => {
-    const { user } = await renderWithStub(
-      "/plays/:playId/members",
-      MembersPage,
-      [`/plays/${mainPlay.id}/members`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/members",
+      Component: MembersPage,
+      initialEntries: [`/plays/${mainPlay.id}/members`],
+      me: teacherUser,
+    });
 
     await user.type(
       screen.getByLabelText(/email/i),

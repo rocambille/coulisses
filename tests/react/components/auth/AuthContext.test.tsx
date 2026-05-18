@@ -24,12 +24,14 @@ describe("React Components: AuthContext", () => {
 
   describe("<AuthProvider />", () => {
     it("should render its children", async () => {
-      await renderWithStub(
-        "/",
-        () => <AuthProvider initialUser={null}>hello, world!</AuthProvider>,
-        ["/"],
-        { me: null },
-      );
+      await renderWithStub({
+        path: "/",
+        Component: () => (
+          <AuthProvider initialUser={null}>hello, world!</AuthProvider>
+        ),
+        initialEntries: ["/"],
+        me: null,
+      });
 
       await screen.findByText("hello, world!");
     });

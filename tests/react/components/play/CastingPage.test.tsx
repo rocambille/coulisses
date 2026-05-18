@@ -19,24 +19,24 @@ describe("React: CastingPage", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub(
-      "/plays/:playId/casting",
-      CastingPage,
-      [`/plays/${mainPlay.id}/casting`],
-      { me: teacherUser },
-    );
+    await renderWithStub({
+      path: "/plays/:playId/casting",
+      Component: CastingPage,
+      initialEntries: [`/plays/${mainPlay.id}/casting`],
+      me: teacherUser,
+    });
 
     await screen.findByRole("heading", { level: 2 });
     expect(screen.getByText(/casting/i)).toBeDefined();
   });
 
   it("should assign a role successfully (teacher)", async () => {
-    const { user } = await renderWithStub(
-      "/plays/:playId/casting",
-      CastingPage,
-      [`/plays/${mainPlay.id}/casting`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/casting",
+      Component: CastingPage,
+      initialEntries: [`/plays/${mainPlay.id}/casting`],
+      me: teacherUser,
+    });
 
     // Specific label matching the first role
     const label = new RegExp(
@@ -52,12 +52,12 @@ describe("React: CastingPage", () => {
   });
 
   it("should update a role successfully (teacher)", async () => {
-    const { user } = await renderWithStub(
-      "/plays/:playId/casting",
-      CastingPage,
-      [`/plays/${mainPlay.id}/casting`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/casting",
+      Component: CastingPage,
+      initialEntries: [`/plays/${mainPlay.id}/casting`],
+      me: teacherUser,
+    });
 
     // Specific label matching the first role
     const label = new RegExp(
@@ -73,12 +73,12 @@ describe("React: CastingPage", () => {
   });
 
   it("should unassign a role successfully (teacher)", async () => {
-    const { user } = await renderWithStub(
-      "/plays/:playId/casting",
-      CastingPage,
-      [`/plays/${mainPlay.id}/casting`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/casting",
+      Component: CastingPage,
+      initialEntries: [`/plays/${mainPlay.id}/casting`],
+      me: teacherUser,
+    });
 
     const label = new RegExp(
       `assigner.*${requestValue("castings", "unassign", "main", "roleId")}`,

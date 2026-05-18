@@ -19,7 +19,10 @@ describe("<PlayLayout />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub("/plays/:playId", () => <PlayLayout />, ["/plays/1"], {
+    await renderWithStub({
+      path: "/plays/:playId",
+      Component: PlayLayout,
+      initialEntries: ["/plays/1"],
       me: teacherUser,
     });
 

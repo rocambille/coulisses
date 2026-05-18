@@ -20,36 +20,36 @@ describe("React: RolesPage", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub(
-      "/plays/:playId/roles",
-      RolesPage,
-      [`/plays/${mainPlay.id}/roles`],
-      { me: teacherUser },
-    );
+    await renderWithStub({
+      path: "/plays/:playId/roles",
+      Component: RolesPage,
+      initialEntries: [`/plays/${mainPlay.id}/roles`],
+      me: teacherUser,
+    });
 
     await screen.findByRole("heading", { level: 2 });
     expect(screen.getByText(/rôles/i)).toBeDefined();
   });
 
   it("should display a message when the play has no roles", async () => {
-    await renderWithStub(
-      "/plays/:playId/roles",
-      RolesPage,
-      [`/plays/${emptyPlay.id}/roles`],
-      { me: teacherUser },
-    );
+    await renderWithStub({
+      path: "/plays/:playId/roles",
+      Component: RolesPage,
+      initialEntries: [`/plays/${emptyPlay.id}/roles`],
+      me: teacherUser,
+    });
 
     await screen.findByText(/aucun rôle/i);
     expectContractCall("roles", "browse", "empty");
   });
 
   it("should add a new role successfully", async () => {
-    const { user } = await renderWithStub(
-      "/plays/:playId/roles",
-      RolesPage,
-      [`/plays/${mainPlay.id}/roles`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/roles",
+      Component: RolesPage,
+      initialEntries: [`/plays/${mainPlay.id}/roles`],
+      me: teacherUser,
+    });
 
     await user.type(
       screen.getByLabelText(/nom/i),

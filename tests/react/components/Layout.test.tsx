@@ -13,19 +13,34 @@ describe("<Layout />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub("/", () => <Layout />, ["/"], { me: null });
+    await renderWithStub({
+      path: "/",
+      Component: () => <Layout />,
+      initialEntries: ["/"],
+      me: null,
+    });
 
     await screen.findByRole("navigation");
   });
 
   it("should render magic link form when not authenticated", async () => {
-    await renderWithStub("/", () => <Layout />, ["/"], { me: null });
+    await renderWithStub({
+      path: "/",
+      Component: () => <Layout />,
+      initialEntries: ["/"],
+      me: null,
+    });
 
     await screen.findByLabelText(/email/i);
   });
 
   it("should render logout when authenticated", async () => {
-    await renderWithStub("/", () => <Layout />, ["/"], { me: teacherUser });
+    await renderWithStub({
+      path: "/",
+      Component: () => <Layout />,
+      initialEntries: ["/"],
+      me: teacherUser,
+    });
 
     await screen.findByText(/déconnexion/i);
   });

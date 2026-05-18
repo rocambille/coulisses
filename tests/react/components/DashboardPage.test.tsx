@@ -19,7 +19,12 @@ describe("<DashboardPage />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub("/", DashboardPage, ["/"], { me: teacherUser });
+    await renderWithStub({
+      path: "/",
+      Component: DashboardPage,
+      initialEntries: ["/"],
+      me: teacherUser,
+    });
 
     await screen.findByRole("heading", { level: 1, name: /mes pièces/i });
 
@@ -29,7 +34,12 @@ describe("<DashboardPage />", () => {
   it("should display a message when the user has no plays", async () => {
     setupMocks({ forceCases: { "plays.browse": "third" } });
 
-    await renderWithStub("/", DashboardPage, ["/"], { me: thirdUser });
+    await renderWithStub({
+      path: "/",
+      Component: DashboardPage,
+      initialEntries: ["/"],
+      me: thirdUser,
+    });
 
     await screen.findByText(/aucune pièce/i);
 
@@ -37,7 +47,10 @@ describe("<DashboardPage />", () => {
   });
 
   it("should add a play", async () => {
-    const { user } = await renderWithStub("/", DashboardPage, ["/"], {
+    const { user } = await renderWithStub({
+      path: "/",
+      Component: DashboardPage,
+      initialEntries: ["/"],
       me: teacherUser,
     });
 
@@ -53,7 +66,10 @@ describe("<DashboardPage />", () => {
   it("should alert when submitted data is invalid", async () => {
     vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
 
-    await renderWithStub("/", DashboardPage, ["/"], {
+    await renderWithStub({
+      path: "/",
+      Component: DashboardPage,
+      initialEntries: ["/"],
       me: teacherUser,
     });
 

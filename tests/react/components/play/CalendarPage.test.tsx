@@ -22,12 +22,12 @@ describe("React: CalendarPage", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: actorUser },
-    );
+    await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: actorUser,
+    });
 
     await screen.findByRole("heading", { level: 2 });
 
@@ -37,12 +37,12 @@ describe("React: CalendarPage", () => {
   it("should allow user to navigate previous month", async () => {
     vi.setSystemTime(new Date("2026-05-05T12:00:00Z"));
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: actorUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: actorUser,
+    });
 
     await user.click(screen.getByRole("button", { name: /</i }));
     await screen.findByText("Avril 2026");
@@ -51,24 +51,24 @@ describe("React: CalendarPage", () => {
   it("should allow user to navigate next month", async () => {
     vi.setSystemTime(new Date("2026-05-05T12:00:00Z"));
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: actorUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: actorUser,
+    });
 
     await user.click(screen.getByRole("button", { name: />/i }));
     await screen.findByText("Juin 2026");
   });
 
   it("should display 'add' button (teacher)", async () => {
-    await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: teacherUser },
-    );
+    await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: teacherUser,
+    });
 
     await screen.findByLabelText(/ajouter.*28$/i);
   });
@@ -76,12 +76,12 @@ describe("React: CalendarPage", () => {
   it("should open event details (actor)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: actorUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: actorUser,
+    });
 
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
@@ -98,12 +98,12 @@ describe("React: CalendarPage", () => {
   it("should open and close event details (actor)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: actorUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: actorUser,
+    });
 
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
@@ -117,12 +117,12 @@ describe("React: CalendarPage", () => {
   it("should open form to edit/delete an event (teacher)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: teacherUser,
+    });
 
     await user.click(
       screen.getByRole("button", {
@@ -142,12 +142,12 @@ describe("React: CalendarPage", () => {
   it("should open form to edit/delete an event and close it (teacher)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: teacherUser,
+    });
 
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
@@ -161,12 +161,12 @@ describe("React: CalendarPage", () => {
   it("should open form and edit an event (teacher)", async () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: teacherUser,
+    });
 
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
@@ -190,12 +190,12 @@ describe("React: CalendarPage", () => {
     vi.setSystemTime(new Date(openingNightEvent.start_time));
     vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: teacherUser,
+    });
 
     await user.click(
       screen.getByRole("button", { name: openingNightEvent.title }),
@@ -208,12 +208,12 @@ describe("React: CalendarPage", () => {
   });
 
   it("should open form to create a new event on a date (teacher)", async () => {
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: teacherUser,
+    });
 
     await user.click(screen.getByLabelText(/ajouter.*28$/i));
 
@@ -222,12 +222,12 @@ describe("React: CalendarPage", () => {
   });
 
   it("should open form to create a new event on a date and close it (teacher)", async () => {
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: teacherUser,
+    });
 
     await user.click(screen.getByLabelText(/ajouter.*28$/i));
 
@@ -245,12 +245,12 @@ describe("React: CalendarPage", () => {
       ),
     );
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: teacherUser,
+    });
 
     await user.click(
       screen.getByLabelText(
@@ -275,12 +275,12 @@ describe("React: CalendarPage", () => {
   it("should alert when submitted data is invalid (teacher)", async () => {
     vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
 
-    const { user } = await renderWithStub(
-      "/plays/:playId/calendar",
-      CalendarPage,
-      [`/plays/${mainPlay.id}/calendar`],
-      { me: teacherUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/plays/:playId/calendar",
+      Component: CalendarPage,
+      initialEntries: [`/plays/${mainPlay.id}/calendar`],
+      me: teacherUser,
+    });
 
     await user.click(screen.getByLabelText(/ajouter.*28$/i));
 
