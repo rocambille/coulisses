@@ -15,32 +15,32 @@ describe("<ItemForm />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub(
-      "/items/new",
-      () => (
+    await renderWithStub({
+      path: "/items/new",
+      Component: () => (
         <ItemForm defaultValue={{ title: "" }} action={() => {}}>
           <button type="submit">submit</button>
         </ItemForm>
       ),
-      ["/items/new"],
-      { me: fooUser },
-    );
+      initialEntries: ["/items/new"],
+      me: fooUser,
+    });
 
     await screen.findByRole("form", { name: /item form/i });
   });
   it("should raise validation errors when submitting", async () => {
     vi.spyOn(globalThis, "alert").mockImplementation(() => {});
 
-    await renderWithStub(
-      "/items/new",
-      () => (
+    await renderWithStub({
+      path: "/items/new",
+      Component: () => (
         <ItemForm defaultValue={{ title: "" }} action={() => {}}>
           <button type="submit">submit</button>
         </ItemForm>
       ),
-      ["/items/new"],
-      { me: fooUser },
-    );
+      initialEntries: ["/items/new"],
+      me: fooUser,
+    });
 
     await fireEvent.submit(screen.getByRole("form", { name: /item form/i }));
 

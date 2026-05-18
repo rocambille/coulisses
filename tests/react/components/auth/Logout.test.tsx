@@ -19,13 +19,19 @@ describe("<LogoutForm />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub("/", LogoutForm, ["/"], {
+    await renderWithStub({
+      path: "/",
+      Component: LogoutForm,
+      initialEntries: ["/"],
       me: fooUser,
     });
     await screen.findByRole("button");
   });
   it("should submit form logout", async () => {
-    const { user } = await renderWithStub("/", LogoutForm, ["/"], {
+    const { user } = await renderWithStub({
+      path: "/",
+      Component: LogoutForm,
+      initialEntries: ["/"],
       me: fooUser,
     });
     await screen.findByRole("button");

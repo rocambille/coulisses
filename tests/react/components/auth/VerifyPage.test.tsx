@@ -25,12 +25,14 @@ describe("<VerifyPage />", () => {
       () => mockedNavigate,
     );
 
-    await renderWithStub(
-      "/verify",
-      VerifyPage,
-      [`/verify?token=${requestValue("auth", "verify", "success", "token")}`],
-      { me: null },
-    );
+    await renderWithStub({
+      path: "/verify",
+      Component: VerifyPage,
+      initialEntries: [
+        `/verify?token=${requestValue("auth", "verify", "success", "token")}`,
+      ],
+      me: null,
+    });
 
     await screen.findByText(/in progress/i);
   });
@@ -40,12 +42,14 @@ describe("<VerifyPage />", () => {
       () => mockedNavigate,
     );
 
-    await renderWithStub(
-      "/verify",
-      VerifyPage,
-      [`/verify?token=${requestValue("auth", "verify", "success", "token")}`],
-      { me: null },
-    );
+    await renderWithStub({
+      path: "/verify",
+      Component: VerifyPage,
+      initialEntries: [
+        `/verify?token=${requestValue("auth", "verify", "success", "token")}`,
+      ],
+      me: null,
+    });
 
     expectContractCall("auth", "verify", "success");
 
@@ -57,14 +61,14 @@ describe("<VerifyPage />", () => {
       () => mockedNavigate,
     );
 
-    await renderWithStub(
-      "/verify",
-      VerifyPage,
-      [
+    await renderWithStub({
+      path: "/verify",
+      Component: VerifyPage,
+      initialEntries: [
         `/verify?token=${requestValue("auth", "verify", "unauthorized", "token")}`,
       ],
-      { me: null },
-    );
+      me: null,
+    });
 
     await screen.findByText(/invalid/i);
 
@@ -77,7 +81,12 @@ describe("<VerifyPage />", () => {
       () => mockedNavigate,
     );
 
-    await renderWithStub("/verify", VerifyPage, ["/verify"], { me: null });
+    await renderWithStub({
+      path: "/verify",
+      Component: VerifyPage,
+      initialEntries: ["/verify"],
+      me: null,
+    });
 
     await screen.findByText(/invalid/i);
 

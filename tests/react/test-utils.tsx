@@ -135,39 +135,44 @@ type StubRouteObject = Parameters<typeof createRoutesStub>[0][number];
 
 // Wrapping render() in act() because React's use() is suspending
 // see https://github.com/testing-library/react-testing-library/issues/1375#issuecomment-2582198933
-export const renderWithStub = async (
-  path: StubRouteObject["path"],
-  Component: StubRouteObject["Component"],
-  initialEntries: string[],
-  options: { me: User | null },
-) => {
+export const renderWithStub = async ({
+  path,
+  Component,
+  ErrorBoundary,
+  loader,
+  initialEntries,
+  me,
+}: {
+  path: NonNullable<StubRouteObject["path"]>;
+  Component: NonNullable<StubRouteObject["Component"]>;
+  ErrorBoundary?: StubRouteObject["ErrorBoundary"];
+  loader?: StubRouteObject["loader"];
+  initialEntries: string[];
+  me: User | null;
+}) => {
   const Stub = createRoutesStub([
     {
       path,
-      Component: (props) => {
-        if (Component == null) {
-          return null;
-        }
-        return (
-          <AuthProvider initialUser={options.me}>
-            <DataRefreshProvider>
-              <Component {...props} />
-            </DataRefreshProvider>
-          </AuthProvider>
-        );
-      },
+      HydrateFallback: () => null,
+      Component: () => (
+        <AuthProvider initialUser={me}>
+          <DataRefreshProvider>
+            <Component />
+          </DataRefreshProvider>
+        </AuthProvider>
+      ),
       ErrorBoundary:
-        // Catch component errors and report them to the test runner
-        ({ error }) => {
+        ErrorBoundary ??
+        (({ error }: { error: unknown }) => {
           throw error;
-        },
+        }),
+      loader,
     },
   ]);
-  const user = userEvent.setup();
   const view = await act(async () =>
     render(<Stub initialEntries={initialEntries} />),
   );
-  return { user, ...view };
+  return { ...view, user: userEvent.setup() };
 };
 
 const mockedRandomUUID = "a-b-c-d-e";

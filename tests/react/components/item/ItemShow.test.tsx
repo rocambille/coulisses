@@ -21,7 +21,10 @@ describe("<ItemShow />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub("/items/:id", ItemShow, [`/items/${allItems[0].id}`], {
+    await renderWithStub({
+      path: "/items/:id",
+      Component: ItemShow,
+      initialEntries: [`/items/${allItems[0].id}`],
       me: fooUser,
     });
 
@@ -31,15 +34,21 @@ describe("<ItemShow />", () => {
   });
   it("should throw 404 when params contain invalid id", async () => {
     await expect(() =>
-      renderWithStub("/items/:id", ItemShow, [`/items/${NaN}`], {
+      renderWithStub({
+        path: "/items/:id",
+        Component: ItemShow,
+        initialEntries: [`/items/${NaN}`],
         me: fooUser,
       }),
-    ).rejects.toThrow(/404/);
+    ).rejects.toThrow(/not found/i);
 
     expectContractCall("items", "read", "not_found");
   });
   it("should not display link to edit item when anonymous", async () => {
-    await renderWithStub("/items/:id", ItemShow, [`/items/${allItems[0].id}`], {
+    await renderWithStub({
+      path: "/items/:id",
+      Component: ItemShow,
+      initialEntries: [`/items/${allItems[0].id}`],
       me: null,
     });
 
@@ -48,7 +57,10 @@ describe("<ItemShow />", () => {
     expect(screen.queryByTestId(`items-edit-/${allItems[0].id}`)).toBeNull();
   });
   it("should display link to edit item when authentified", async () => {
-    await renderWithStub("/items/:id", ItemShow, [`/items/${allItems[0].id}`], {
+    await renderWithStub({
+      path: "/items/:id",
+      Component: ItemShow,
+      initialEntries: [`/items/${allItems[0].id}`],
       me: fooUser,
     });
 

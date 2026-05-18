@@ -28,29 +28,32 @@ describe("<ItemEdit />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub(
-      "/items/:id/edit",
-      ItemEdit,
-      [`/items/${allItems[0].id}/edit`],
-      { me: fooUser },
-    );
+    await renderWithStub({
+      path: "/items/:id/edit",
+      Component: ItemEdit,
+      initialEntries: [`/items/${allItems[0].id}/edit`],
+      me: fooUser,
+    });
 
     await screen.findByRole("button");
   });
   it("should throw 404 when params contain invalid id", async () => {
     await expect(() =>
-      renderWithStub("/items/:id/edit", ItemEdit, [`/items/${NaN}/edit`], {
+      renderWithStub({
+        path: "/items/:id/edit",
+        Component: ItemEdit,
+        initialEntries: [`/items/${NaN}/edit`],
         me: fooUser,
       }),
-    ).rejects.toThrow(/404/);
+    ).rejects.toThrow(/not found/i);
   });
   it("should submit form and edit an item", async () => {
-    const { user } = await renderWithStub(
-      "/items/:id/edit",
-      ItemEdit,
-      [`/items/${allItems[0].id}/edit`],
-      { me: fooUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/items/:id/edit",
+      Component: ItemEdit,
+      initialEntries: [`/items/${allItems[0].id}/edit`],
+      me: fooUser,
+    });
 
     await user.clear(screen.getByLabelText(/title/i));
     await user.type(
@@ -74,12 +77,12 @@ describe("<ItemEdit />", () => {
       ],
     });
 
-    const { user } = await renderWithStub(
-      "/items/:id/edit",
-      ItemEdit,
-      [`/items/${allItems[0].id}/edit`],
-      { me: fooUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/items/:id/edit",
+      Component: ItemEdit,
+      initialEntries: [`/items/${allItems[0].id}/edit`],
+      me: fooUser,
+    });
 
     await user.clear(screen.getByLabelText(/title/i));
     await user.type(

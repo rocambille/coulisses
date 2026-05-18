@@ -19,11 +19,19 @@ describe("<MagicLinkForm />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub("/", MagicLinkForm, ["/"], { me: null });
+    await renderWithStub({
+      path: "/",
+      Component: MagicLinkForm,
+      initialEntries: ["/"],
+      me: null,
+    });
     await screen.findByRole("form");
   });
   it("should submit email and show confirmation", async () => {
-    const { user } = await renderWithStub("/", MagicLinkForm, ["/"], {
+    const { user } = await renderWithStub({
+      path: "/",
+      Component: MagicLinkForm,
+      initialEntries: ["/"],
       me: null,
     });
 
@@ -38,7 +46,10 @@ describe("<MagicLinkForm />", () => {
   it("should fail when email is invalid", async () => {
     vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
 
-    await renderWithStub("/", MagicLinkForm, ["/"], {
+    await renderWithStub({
+      path: "/",
+      Component: MagicLinkForm,
+      initialEntries: ["/"],
       me: null,
     });
 

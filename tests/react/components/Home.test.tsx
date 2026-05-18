@@ -13,13 +13,21 @@ describe("<Home />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub("/", () => <Home />, ["/"], { me: null });
+    await renderWithStub({
+      path: "/",
+      Component: () => <Home />,
+      initialEntries: ["/"],
+      me: null,
+    });
 
     await screen.findByRole("heading", { level: 1 });
   });
 
   it("should count", async () => {
-    const { user } = await renderWithStub("/", () => <Home />, ["/"], {
+    const { user } = await renderWithStub({
+      path: "/",
+      Component: () => <Home />,
+      initialEntries: ["/"],
       me: null,
     });
 

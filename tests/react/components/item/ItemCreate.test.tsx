@@ -28,19 +28,22 @@ describe("<ItemCreate />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub("/items/new", ItemCreate, ["/items/new"], {
+    await renderWithStub({
+      path: "/items/new",
+      Component: ItemCreate,
+      initialEntries: ["/items/new"],
       me: fooUser,
     });
 
     await screen.findByRole("button");
   });
   it("should submit form and create an item", async () => {
-    const { user } = await renderWithStub(
-      "/items/new",
-      ItemCreate,
-      ["/items/new"],
-      { me: fooUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/items/new",
+      Component: ItemCreate,
+      initialEntries: ["/items/new"],
+      me: fooUser,
+    });
 
     await user.type(
       screen.getByLabelText(/title/i),
@@ -65,12 +68,12 @@ describe("<ItemCreate />", () => {
       ],
     });
 
-    const { user } = await renderWithStub(
-      "/items/new",
-      ItemCreate,
-      ["/items/new"],
-      { me: fooUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/items/new",
+      Component: ItemCreate,
+      initialEntries: ["/items/new"],
+      me: fooUser,
+    });
 
     await user.type(
       screen.getByLabelText(/title/i),

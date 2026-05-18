@@ -27,22 +27,22 @@ describe("<ItemDeleteForm />", () => {
   });
 
   it("should mount successfully", async () => {
-    await renderWithStub(
-      "/items/:id",
-      ItemDeleteForm,
-      [`/items/${allItems[0].id}`],
-      { me: fooUser },
-    );
+    await renderWithStub({
+      path: "/items/:id",
+      Component: ItemDeleteForm,
+      initialEntries: [`/items/${allItems[0].id}`],
+      me: fooUser,
+    });
 
     await screen.findByRole("button");
   });
   it("should submit form and delete an item", async () => {
-    const { user } = await renderWithStub(
-      "/items/:id",
-      ItemDeleteForm,
-      [`/items/${allItems[0].id}`],
-      { me: fooUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/items/:id",
+      Component: ItemDeleteForm,
+      initialEntries: [`/items/${allItems[0].id}`],
+      me: fooUser,
+    });
 
     await user.click(screen.getByRole("button"));
 
@@ -61,12 +61,12 @@ describe("<ItemDeleteForm />", () => {
       ],
     });
 
-    const { user } = await renderWithStub(
-      "/items/:id",
-      ItemDeleteForm,
-      [`/items/${allItems[0].id}`],
-      { me: fooUser },
-    );
+    const { user } = await renderWithStub({
+      path: "/items/:id",
+      Component: ItemDeleteForm,
+      initialEntries: [`/items/${allItems[0].id}`],
+      me: fooUser,
+    });
 
     await user.click(screen.getByRole("button"));
 
