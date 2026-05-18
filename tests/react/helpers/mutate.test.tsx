@@ -1,6 +1,7 @@
 import { act } from "@testing-library/react";
 
 import { DataRefreshProvider } from "../../../src/react/components/DataRefreshContext";
+import * as cache from "../../../src/react/helpers/cache";
 import { apiMutate, useMutate } from "../../../src/react/helpers/mutate";
 import {
   expectContractCall,
@@ -52,11 +53,43 @@ describe("React Helpers: mutate", () => {
 
       const mutate = result.current;
 
+      expectTypeOf(mutate).toBeFunction();
+    });
+
+    it("should return a mutate function that sends a mutation request and invalidates the cache", async () => {
+      const invalidateCacheMock = vi.spyOn(cache, "invalidateCache");
+      const { result } = await renderHookAsync(() => useMutate(), {
+        wrapper: DataRefreshProvider,
+      });
+
+      const mutate = result.current;
+
       await act(() =>
         mutate(`/api/users/${teacherUser.id}`, "delete", null, ["/api/users"]),
       );
 
       expectContractCall("users", "delete", "teacher");
+      expect(invalidateCacheMock).toHaveBeenCalledWith("/api/users");
+    });
+
+    it("should return a mutate function that does not invalidate the cache when the request fails", async () => {
+      setupMocks({
+        force500: [{ path: `/api/users/${teacherUser.id}`, method: "delete" }],
+      });
+
+      const invalidateCacheMock = vi.spyOn(cache, "invalidateCache");
+      const { result } = await renderHookAsync(() => useMutate(), {
+        wrapper: DataRefreshProvider,
+      });
+
+      const mutate = result.current;
+
+      await act(() =>
+        mutate(`/api/users/${teacherUser.id}`, "delete", null, ["/api/users"]),
+      );
+
+      expectContractCall("users", "delete", "teacher");
+      expect(invalidateCacheMock).not.toHaveBeenCalled();
     });
   });
 });

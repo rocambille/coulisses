@@ -40,7 +40,7 @@ describe("React: MembersPage", () => {
 
     await user.type(
       screen.getByLabelText(/email/i),
-      requestValue("members", "invite", "teacher", "email"),
+      String(requestValue("members", "invite", "teacher", "email")),
     );
     await user.click(screen.getByRole("button", { name: /inviter/i }));
 

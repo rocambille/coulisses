@@ -176,7 +176,7 @@ describe("React: CalendarPage", () => {
     await user.clear(titleInput);
     await user.type(
       titleInput,
-      requestValue("events", "update", "opening_night", "title"),
+      String(requestValue("events", "update", "opening_night", "title")),
     );
 
     await user.click(screen.getByRole("button", { name: /enregistrer/i }));
@@ -240,7 +240,9 @@ describe("React: CalendarPage", () => {
 
   it("should open form and create a new event on a date (teacher)", async () => {
     vi.setSystemTime(
-      new Date(requestValue("events", "create", "opening_night", "start_time")),
+      new Date(
+        String(requestValue("events", "create", "opening_night", "start_time")),
+      ),
     );
 
     const { user } = await renderWithStub(
@@ -253,7 +255,7 @@ describe("React: CalendarPage", () => {
     await user.click(
       screen.getByLabelText(
         new RegExp(
-          `ajouter.*${requestValue("events", "create", "opening_night", "start_time").split("T")[0]}`,
+          `ajouter.*${String(requestValue("events", "create", "opening_night", "start_time")).split("T")[0]}`,
           "i",
         ),
       ),
@@ -261,7 +263,7 @@ describe("React: CalendarPage", () => {
 
     await user.type(
       screen.getByLabelText(/titre/i),
-      requestValue("events", "create", "opening_night", "title"),
+      String(requestValue("events", "create", "opening_night", "title")),
     );
 
     await user.click(screen.getByRole("button", { name: /^ajouter$/i }));

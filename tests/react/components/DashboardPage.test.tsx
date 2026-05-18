@@ -43,7 +43,7 @@ describe("<DashboardPage />", () => {
 
     await user.type(
       screen.getByLabelText(/titre/i),
-      requestValue("plays", "create", "teacher", "title"),
+      String(requestValue("plays", "create", "teacher", "title")),
     );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 

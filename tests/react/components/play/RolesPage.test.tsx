@@ -53,7 +53,7 @@ describe("React: RolesPage", () => {
 
     await user.type(
       screen.getByLabelText(/nom/i),
-      requestValue("roles", "create", "no_scene", "name"),
+      String(requestValue("roles", "create", "no_scene", "name")),
     );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 

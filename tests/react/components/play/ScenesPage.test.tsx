@@ -44,7 +44,7 @@ describe("React: ScenesPage", () => {
 
     await user.type(
       screen.getByLabelText(/titre/i),
-      requestValue("scenes", "create", "teacher", "title"),
+      String(requestValue("scenes", "create", "teacher", "title")),
     );
     await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
@@ -160,7 +160,7 @@ describe("React: ScenesPage", () => {
     await user.clear(screen.getByLabelText(/^titre$/i));
     await user.type(
       screen.getByLabelText(/^titre$/i),
-      requestValue("scenes", "update", "first_scene", "title"),
+      String(requestValue("scenes", "update", "first_scene", "title")),
     );
     await user.click(
       screen.getByLabelText(

@@ -45,7 +45,7 @@ describe("React: CastingPage", () => {
     );
     await user.selectOptions(
       await screen.findByLabelText(label),
-      requestValue("castings", "assign", "main", "userId"),
+      String(requestValue("castings", "assign", "main", "userId")),
     );
 
     expectContractCall("castings", "assign", "main");
@@ -66,7 +66,7 @@ describe("React: CastingPage", () => {
     );
     await user.selectOptions(
       await screen.findByLabelText(label),
-      requestValue("castings", "update", "main", "userId"),
+      String(requestValue("castings", "update", "main", "userId")),
     );
 
     expectContractCall("castings", "update", "main");
