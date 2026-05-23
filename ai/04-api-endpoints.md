@@ -1,105 +1,140 @@
 # Endpoints API (Express / REST) - MVP
 
-Suite à la définition du modèle de données, ce document dresse la liste des principales routes API REST nécessaires pour faire fonctionner le MVP de l'application. 
-L'API est pensée pour un backend **Node.js (Express)** interagissant avec une base de données au format de notre schéma Prisma.
+Suite à la définition du modèle de données (centré autour des Troupes), ce document dresse la liste des routes API REST nécessaires pour le MVP de l'application. 
+L'API est pensée pour un backend **Node.js (Express)** interagissant avec une base de données **SQLite synchrone** (sans Prisma).
+
+La structure de l'API suit une approche "hybride" :
+- **Imbriquée** pour la création et le listing (ex: `/api/troupes/:troupeId/plays`).
+- **Plate** pour la lecture unitaire, modification ou suppression d'une ressource (ex: `/api/plays/:playId`).
 
 ---
 
 ## 🔒 1. Authentification (Magic Link)
-L'authentification repose sur l'envoi d'un email contenant un token, qui sera ensuite échangé contre un JWT (JSON Web Token) côté front.
+
+L'authentification repose sur un système de lien magique (token éphémère envoyé par email) et l'utilisation de cookies HTTP-Only (`__Host-auth`) pour le maintien de session.
 
 - `POST /api/auth/magic-link`
   - **Body** : `{ email: string }`
-  - **Action** : Crée (ou trouve) le `User` et envoie un email avec un lien sécurisé.
+  - **Action** : Crée (ou trouve) le `User` et envoie un email contenant un lien de connexion.
   
 - `POST /api/auth/verify`
   - **Body** : `{ token: string }`
-  - **Action** : Valide le token magique et retourne le profil utilisateur + un JWT Session (ex: `access_token` dans les cookies ou en JSON).
+  - **Action** : Valide le token magique et renvoie un cookie sécurisé contenant la session.
 
 ---
 
-## 🎭 2. Gestion des Pièces (Plays) & Membres
+## 👥 2. Troupes & Membres (Workspace)
 
-- `GET /api/plays`
-  - **Action** : Récupère la liste des pièces auxquelles le `User` connecté participe (via la table `PlayMember`).
+- `GET /api/troupes`
+  - **Action** : Liste les troupes auxquelles le `User` connecté appartient.
 
-- `POST /api/plays` *(Professeur)*
+- `POST /api/troupes`
+  - **Body** : `{ name: string, description?: string, external_discussion_link?: string }`
+  - **Action** : Crée une troupe. L'utilisateur connecté devient automatiquement membre avec le rôle `ADMIN`.
+
+- `GET /api/troupes/:troupeId`
+  - **Action** : Détails d'une troupe spécifique.
+
+- `GET /api/troupes/:troupeId/members`
+  - **Action** : Liste tous les membres de la troupe (Admin et Comédiens).
+
+- `POST /api/troupes/:troupeId/members` *(Admin uniquement)*
+  - **Body** : `{ email: string, role: 'ADMIN' | 'ACTOR' }`
+  - **Action** : Invite un utilisateur dans la troupe. Si l'email n'existe pas en base, un profil temporaire est créé.
+
+- `DELETE /api/troupes/:troupeId/members/:userId` *(Admin uniquement)*
+  - **Action** : Retire un utilisateur de la troupe.
+
+---
+
+## 🎭 3. Répertoire (Pièces & Envies)
+
+- `GET /api/troupes/:troupeId/plays`
+  - **Action** : Liste toutes les pièces proposées au sein d'une troupe.
+
+- `POST /api/troupes/:troupeId/plays` *(Admin uniquement)*
   - **Body** : `{ title: string, description?: string }`
-  - **Action** : Crée une nouvelle pièce de théâtre.
+  - **Action** : Crée / propose une nouvelle pièce pour la troupe.
 
 - `GET /api/plays/:playId`
-  - **Action** : Récupère les détails d'une pièce spécifique.
+  - **Action** : Détails d'une pièce spécifique.
 
-- `GET /api/plays/:playId/members`
-  - **Action** : Liste la troupe (acteurs et professeurs) associés à la pièce.
-
-- `POST /api/plays/:playId/members` *(Professeur)*
-  - **Body** : `{ email: string, role: MemberRole }`
-  - **Action** : Invite un nouvel utilisateur dans la pièce. S'il n'existe pas, il est créé temporairement en attente d'activation.
+- `POST /api/plays/:playId/preferences` *(Comédien)*
+  - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
+  - **Action** : L'utilisateur enregistre ou met à jour son niveau d'envie global pour cette pièce (`play_preference`).
 
 ---
 
-## 🎬 3. Gestion des Scènes & Rôles
+## 🎬 4. Découpage (Scènes & Rôles)
 
 - `GET /api/plays/:playId/scenes`
-  - **Action** : Récupère la liste des scènes (conduite).
+  - **Action** : Liste toutes les scènes de la pièce (la conduite), ordonnées par `order_in_play`.
 
-- `POST /api/plays/:playId/scenes` *(Professeur)*
-  - **Body** : `{ title: string, durationEst?: number, scene_order: number }`
-  - **Action** : Crée une scène.
-  
+- `POST /api/plays/:playId/scenes` *(Admin uniquement)*
+  - **Body** : `{ title: string, description?: string, cut_notes?: string, order_in_play: number, duration_estimated_seconds?: number }`
+  - **Action** : Ajoute une scène à la pièce.
+
+- `PUT /api/scenes/:sceneId` *(Admin uniquement)*
+  - **Body** : `{ title?: string, cut_notes?: string, order_in_play?: number, is_active?: boolean }`
+  - **Action** : Modifie les attributs d'une scène (notamment pour l'activer/désactiver ou modifier les notes de coupes).
+
 - `GET /api/plays/:playId/roles`
-  - **Action** : Récupère la liste des rôles de la pièce.
+  - **Action** : Liste les rôles de la pièce.
 
-- `POST /api/plays/:playId/roles` *(Professeur)*
-  - **Body** : `{ name: string, description?: string, sceneIds: string[] }`
-  - **Action** : Crée un rôle et l'associe à diverses scènes.
+- `POST /api/plays/:playId/roles` *(Admin uniquement)*
+  - **Body** : `{ name: string, description?: string }`
+  - **Action** : Crée un nouveau rôle.
 
-- `PUT /api/scenes/:sceneId` *(Professeur)*
-  - **Body** : `{ title?: string, scene_order?: number, isActive?: boolean }`
-  - **Action** : Modifie une scène (par exemple : changer son ordre dans la conduite).
-
-- `DELETE /api/scenes/:sceneId` *(Professeur)*
-  - **Action** : Supprime une scène à condition d'avoir les droits.
+- `POST /api/roles/:roleId/scenes` *(Admin uniquement)*
+  - **Body** : `{ sceneId: number }`
+  - **Action** : Associe un rôle existant à une scène existante (table `role_scene`).
 
 ---
 
-## ⭐️ 4. Casting & Préférences
+## ⭐️ 5. Casting & Distribution
 
 - `GET /api/plays/:playId/castings`
-  - **Action** : Endpoint agrégé pour le tableau de bord de la distribution. Retourne toutes les scènes + rôles + castings officiels + synthèses des préférences pour la pièce ciblée.
+  - **Action** : Endpoint agrégé (Dashboard). Retourne l'ensemble de la matrice : les scènes, les rôles associés, toutes les préférences des comédiens, et le casting officiel actuel.
 
 - `POST /api/scenes/:sceneId/preferences` *(Comédien)*
-  - **Body** : `{ level: PreferenceLevel }`
-  - **Action** : Le comédien connecté crée ou met à jour sa préférence pour cette scène.
+  - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
+  - **Action** : Le comédien indique son souhait que cette scène soit conservée dans le spectacle (`scene_preference`).
 
-- `GET /api/plays/:playId/preferences`
-  - **Action** : Récupère la liste de toutes les préférences des comédiens pour visualiser les intentions globales de la troupe sur cette pièce.
+- `POST /api/scenes/:sceneId/roles/:roleId/preferences` *(Comédien)*
+  - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
+  - **Action** : Le comédien indique son niveau d'envie pour interpréter ce rôle précis dans cette scène (`role_preference`).
 
-- `POST /api/plays/:playId/castings` *(Professeur)*
-  - **Body** : `{ roleId: number, userId: number }`
-  - **Action** : Le professeur assigne officiellement un rôle à un comédien.
+- `POST /api/roles/:roleId/preferences` *(Comédien)*
+  - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
+  - **Action** : Le comédien indique son niveau d'envie pour interpréter ce rôle dans toutes les scènes où ce rôle apparaît (`role_preference`).
 
-- `DELETE /api/plays/:playId/castings` *(Professeur)*
-  - **Body** : `{ roleId: number, userId: number }`
-  - **Action** : Le professeur retire l'assignation d'un acteur à un rôle.
+- `POST /api/plays/:playId/castings` *(Admin uniquement)*
+  - **Body** : `{ userId: number, roleId: number, sceneId: number }`
+  - **Action** : L'administrateur attribue officiellement ce rôle à ce comédien pour cette scène spécifique. (Contrainte : 1 seul comédien par rôle par scène).
+
+- `DELETE /api/plays/:playId/castings` *(Admin uniquement)*
+  - **Body** : `{ userId: number, roleId: number, sceneId: number }`
+  - **Action** : Retire l'acteur de son rôle dans cette scène.
 
 ---
 
-## 📅 5. Calendrier (Événements)
+## 📅 6. Agenda & Événements
 
-- `GET /api/plays/:playId/events`
-  - **Action** : Récupère les répétitions et représentations liées à la pièce.
+- `GET /api/troupes/:troupeId/events`
+  - **Query Params** : `?start=YYYY-MM-DD&end=YYYY-MM-DD`
+  - **Action** : Récupère les événements de la troupe, filtrables par fenêtre de dates (semaine en cours, mois prochain...).
 
-- `POST /api/plays/:playId/events` *(Professeur)*
-  - **Body** : `{ title: string, type: 'SHOW' | 'FIXED_REHEARSAL' | 'AUTO_REHEARSAL', start_time: string, end_time: string, location?: string, description?: string }`
-  - **Action** : Crée un évènement.
+- `POST /api/troupes/:troupeId/events` *(Tous les membres)*
+  - **Body** : `{ type: 'COURSE' | 'REHEARSAL' | 'SHOW' | 'OTHER', title: string, start_time: string, end_time: string, location?: string, description?: string }`
+  - **Action** : Crée un événement. Le créateur en devient le propriétaire (`owner_id`).
 
-- `PUT /api/events/:eventId` *(Professeur)*
-  - **Body** : Full `EventData` entity (type, title, description, location, start_time, end_time).
-  - **Action** : Met à jour un évènement existant.
+- `PUT /api/events/:eventId` *(Admin ou Propriétaire de l'événement)*
+  - **Body** : (Champs de l'événement partiels ou totaux)
+  - **Action** : Modifie un événement.
 
-- `DELETE /api/events/:eventId` *(Professeur)*
-  - **Action** : Supprime un évènement.
+- `DELETE /api/events/:eventId` *(Admin ou Propriétaire de l'événement)*
+  - **Action** : Supprime l'événement.
 
-*(Les endpoints concernant la planification des répétitions autonomes `AUTO_REHEARSAL` et les disponibilités `Availability` sont mis en attente pour une éventuelle phase post-MVP).*
+- `POST /api/events/:eventId/presence` *(Tous les membres)*
+  - **Body** : `{ status: 'PRESENT' | 'ABSENT' }`
+  - **Action** : Met à jour la participation de l'utilisateur connecté à l'événement (`event_presence`).
