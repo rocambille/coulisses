@@ -1,6 +1,15 @@
 # Contexte et Objectifs du Projet
 
-Ce document définit le contexte et les objectifs de l'application destinée à l'organisation de la troupe de théâtre.
+Ce document définit le contexte et les objectifs de l'application destinée à l'organisation d'une troupe de théâtre.
+
+Noms envisagés pour l'application :
+- Coulisses
+- En scène
+- Mon petit théâtre
+- Le souffleur
+- Les trois coups
+- La répète
+
 Contexte :
 Nous préparons une pièce de théâtre avec plusieurs scènes et rôles.  
 Le but est d’aider la troupe et le professeur à organiser la préparation de manière claire et transparente.
@@ -21,7 +30,7 @@ Fonctionnalités principales :
 
 2. **Troupes**
    - Une troupe est un ensemble d'utilisateurs
-   - Une troupe est définie par un nom et une description
+   - Une troupe est définie par un nom, une description et un lien pour rejoindre un groupe de discussion (ex: whatsapp, discord, telegram, etc.) 
    - Un utilisateur peut être membre de plusieurs troupes
    - Chaque utilisateur a un rôle unique au sein de la troupe (administrateur ou comédien)
    - Une troupe est créée par un utilisateur (qui en devient l'administrateur)
