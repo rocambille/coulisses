@@ -6,10 +6,10 @@
 import { z } from "zod";
 
 const eventDTOSchema = z.object({
-  type: z.enum(["SHOW", "FIXED_REHEARSAL", "AUTO_REHEARSAL"]),
+  type: z.enum(["COURSE", "REHEARSAL", "SHOW", "OTHER"]),
   title: z.string().max(255),
-  description: z.string().nullable().optional(),
-  location: z.string().max(255).nullable().optional(),
+  description: z.string(),
+  location: z.string().max(255),
   start_time: z.iso.datetime(),
   end_time: z.iso.datetime(),
 });

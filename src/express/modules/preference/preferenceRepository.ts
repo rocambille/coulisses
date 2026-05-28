@@ -1,57 +1,104 @@
 /*
   Purpose:
-  Persistent logic for Preferences.
+  Centralize all persistence logic related to Preference entities.
 */
 
 import database from "../../../database";
 
-const mapLevelToPreferenceLevel = (level: string): PreferenceLevel => {
-  switch (level) {
-    case "HIGH":
-      return "HIGH";
-    case "MEDIUM":
-      return "MEDIUM";
-    case "LOW":
-      return "LOW";
-    case "NOT_INTERESTED":
-      return "NOT_INTERESTED";
-    default:
-      throw new Error(`Invalid preference level: ${level}`);
-  }
-};
-
 class PreferenceRepository {
-  upsert(userId: RowId, sceneId: RowId, level: PreferenceLevel): boolean {
-    // SQLite UPSERT using ON CONFLICT
-    const result = database
+  findAllForUser(userId: RowId): {
+    playPreferences: PlayPreference[];
+    scenePreferences: ScenePreference[];
+    rolePreferences: RolePreference[];
+  } {
+    const playRows = database
       .prepare(
-        `insert into preference (user_id, scene_id, level) 
-       values (?, ?, ?)
-       on conflict(user_id, scene_id) do update set level = ?`,
+        `select user_id, play_id, level, created_at 
+         from play_preference
+         where user_id = ?`,
       )
-      .run(userId, sceneId, level, level);
+      .all(userId);
 
-    return result.changes > 0;
+    const sceneRows = database
+      .prepare(
+        `select user_id, scene_id, level, created_at
+         from scene_preference
+         where user_id = ?`,
+      )
+      .all(userId);
+
+    const roleRows = database
+      .prepare(
+        `select user_id, scene_id, role_id, level, created_at
+         from role_preference
+         where user_id = ?`,
+      )
+      .all(userId);
+
+    return {
+      playPreferences: playRows.map<PlayPreference>((row) => ({
+        user_id: Number(row.user_id),
+        play_id: Number(row.play_id),
+        level: row.level as PreferenceLevel,
+        created_at: String(row.created_at),
+      })),
+      scenePreferences: sceneRows.map<ScenePreference>((row) => ({
+        user_id: Number(row.user_id),
+        scene_id: Number(row.scene_id),
+        level: row.level as PreferenceLevel,
+        created_at: String(row.created_at),
+      })),
+      rolePreferences: roleRows.map<RolePreference>((row) => ({
+        user_id: Number(row.user_id),
+        scene_id: Number(row.scene_id),
+        role_id: Number(row.role_id),
+        level: row.level as PreferenceLevel,
+        created_at: String(row.created_at),
+      })),
+    };
   }
 
-  findByPlay(playId: RowId): PreferenceWithUser[] {
-    const rows = database
+  upsertPlayPreference(
+    userId: RowId,
+    playId: RowId,
+    level: PreferenceLevel,
+  ): void {
+    database
       .prepare(
-        `select p.user_id, u.name, u.email, p.scene_id, p.level 
-       from preference p
-       join user u on p.user_id = u.id
-       join scene s on p.scene_id = s.id 
-       where s.play_id = ?`,
+        `insert into play_preference (user_id, play_id, level) 
+         values (?, ?, ?) 
+         on conflict(user_id, play_id) do update set level = excluded.level`,
       )
-      .all(playId);
+      .run(userId, playId, level);
+  }
 
-    return rows.map<PreferenceWithUser>((row) => ({
-      user_id: Number(row.user_id),
-      name: String(row.name),
-      email: String(row.email),
-      scene_id: Number(row.scene_id),
-      level: mapLevelToPreferenceLevel(String(row.level)),
-    }));
+  upsertScenePreference(
+    userId: RowId,
+    sceneId: RowId,
+    level: PreferenceLevel,
+  ): void {
+    database
+      .prepare(
+        `insert into scene_preference (user_id, scene_id, level) 
+         values (?, ?, ?) 
+         on conflict(user_id, scene_id) do update set level = excluded.level`,
+      )
+      .run(userId, sceneId, level);
+  }
+
+  upsertRolePreference(
+    userId: RowId,
+    sceneId: RowId,
+    roleId: RowId,
+    level: PreferenceLevel,
+  ): void {
+    database
+      .prepare(
+        `insert into role_preference (user_id, scene_id, role_id, level) 
+         values (?, ?, ?, ?) 
+         on conflict(user_id, scene_id, role_id) do update set level = excluded.level`,
+      )
+      .run(userId, sceneId, roleId, level);
   }
 }
 

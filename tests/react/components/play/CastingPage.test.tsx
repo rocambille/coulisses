@@ -1,91 +1,100 @@
 import { screen } from "@testing-library/react";
 import CastingPage from "../../../../src/react/components/play/CastingPage";
 import {
+  actorUser,
   expectContractCall,
   mainPlay,
+  mainPlayPreferences,
+  mainRolePreferences,
+  mainScenePreferences,
+  mainTroupe,
+  mainTroupeMembers,
   renderWithStub,
   requestValue,
   setupMocks,
+  setupTroupeLayoutMocks,
   teacherUser,
 } from "../../test-utils";
 
 describe("React: CastingPage", () => {
-  beforeEach(() => {
-    setupMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("should mount successfully", async () => {
-    await renderWithStub({
-      path: "/plays/:playId/casting",
-      Component: CastingPage,
-      initialEntries: [`/plays/${mainPlay.id}/casting`],
-      me: teacherUser,
+  describe("as actor", () => {
+    beforeEach(() => {
+      setupMocks();
+      setupTroupeLayoutMocks({
+        troupe: mainTroupe,
+        members: mainTroupeMembers,
+        isAdmin: false,
+        playPreferences: mainPlayPreferences,
+        rolePreferences: mainRolePreferences,
+        scenePreferences: mainScenePreferences,
+      });
     });
 
-    await screen.findByRole("heading", { level: 2 });
-    expect(screen.getByText(/casting/i)).toBeDefined();
-  });
-
-  it("should assign a role successfully (teacher)", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/casting",
-      Component: CastingPage,
-      initialEntries: [`/plays/${mainPlay.id}/casting`],
-      me: teacherUser,
+    afterEach(() => {
+      vi.restoreAllMocks();
     });
 
-    // Specific label matching the first role
-    const label = new RegExp(
-      `assigner.*\\b${requestValue("castings", "assign", "main", "roleId")}\\b`,
-      "i",
-    );
-    await user.selectOptions(
-      await screen.findByLabelText(label),
-      String(requestValue("castings", "assign", "main", "userId")),
-    );
+    it("should mount successfully", async () => {
+      await renderWithStub({
+        path: "/plays/:playId/casting",
+        Component: CastingPage,
+        initialEntries: [`/plays/${mainPlay.id}/casting`],
+        me: actorUser,
+      });
 
-    expectContractCall("castings", "assign", "main");
+      await screen.findByRole("heading", { level: 3 });
+    });
   });
 
-  it("should update a role successfully (teacher)", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/casting",
-      Component: CastingPage,
-      initialEntries: [`/plays/${mainPlay.id}/casting`],
-      me: teacherUser,
+  describe("as admin", () => {
+    beforeEach(() => {
+      setupMocks();
+      setupTroupeLayoutMocks({
+        troupe: mainTroupe,
+        members: mainTroupeMembers,
+        isAdmin: true,
+        playPreferences: mainPlayPreferences,
+        rolePreferences: mainRolePreferences,
+        scenePreferences: mainScenePreferences,
+      });
     });
 
-    // Specific label matching the first role
-    const label = new RegExp(
-      `assigner.*\\b${requestValue("castings", "update", "main", "roleId")}\\b`,
-      "i",
-    );
-    await user.selectOptions(
-      await screen.findByLabelText(label),
-      String(requestValue("castings", "update", "main", "userId")),
-    );
-
-    expectContractCall("castings", "update", "main");
-  });
-
-  it("should unassign a role successfully (teacher)", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/casting",
-      Component: CastingPage,
-      initialEntries: [`/plays/${mainPlay.id}/casting`],
-      me: teacherUser,
+    afterEach(() => {
+      vi.restoreAllMocks();
     });
 
-    const label = new RegExp(
-      `assigner.*${requestValue("castings", "unassign", "main", "roleId")}`,
-      "i",
-    );
-    await user.selectOptions(await screen.findByLabelText(label), "");
+    it("should assign a role successfully", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/casting",
+        Component: CastingPage,
+        initialEntries: [`/plays/${mainPlay.id}/casting`],
+        me: teacherUser,
+      });
 
-    expectContractCall("castings", "unassign", "main");
+      const label = new RegExp(
+        `assigner.*rôle.*${requestValue("castings", "assign", "admin", "role_id")}.*scène.*${requestValue("castings", "assign", "admin", "scene_id")}.*à.*${requestValue("castings", "assign", "admin", "user_id")}`,
+        "i",
+      );
+      await user.click(await screen.getByRole("button", { name: label }));
+
+      expectContractCall("castings", "assign", "admin");
+    });
+
+    it("should unassign a role successfully", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/casting",
+        Component: CastingPage,
+        initialEntries: [`/plays/${mainPlay.id}/casting`],
+        me: teacherUser,
+      });
+
+      const label = new RegExp(
+        `désassigner.*rôle.*${requestValue("castings", "unassign", "admin", "role_id")}.*scène.*${requestValue("castings", "unassign", "admin", "scene_id")}.*à.*${requestValue("castings", "unassign", "admin", "user_id")}`,
+        "i",
+      );
+      await user.click(await screen.getByRole("button", { name: label }));
+
+      expectContractCall("castings", "unassign", "admin");
+    });
   });
 });

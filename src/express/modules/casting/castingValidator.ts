@@ -1,15 +1,15 @@
 /*
   Purpose:
-  Validate and normalize incoming Casting payloads for mutative requests.
+  Validate incoming payloads for Castings.
 */
 
 import { z } from "zod";
+import { createValidator } from "../../helpers/validation";
 
 const castingDTOSchema = z.object({
-  userId: z.number(),
-  roleId: z.number(),
+  user_id: z.number(),
+  role_id: z.number(),
+  scene_id: z.number(),
 });
-
-import { createValidator } from "../../helpers/validation";
 
 export default createValidator(castingDTOSchema);

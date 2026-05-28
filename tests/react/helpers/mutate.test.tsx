@@ -8,7 +8,6 @@ import {
   renderHookAsync,
   requestValue,
   setupMocks,
-  teacherUser,
 } from "../test-utils";
 
 describe("React Helpers: mutate", () => {
@@ -23,18 +22,18 @@ describe("React Helpers: mutate", () => {
 
   describe("apiMutate()", () => {
     it("should send a mutation request with a body", async () => {
-      await apiMutate(`/api/users/${teacherUser.id}`, "put", {
-        name: requestValue("users", "update", "teacher", "name"),
-        email: requestValue("users", "update", "teacher", "email"),
+      await apiMutate("/api/users/me", "put", {
+        email: requestValue("users", "edit", "me", "email"),
+        name: requestValue("users", "edit", "me", "name"),
       });
 
-      expectContractCall("users", "update", "teacher");
+      expectContractCall("users", "edit", "me");
     });
 
     it("should send a mutation request without a body", async () => {
-      await apiMutate(`/api/users/${teacherUser.id}`, "delete");
+      await apiMutate("/api/users/me", "delete");
 
-      expectContractCall("users", "delete", "teacher");
+      expectContractCall("users", "delete", "me");
     });
   });
 
@@ -64,17 +63,15 @@ describe("React Helpers: mutate", () => {
 
       const mutate = result.current;
 
-      await act(() =>
-        mutate(`/api/users/${teacherUser.id}`, "delete", null, ["/api/users"]),
-      );
+      await act(() => mutate("/api/users/me", "delete", null, ["/api/users"]));
 
-      expectContractCall("users", "delete", "teacher");
+      expectContractCall("users", "delete", "me");
       expect(invalidateCacheMock).toHaveBeenCalledWith("/api/users");
     });
 
     it("should return a mutate function that does not invalidate the cache when the request fails", async () => {
       setupMocks({
-        force500: [{ path: `/api/users/${teacherUser.id}`, method: "delete" }],
+        force500: [{ path: "/api/users/me", method: "delete" }],
       });
 
       const invalidateCacheMock = vi.spyOn(cache, "invalidateCache");
@@ -84,11 +81,9 @@ describe("React Helpers: mutate", () => {
 
       const mutate = result.current;
 
-      await act(() =>
-        mutate(`/api/users/${teacherUser.id}`, "delete", null, ["/api/users"]),
-      );
+      await act(() => mutate("/api/users/me", "delete", null, ["/api/users"]));
 
-      expectContractCall("users", "delete", "teacher");
+      expectContractCall("users", "delete", "me");
       expect(invalidateCacheMock).not.toHaveBeenCalled();
     });
   });

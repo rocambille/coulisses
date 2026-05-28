@@ -1,204 +1,264 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import ScenesPage from "../../../../src/react/components/play/ScenesPage";
 import {
   actorUser,
+  emptyPlay,
   expectContractCall,
   mainPlay,
+  mainPlayPreferences,
+  mainRolePreferences,
+  mainScenePreferences,
   mainScenes,
+  mainTroupe,
+  mainTroupeMembers,
   renderWithStub,
   requestValue,
   setupMocks,
+  setupTroupeLayoutMocks,
   teacherUser,
 } from "../../test-utils";
 
 describe("React: ScenesPage", () => {
-  beforeEach(() => {
-    setupMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("should mount successfully and render scenes list", async () => {
-    await renderWithStub({
-      path: "/plays/:playId/scenes",
-      Component: ScenesPage,
-      initialEntries: [`/plays/${mainPlay.id}/scenes`],
-      me: teacherUser,
+  describe("as actor", () => {
+    beforeEach(() => {
+      setupMocks();
+      setupTroupeLayoutMocks({
+        troupe: mainTroupe,
+        members: mainTroupeMembers,
+        isAdmin: false,
+        playPreferences: mainPlayPreferences,
+        rolePreferences: mainRolePreferences,
+        scenePreferences: mainScenePreferences,
+      });
     });
 
-    await screen.findByText(new RegExp(mainScenes[0].title, "i"));
-    expect(
-      screen.getByText(new RegExp(mainScenes[1].title, "i")),
-    ).toBeDefined();
-  });
-
-  it("should add a new scene successfully (teacher)", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/scenes",
-      Component: ScenesPage,
-      initialEntries: [`/plays/${mainPlay.id}/scenes`],
-      me: teacherUser,
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
     });
 
-    await user.type(
-      screen.getByLabelText(/titre/i),
-      String(requestValue("scenes", "create", "teacher", "title")),
-    );
-    await user.click(screen.getByRole("button", { name: /ajouter/i }));
+    it("should mount successfully", async () => {
+      await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: actorUser,
+      });
 
-    expectContractCall("scenes", "create", "teacher");
-  });
-
-  it("should update preference successfully (actor)", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/scenes",
-      Component: ScenesPage,
-      initialEntries: [`/plays/${mainPlay.id}/scenes`],
-      me: actorUser,
+      await waitFor(() => screen.getByRole("heading", { level: 3 }));
     });
 
-    await user.selectOptions(
-      screen.getByLabelText(
-        new RegExp(`envie.*scène.*${mainScenes[0].id}`, "i"),
-      ),
-      "HIGH",
-    );
+    it("should display a message when the play has no scenes", async () => {
+      await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${emptyPlay.id}/scenes`],
+        me: actorUser,
+      });
 
-    expectContractCall("preferences", "upsert", "update");
-  });
-
-  it("should add a new preference successfully (actor)", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/scenes",
-      Component: ScenesPage,
-      initialEntries: [`/plays/${mainPlay.id}/scenes`],
-      me: actorUser,
+      await screen.findByText(/aucune scène/i);
     });
 
-    await user.selectOptions(
-      screen.getByLabelText(
-        new RegExp(`envie.*scène.*${mainScenes[2].id}`, "i"),
-      ),
-      "HIGH",
-    );
+    it("should update preference successfully", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: actorUser,
+      });
 
-    expectContractCall("preferences", "upsert", "insert");
-  });
+      await user.selectOptions(
+        screen.getByLabelText(
+          new RegExp(`envie.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+        "HIGH",
+      );
 
-  it("should display edit form when clicking on edit button", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/scenes",
-      Component: ScenesPage,
-      initialEntries: [`/plays/${mainPlay.id}/scenes`],
-      me: teacherUser,
+      expectContractCall("scenes", "set_preference", "member");
     });
 
-    await user.click(
-      screen.getByLabelText(
-        new RegExp(`modifier.*${mainScenes[0].title}`, "i"),
-      ),
-    );
+    it("should select no preference when user has no preference", async () => {
+      await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: actorUser,
+      });
 
-    await screen.findByLabelText(
-      new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
-    );
-    await screen.findByLabelText(
-      new RegExp(`annuler.*${mainScenes[0].title}`, "i"),
-    );
+      const label = new RegExp(`envie.*scène.*${mainScenes[2].id}`, "i");
+      await screen.findByLabelText(label);
+
+      expect(screen.getByLabelText<HTMLSelectElement>(label).value).toBe("");
+    });
   });
 
-  it("should cancel editing a scene when clicking on cancel button", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/scenes",
-      Component: ScenesPage,
-      initialEntries: [`/plays/${mainPlay.id}/scenes`],
-      me: teacherUser,
+  describe("as admin", () => {
+    beforeEach(() => {
+      setupMocks();
+      setupTroupeLayoutMocks({
+        troupe: mainTroupe,
+        members: mainTroupeMembers,
+        isAdmin: true,
+        playPreferences: mainPlayPreferences,
+        rolePreferences: mainRolePreferences,
+        scenePreferences: mainScenePreferences,
+      });
     });
 
-    await user.click(
-      screen.getByLabelText(
-        new RegExp(`modifier.*${mainScenes[0].title}`, "i"),
-      ),
-    );
-
-    await screen.findByLabelText(
-      new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
-    );
-    await screen.findByLabelText(
-      new RegExp(`annuler.*${mainScenes[0].title}`, "i"),
-    );
-
-    await user.click(
-      screen.getByLabelText(new RegExp(`annuler.*${mainScenes[0].title}`, "i")),
-    );
-
-    await screen.findByLabelText(
-      new RegExp(`modifier.*${mainScenes[0].title}`, "i"),
-    );
-  });
-
-  it("should edit a scene successfully (teacher)", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/scenes",
-      Component: ScenesPage,
-      initialEntries: [`/plays/${mainPlay.id}/scenes`],
-      me: teacherUser,
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
     });
 
-    await user.click(
-      screen.getByLabelText(
-        new RegExp(`modifier.*${mainScenes[0].title}`, "i"),
-      ),
-    );
+    it("should add a new scene", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: teacherUser,
+      });
 
-    await screen.findByLabelText(
-      new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
-    );
+      await user.type(
+        screen.getByLabelText(/titre/i),
+        String(requestValue("scenes", "create", "admin", "title")),
+      );
+      await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-    await user.clear(screen.getByLabelText(/^titre$/i));
-    await user.type(
-      screen.getByLabelText(/^titre$/i),
-      String(requestValue("scenes", "update", "first_scene", "title")),
-    );
-    await user.click(
-      screen.getByLabelText(
-        new RegExp(`enregistrer.*${mainScenes[0].title}`, "i"),
-      ),
-    );
-
-    expectContractCall("scenes", "update", "first_scene");
-  });
-
-  it("should delete a scene successfully (teacher)", async () => {
-    const { user } = await renderWithStub({
-      path: "/plays/:playId/scenes",
-      Component: ScenesPage,
-      initialEntries: [`/plays/${mainPlay.id}/scenes`],
-      me: teacherUser,
+      expectContractCall("scenes", "create", "admin");
     });
 
-    await user.click(
-      screen.getByLabelText(
-        new RegExp(`supprimer.*${mainScenes[0].title}`, "i"),
-      ),
-    );
+    it("should display edit form when clicking on edit button", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: teacherUser,
+      });
 
-    expectContractCall("scenes", "delete", "first_scene");
-  });
+      await user.click(
+        screen.getByLabelText(
+          new RegExp(`modifier.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+      );
 
-  it("should select no preference when user has no preference", async () => {
-    await renderWithStub({
-      path: "/plays/:playId/scenes",
-      Component: ScenesPage,
-      initialEntries: [`/plays/${mainPlay.id}/scenes`],
-      me: actorUser,
+      await screen.findByLabelText(
+        new RegExp(
+          `enregistrer.*modification.*scène.*${mainScenes[0].id}`,
+          "i",
+        ),
+      );
+      await screen.findByLabelText(
+        new RegExp(`annuler.*modification.*scène.*${mainScenes[0].id}`, "i"),
+      );
     });
 
-    const label = new RegExp(`envie.*scène.*${mainScenes[2].id}`, "i");
-    await screen.findByLabelText(label);
+    it("should cancel editing a scene when clicking on cancel button", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: teacherUser,
+      });
 
-    expect(screen.getByLabelText<HTMLSelectElement>(label).value).toBe("");
+      await user.click(
+        screen.getByLabelText(
+          new RegExp(`modifier.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+      );
+
+      await user.click(
+        screen.getByLabelText(
+          new RegExp(`annuler.*modification.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+      );
+
+      await screen.findByLabelText(
+        new RegExp(`modifier.*scène.*${mainScenes[0].id}`, "i"),
+      );
+    });
+
+    it("should edit a scene", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: teacherUser,
+      });
+
+      await user.click(
+        screen.getByLabelText(
+          new RegExp(`modifier.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+      );
+
+      await screen.findByLabelText(
+        new RegExp(
+          `enregistrer.*modification.*scène.*${mainScenes[0].id}`,
+          "i",
+        ),
+      );
+
+      await user.clear(
+        screen.getByLabelText(
+          new RegExp(`titre.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+      );
+      await user.type(
+        screen.getByLabelText(
+          new RegExp(`titre.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+        String(requestValue("scenes", "edit", "admin", "title")),
+      );
+      await user.click(
+        screen.getByLabelText(
+          new RegExp(
+            `enregistrer.*modification.*scène.*${mainScenes[0].id}`,
+            "i",
+          ),
+        ),
+      );
+
+      expectContractCall("scenes", "edit", "admin");
+    });
+
+    it("should delete a scene", async () => {
+      vi.spyOn(window, "confirm").mockReturnValue(true);
+
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: teacherUser,
+      });
+
+      await user.click(
+        screen.getByLabelText(
+          new RegExp(`supprimer.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+      );
+
+      expectContractCall("scenes", "delete", "admin");
+    });
+
+    it("should not delete a scene when user cancels", async () => {
+      vi.spyOn(window, "confirm").mockReturnValue(false);
+
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: teacherUser,
+      });
+
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockClear();
+
+      await user.click(
+        screen.getByLabelText(
+          new RegExp(`supprimer.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+      );
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
   });
 });

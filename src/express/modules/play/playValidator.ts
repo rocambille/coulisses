@@ -4,20 +4,11 @@
 */
 
 import { z } from "zod";
-
-const playDTOSchema = z.object({
-  id: z.number().optional(),
-  title: z.string().max(255),
-  description: z.string().nullable().optional(),
-});
-
 import { createValidator } from "../../helpers/validation";
 
-export default createValidator(playDTOSchema);
-
-const playMemberDTOSchema = z.object({
-  email: z.email(),
-  role: z.enum(["TEACHER", "ACTOR"]),
+const playDTOSchema = z.object({
+  title: z.string().max(255),
+  description: z.string(),
 });
 
-export const playMemberValidator = createValidator(playMemberDTOSchema);
+export default createValidator(playDTOSchema);

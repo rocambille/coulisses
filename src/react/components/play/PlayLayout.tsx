@@ -1,49 +1,83 @@
 /*
   Purpose:
   Shared layout for a specific play.
-  Provides internal navigation (Scènes, Rôles, Membres) and fetches play data.
-  Route: /plays/:playId
+  Provides internal navigation (Scènes, Rôles, Casting) and fetches play data.
+  Route: /troupes/:troupeId/plays/:playId
 */
 
-import { use } from "react";
-import { NavLink, Outlet, useParams } from "react-router";
+import { use, useEffect } from "react";
+import { Link, Outlet, useOutletContext, useParams } from "react-router";
 import { cache } from "../../helpers/cache";
 
-function PlayLayout() {
-  const { playId } = useParams();
+export default function PlayLayout() {
+  const { troupeId, playId } = useParams();
+  const {
+    troupe,
+    members,
+    isAdmin,
+    scenePreferences,
+    rolePreferences,
+    pushBreadcrumb,
+  } = useOutletContext<{
+    troupe: Troupe;
+    members: TroupeMember[];
+    isAdmin: boolean;
+    scenePreferences: ScenePreference[];
+    rolePreferences: RolePreference[];
+    pushBreadcrumb: (breadcrumb: NavItem[]) => void;
+  }>();
 
-  const play: Play = use(cache(`/api/plays/${playId}`));
+  // Use the cached play fetched at the Troupe level if possible, or fetch it directly.
+  const play = use<Play>(cache(`/api/plays/${playId}`));
+
+  useEffect(() => {
+    pushBreadcrumb([
+      {
+        to: `/troupes/${troupeId}/plays/${playId}`,
+        label: play.title,
+      },
+    ]);
+
+    return () => {
+      pushBreadcrumb([]);
+    };
+  }, [playId, troupeId, play.title, pushBreadcrumb]);
 
   return (
     <>
       <hgroup>
-        <h1>{play.title}</h1>
-        {play.description && <p>{play.description}</p>}
+        <h2>{play.title}</h2>
+        <p>{play.description}</p>
       </hgroup>
 
       <nav>
         <ul>
           <li>
-            <NavLink to={`/plays/${playId}/scenes`}>Scènes</NavLink>
+            <Link to={`/troupes/${troupeId}/plays/${playId}/scenes`}>
+              Scènes & Envies
+            </Link>
           </li>
           <li>
-            <NavLink to={`/plays/${playId}/roles`}>Rôles</NavLink>
+            <Link to={`/troupes/${troupeId}/plays/${playId}/roles`}>Rôles</Link>
           </li>
           <li>
-            <NavLink to={`/plays/${playId}/casting`}>Distribution</NavLink>
-          </li>
-          <li>
-            <NavLink to={`/plays/${playId}/calendar`}>Agenda</NavLink>
-          </li>
-          <li>
-            <NavLink to={`/plays/${playId}/members`}>Membres</NavLink>
+            <Link to={`/troupes/${troupeId}/plays/${playId}/casting`}>
+              Distribution
+            </Link>
           </li>
         </ul>
       </nav>
 
-      <Outlet context={{ play }} />
+      <Outlet
+        context={{
+          play,
+          troupe,
+          members,
+          isAdmin,
+          scenePreferences,
+          rolePreferences,
+        }}
+      />
     </>
   );
 }
-
-export default PlayLayout;

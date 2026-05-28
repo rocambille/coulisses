@@ -69,7 +69,7 @@ import userValidator from "./userValidator";
   - Make refactors trivial
 */
 const BASE_PATH = "/api/users";
-const USER_PATH = "/api/users/:userId";
+const ME_PATH = "/api/users/me";
 
 /* ************************************************************************ */
 /* Param converter                                                          */
@@ -83,32 +83,6 @@ const USER_PATH = "/api/users/:userId";
   - Downstream handlers can assume a valid user
 */
 router.param("userId", userParamConverter.convert);
-
-/* ************************************************************************ */
-/* Authorization rules                                                      */
-/* ************************************************************************ */
-
-import type { RequestHandler } from "express";
-
-/*
-  Ownership check.
-
-  Authorization logic is kept:
-  - Explicit
-  - Local to the resource
-  - Easy to audit
-
-  Assumptions:
-  - req.params.userId is the owner
-  - req.me.id is the authenticated user id
-*/
-const checkAccess: RequestHandler = (req, res, next) => {
-  if (req.user.id === req.me.id) {
-    next();
-  } else {
-    res.sendStatus(403);
-  }
-};
 
 /* ************************************************************************ */
 /* Authentication wall                                                      */
@@ -127,17 +101,11 @@ router.use(BASE_PATH, authActions.verifyAccessToken);
 /* Authenticated routes                                                     */
 /* ************************************************************************ */
 
-/*
-  User-specific mutations.
-  - Authentication already enforced
-  - Ownership enforced via checkAccess
-*/
 router
-  .route(USER_PATH)
-  .all(checkAccess)
-  .get(userActions.read)
-  .put(userValidator.validate, userActions.edit)
-  .delete(userActions.destroy);
+  .route(ME_PATH)
+  .get(userActions.readMe)
+  .put(userValidator.validate, userActions.editMe)
+  .delete(userActions.destroyMe);
 
 /* ************************************************************************ */
 /* Export                                                                   */

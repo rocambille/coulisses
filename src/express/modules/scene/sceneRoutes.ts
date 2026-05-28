@@ -1,6 +1,6 @@
 /*
   Purpose:
-  Routes related to "scenes".
+  Routes related to "scenes" resources.
 */
 
 import { Router } from "express";
@@ -10,75 +10,73 @@ const router = Router();
 import type { RequestHandler } from "express";
 import authActions from "../auth/authActions";
 import playParamConverter from "../play/playParamConverter";
-import playRepository from "../play/playRepository"; // To check play membership
+import playRepository from "../play/playRepository";
+import troupeRepository from "../troupe/troupeRepository";
 import sceneActions from "./sceneActions";
 import sceneParamConverter from "./sceneParamConverter";
 import sceneValidator from "./sceneValidator";
 
-const SCENES_BY_PLAY_PATH = "/api/plays/:playId/scenes";
+const PLAY_SCENES_PATH = "/api/plays/:playId/scenes";
 const SCENE_PATH = "/api/scenes/:sceneId";
 
 router.param("playId", playParamConverter.convert);
 router.param("sceneId", sceneParamConverter.convert);
 
-// Reusable middlewares to check permissions
-const checkIsMemberByPlayId: RequestHandler = (req, res, next) => {
-  const members = playRepository.getMembers(req.play.id);
-  const isMember = members.some((member) => member.id === req.me.id);
-
-  if (isMember) {
+// Helper for play routes
+const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
+  if (troupeRepository.findMember(req.play.troupe_id, req.me.id) != null) {
     next();
   } else {
     res.sendStatus(403);
   }
 };
 
-const checkIsTeacherByPlayId: RequestHandler = (req, res, next) => {
-  const members = playRepository.getMembers(req.play.id);
-  const member = members.find((member) => member.id === req.me.id);
-
-  if (member?.role === "TEACHER") {
+const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
+  if (
+    troupeRepository.findMember(req.play.troupe_id, req.me.id)?.role === "ADMIN"
+  ) {
     next();
   } else {
     res.sendStatus(403);
   }
 };
 
-const checkIsMemberBySceneId: RequestHandler = (req, res, next) => {
-  const members = playRepository.getMembers(req.scene.play_id);
-  const isMember = members.some((member) => member.id === req.me.id);
-
-  if (isMember) {
+// Helper for scene routes (need to fetch play to check troupe)
+const checkIsSceneTroupeMember: RequestHandler = (req, res, next) => {
+  const play = playRepository.find(req.scene.play_id);
+  if (play && troupeRepository.findMember(play.troupe_id, req.me.id) != null) {
     next();
   } else {
     res.sendStatus(403);
   }
 };
 
-const checkIsTeacherBySceneId: RequestHandler = (req, res, next) => {
-  const members = playRepository.getMembers(req.scene.play_id);
-  const member = members.find((member) => member.id === req.me.id);
-
-  if (member?.role === "TEACHER") {
+const checkIsSceneTroupeAdmin: RequestHandler = (req, res, next) => {
+  const play = playRepository.find(req.scene.play_id);
+  if (
+    play &&
+    troupeRepository.findMember(play.troupe_id, req.me.id)?.role === "ADMIN"
+  ) {
     next();
   } else {
     res.sendStatus(403);
   }
 };
 
-router.use([SCENES_BY_PLAY_PATH, SCENE_PATH], authActions.verifyAccessToken);
+router.use([PLAY_SCENES_PATH, SCENE_PATH], authActions.verifyAccessToken);
 
-router
-  .route(SCENES_BY_PLAY_PATH)
-  .get(checkIsMemberByPlayId, sceneActions.browse)
-  .post(checkIsTeacherByPlayId, sceneValidator.validate, sceneActions.add);
+// Nested routes under play
+router.get(PLAY_SCENES_PATH, checkIsPlayTroupeMember, sceneActions.browse);
+router.post(
+  PLAY_SCENES_PATH,
+  checkIsPlayTroupeAdmin,
+  sceneValidator.validate,
+  sceneActions.add,
+);
 
-router.route(SCENE_PATH).all(checkIsMemberBySceneId).get(sceneActions.read);
-
-router
-  .route(SCENE_PATH)
-  .all(checkIsTeacherBySceneId)
-  .put(sceneValidator.validate, sceneActions.edit)
-  .delete(sceneActions.destroy);
+// Flat routes for specific scene
+router.get(SCENE_PATH, checkIsSceneTroupeMember, sceneActions.read);
+router.put(SCENE_PATH, checkIsSceneTroupeAdmin, sceneActions.edit); // Add validator? Validation for update is partial. Let's assume validation is handled or we use a separate updateValidator.
+router.delete(SCENE_PATH, checkIsSceneTroupeAdmin, sceneActions.destroy);
 
 export default router;

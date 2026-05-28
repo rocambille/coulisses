@@ -34,7 +34,7 @@ describe("<VerifyPage />", () => {
       me: null,
     });
 
-    await screen.findByText(/in progress/i);
+    await screen.findByText(/en cours/i);
   });
   it("should verify token and redirect to dashboard when valid", async () => {
     const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});

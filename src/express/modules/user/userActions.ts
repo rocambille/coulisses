@@ -27,36 +27,30 @@ import userRepository from "./userRepository";
 /* Handlers                                                                 */
 /* ************************************************************************ */
 
-/* ************************************************************************ */
-
 /*
-  Read a single user.
+  Return the currently authenticated user.
 
   Preconditions:
-  - `req.user` has been injected by the param converter
-
-  Response:
-  - 200 with the user payload
+  - verifyAccessToken has run successfully
 */
-const read: RequestHandler = (req, res) => {
-  res.json(req.user);
+const readMe: RequestHandler = (req, res) => {
+  res.json(req.me);
 };
 
 /* ************************************************************************ */
 
 /*
-  Edit an existing user.
+  Edit the currently authenticated user.
 
   Preconditions:
   - User is authenticated
-  - User is authorized to access this user
   - req.body has been validated and sanitized
 
   Response:
   - 204 No Content on success
 */
-const edit: RequestHandler = (req, res) => {
-  userRepository.update(req.user.id, req.body);
+const editMe: RequestHandler = (req, res) => {
+  userRepository.update(req.me.id, req.body);
 
   res.sendStatus(204);
 };
@@ -64,17 +58,16 @@ const edit: RequestHandler = (req, res) => {
 /* ************************************************************************ */
 
 /*
-  Soft-delete a user.
+  Soft-delete the currently authenticated user.
 
   Preconditions:
   - User is authenticated
-  - User is authorized to access this user
 
   Response:
   - 204 No Content
 */
-const destroy: RequestHandler = (req, res) => {
-  userRepository.softDelete(req.user.id);
+const destroyMe: RequestHandler = (req, res) => {
+  userRepository.softDelete(req.me.id);
 
   res.sendStatus(204);
 };
@@ -84,7 +77,7 @@ const destroy: RequestHandler = (req, res) => {
 /* ************************************************************************ */
 
 export default {
-  read,
-  edit,
-  destroy,
+  readMe,
+  editMe,
+  destroyMe,
 };

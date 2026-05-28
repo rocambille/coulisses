@@ -35,12 +35,7 @@ function NavBar() {
     <nav>
       <ul>
         {link("/", "🎭 Coulisses")}
-        {check() && (
-          <>
-            {link("/", "Mes Pièces")}
-            {link("/logout", "Déconnexion")}
-          </>
-        )}
+        {check() && link("/me", "Mon compte")}
       </ul>
     </nav>
   );

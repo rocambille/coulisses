@@ -1,22 +1,22 @@
 /*
   Purpose:
-  Handlers for Event operations.
+  Define HTTP request handlers for Event-related operations.
 */
 
 import type { RequestHandler } from "express";
 import eventRepository from "./eventRepository";
 
 const browse: RequestHandler = (req, res) => {
-  const events = eventRepository.findByPlay(req.play.id);
+  const events = eventRepository.findByTroupe(req.troupe.id);
   res.json(events);
 };
 
-const add: RequestHandler = (req, res) => {
-  const insertId = eventRepository.create({
-    ...req.body,
-    play_id: req.play.id,
-  });
+const read: RequestHandler = (req, res) => {
+  res.json(req.event);
+};
 
+const add: RequestHandler = (req, res) => {
+  const insertId = eventRepository.create(req.troupe.id, req.me.id, req.body);
   res.status(201).json({ insertId });
 };
 
@@ -30,4 +30,17 @@ const destroy: RequestHandler = (req, res) => {
   res.sendStatus(204);
 };
 
-export default { browse, add, edit, destroy };
+const setPresence: RequestHandler = (req, res) => {
+  const { status } = req.body;
+  eventRepository.setPresence(req.event.id, req.me.id, status);
+  res.sendStatus(204);
+};
+
+export default {
+  browse,
+  read,
+  add,
+  edit,
+  destroy,
+  setPresence,
+};

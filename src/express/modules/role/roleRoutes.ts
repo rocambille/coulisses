@@ -1,6 +1,6 @@
 /*
   Purpose:
-  Routes related to "roles".
+  Routes related to "roles" resources.
 */
 
 import { Router } from "express";
@@ -11,40 +11,76 @@ import type { RequestHandler } from "express";
 import authActions from "../auth/authActions";
 import playParamConverter from "../play/playParamConverter";
 import playRepository from "../play/playRepository";
+import troupeRepository from "../troupe/troupeRepository";
 import roleActions from "./roleActions";
+import roleParamConverter from "./roleParamConverter";
 import roleValidator from "./roleValidator";
 
-const ROLES_BY_PLAY_PATH = "/api/plays/:playId/roles";
+const PLAY_ROLES_PATH = "/api/plays/:playId/roles";
+const ROLE_PATH = "/api/roles/:roleId";
+const ROLE_SCENES_PATH = "/api/roles/:roleId/scenes";
 
 router.param("playId", playParamConverter.convert);
+router.param("roleId", roleParamConverter.convert);
 
-const checkIsMemberByPlayId: RequestHandler = (req, res, next) => {
-  const members = playRepository.getMembers(req.play.id);
-  const isMember = members.some((member) => member.id === req.me.id);
-
-  if (isMember) {
+// Helper for play routes
+const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
+  if (troupeRepository.findMember(req.play.troupe_id, req.me.id) != null) {
     next();
   } else {
     res.sendStatus(403);
   }
 };
 
-const checkIsTeacherByPlayId: RequestHandler = (req, res, next) => {
-  const members = playRepository.getMembers(req.play.id);
-  const member = members.find((member) => member.id === req.me.id);
-
-  if (member?.role === "TEACHER") {
+const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
+  if (
+    troupeRepository.findMember(req.play.troupe_id, req.me.id)?.role === "ADMIN"
+  ) {
     next();
   } else {
     res.sendStatus(403);
   }
 };
 
-router.use(ROLES_BY_PLAY_PATH, authActions.verifyAccessToken);
+// Helper for role routes (need to fetch play to check troupe)
+const checkIsRoleTroupeAdmin: RequestHandler = (req, res, next) => {
+  const play = playRepository.find(req.role.play_id);
+  if (
+    play &&
+    troupeRepository.findMember(play.troupe_id, req.me.id)?.role === "ADMIN"
+  ) {
+    next();
+  } else {
+    res.sendStatus(403);
+  }
+};
 
-router
-  .route(ROLES_BY_PLAY_PATH)
-  .get(checkIsMemberByPlayId, roleActions.browse)
-  .post(checkIsTeacherByPlayId, roleValidator.validate, roleActions.add);
+router.use(
+  [PLAY_ROLES_PATH, ROLE_PATH, ROLE_SCENES_PATH],
+  authActions.verifyAccessToken,
+);
+
+router.get(PLAY_ROLES_PATH, checkIsPlayTroupeMember, roleActions.browse);
+router.post(
+  PLAY_ROLES_PATH,
+  checkIsPlayTroupeAdmin,
+  roleValidator.validate,
+  roleActions.add,
+);
+
+// Link scene to role
+import { z } from "zod";
+import { createValidator } from "../../helpers/validation";
+
+const linkSceneValidator = createValidator(z.object({ sceneId: z.number() }));
+
+router.post(
+  ROLE_SCENES_PATH,
+  checkIsRoleTroupeAdmin,
+  linkSceneValidator.validate,
+  roleActions.linkScene,
+);
+
+router.delete(ROLE_PATH, checkIsRoleTroupeAdmin, roleActions.destroy);
 
 export default router;

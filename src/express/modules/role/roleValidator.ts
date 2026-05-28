@@ -7,8 +7,8 @@ import { z } from "zod";
 
 const roleDTOSchema = z.object({
   name: z.string().max(255),
-  description: z.string().nullable().optional(),
-  sceneIds: z.array(z.number()).optional(),
+  description: z.string(),
+  sceneIds: z.array(z.number()),
 });
 
 import { createValidator } from "../../helpers/validation";

@@ -40,7 +40,7 @@ class UserRepository {
     - No validation here (done earlier in the pipeline)
     - Assumes referential integrity (user_id exists)
   */
-  create(user: Omit<User, "id">): RowId {
+  create(user: Omit<User, "id" | "created_at" | "deleted_at">): RowId {
     const query = database.prepare(
       "insert into user (email, name) values (?, ?)",
     );
@@ -65,7 +65,7 @@ class UserRepository {
   */
   find(byId: RowId): User | null {
     const query = database.prepare(
-      "select id, email, name from user where id = ? and deleted_at is null",
+      "select id, email, name, created_at, deleted_at from user where id = ? and deleted_at is null",
     );
     const row = query.get(byId);
 
@@ -73,9 +73,15 @@ class UserRepository {
       return null;
     }
 
-    const { id, email, name } = row;
+    const { id, email, name, created_at, deleted_at } = row;
 
-    return { id: Number(id), email: String(email), name: String(name) };
+    return {
+      id: Number(id),
+      email: String(email),
+      name: String(name),
+      created_at: String(created_at),
+      deleted_at: deleted_at != null ? String(deleted_at) : null,
+    };
   }
 
   /*
@@ -91,7 +97,7 @@ class UserRepository {
   */
   findByEmail(byEmail: string): User | null {
     const query = database.prepare(
-      "select id, email, name from user where email = ? and deleted_at is null",
+      "select id, email, name, created_at, deleted_at from user where email = ? and deleted_at is null",
     );
     const row = query.get(byEmail);
 
@@ -99,9 +105,15 @@ class UserRepository {
       return null;
     }
 
-    const { id, email, name } = row;
+    const { id, email, name, created_at, deleted_at } = row;
 
-    return { id: Number(id), email: String(email), name: String(name) };
+    return {
+      id: Number(id),
+      email: String(email),
+      name: String(name),
+      created_at: String(created_at),
+      deleted_at: deleted_at != null ? String(deleted_at) : null,
+    };
   }
 
   /*
@@ -123,11 +135,10 @@ class UserRepository {
       name: name ?? email.split("@")[0],
     });
 
-    return {
-      id: Number(id),
-      email: String(email),
-      name: String(name ?? email.split("@")[0]),
-    };
+    const newUser = this.find(id);
+    if (newUser == null) throw new Error("User not found after creation");
+
+    return newUser;
   }
 
   /* ********************************************************************** */
@@ -144,7 +155,10 @@ class UserRepository {
     Why:
     - Allows callers to decide how to interpret "0 rows affected"
   */
-  update(id: RowId, user: Omit<User, "id">): boolean {
+  update(
+    id: RowId,
+    user: Omit<User, "id" | "created_at" | "deleted_at">,
+  ): boolean {
     const query = database.prepare(
       "update user set email = ?, name = ? where id = ? and deleted_at is null",
     );

@@ -11,16 +11,18 @@ import {
   actorUser,
   allEvents,
   allPlays,
+  allTroupes,
   allUsers,
   deletedUser,
-  emptyPlay,
-  emptyPlayMembers,
+  emptyTroupeMembers,
   mainCastings,
-  mainPlay,
-  mainPlayMembers,
-  mainPreferences,
+  mainEventPresences,
+  mainPlayPreferences,
+  mainRolePreferences,
   mainRoles,
+  mainScenePreferences,
   mainScenes,
+  mainTroupeMembers,
   teacherUser,
   thirdUser,
 } from "../data";
@@ -63,10 +65,10 @@ const mockDatabase = () => {
 
   /* insert all users */
   const insertUser = database.prepare(
-    "insert into user(id, email, name) values(?, ?, ?)",
+    "insert into user(id, email, name, created_at) values(?, ?, ?, ?)",
   );
   for (const user of allUsers) {
-    insertUser.run(user.id, user.email, user.name);
+    insertUser.run(user.id, user.email, user.name, user.created_at);
   }
 
   /* soft delete one user for tests */
@@ -75,37 +77,75 @@ const mockDatabase = () => {
   );
   deleteUser.run(deletedUser.id);
 
-  /* insert all plays */
-  const insertPlay = database.prepare(
-    "insert into play(id, title, description) values(?, ?, ?)",
+  /* insert all troupes */
+  const insertTroupe = database.prepare(
+    "insert into troupe(id, name, description, external_discussion_link, created_at) values(?, ?, ?, ?, ?)",
   );
-  for (const play of allPlays) {
-    insertPlay.run(play.id, play.title, play.description ?? null);
+  for (const troupe of allTroupes) {
+    insertTroupe.run(
+      troupe.id,
+      troupe.name,
+      troupe.description,
+      troupe.external_discussion_link,
+      troupe.created_at,
+    );
   }
 
-  /* insert play members */
-  const insertPlayMember = database.prepare(
-    "insert into member_play(play_id, user_id, role) values(?, ?, ?)",
+  /* insert troupe members */
+  const insertTroupeMember = database.prepare(
+    "insert into troupe_member(user_id, troupe_id, role, joined_at) values(?, ?, ?, ?)",
   );
-  for (const member of mainPlayMembers) {
-    insertPlayMember.run(mainPlay.id, member.id, member.role);
+  for (const member of mainTroupeMembers) {
+    insertTroupeMember.run(
+      member.id,
+      member.troupe_id,
+      member.role,
+      member.joined_at,
+    );
   }
-  for (const member of emptyPlayMembers) {
-    insertPlayMember.run(emptyPlay.id, member.id, member.role);
+  for (const member of emptyTroupeMembers) {
+    insertTroupeMember.run(
+      member.id,
+      member.troupe_id,
+      member.role,
+      member.joined_at,
+    );
+  }
+
+  /* insert all plays */
+  const insertPlay = database.prepare(
+    "insert into play(id, troupe_id, title, description) values(?, ?, ?, ?)",
+  );
+  for (const play of allPlays) {
+    insertPlay.run(play.id, play.troupe_id, play.title, play.description);
+  }
+
+  /* insert play preferences */
+  const insertPlayPreference = database.prepare(
+    "insert into play_preference(user_id, play_id, level, created_at) values(?, ?, ?, ?)",
+  );
+  for (const pref of mainPlayPreferences) {
+    insertPlayPreference.run(
+      pref.user_id,
+      pref.play_id,
+      pref.level,
+      pref.created_at,
+    );
   }
 
   /* insert all scenes */
   const insertScene = database.prepare(
-    "insert into scene(id, play_id, title, description, duration, scene_order, is_active) values(?, ?, ?, ?, ?, ?, ?)",
+    "insert into scene(id, play_id, title, description, cut_notes, order_in_play, duration_estimated_seconds, is_active) values(?, ?, ?, ?, ?, ?, ?, ?)",
   );
   for (const scene of mainScenes) {
     insertScene.run(
       scene.id,
       scene.play_id,
       scene.title,
-      scene.description ?? null,
-      scene.duration ?? null,
-      scene.scene_order,
+      scene.description,
+      scene.cut_notes,
+      scene.order_in_play,
+      scene.duration_estimated_seconds,
       scene.is_active ? 1 : 0,
     );
   }
@@ -118,7 +158,7 @@ const mockDatabase = () => {
     "insert into role_scene(role_id, scene_id) values(?, ?)",
   );
   for (const role of mainRoles) {
-    insertRole.run(role.id, role.play_id, role.name, role.description ?? null);
+    insertRole.run(role.id, role.play_id, role.name, role.description);
     for (const scene of role.scenes) {
       insertRoleScene.run(role.id, scene.id);
     }
@@ -126,38 +166,71 @@ const mockDatabase = () => {
 
   /* insert castings */
   const insertCasting = database.prepare(
-    "insert into casting(user_id, role_id) values(?, ?)",
+    "insert into casting(user_id, scene_id, role_id, assigned_at) values(?, ?, ?, ?)",
   );
   for (const casting of mainCastings) {
-    insertCasting.run(casting.user_id, casting.role_id);
+    insertCasting.run(
+      casting.user_id,
+      casting.scene_id,
+      casting.role_id,
+      casting.assigned_at,
+    );
+  }
+
+  /* insert scene preferences */
+  const insertScenePreference = database.prepare(
+    "insert into scene_preference(user_id, scene_id, level, created_at) values(?, ?, ?, ?)",
+  );
+  for (const pref of mainScenePreferences) {
+    insertScenePreference.run(
+      pref.user_id,
+      pref.scene_id,
+      pref.level,
+      pref.created_at,
+    );
+  }
+
+  /* insert role preferences */
+  const insertRolePreference = database.prepare(
+    "insert into role_preference(user_id, scene_id, role_id, level, created_at) values(?, ?, ?, ?, ?)",
+  );
+  for (const pref of mainRolePreferences) {
+    insertRolePreference.run(
+      pref.user_id,
+      pref.scene_id,
+      pref.role_id,
+      pref.level,
+      pref.created_at,
+    );
   }
 
   /* insert all events */
   const insertEvent = database.prepare(
-    "insert into event(id, play_id, type, title, description, location, start_time, end_time) values(?, ?, ?, ?, ?, ?, ?, ?)",
+    "insert into event(id, troupe_id, owner_id, type, title, description, location, start_time, end_time) values(?, ?, ?, ?, ?, ?, ?, ?, ?)",
   );
   for (const event of allEvents) {
     insertEvent.run(
       event.id,
-      event.play_id,
+      event.troupe_id,
+      event.owner_id,
       event.type,
       event.title,
-      event.description ?? null,
-      event.location ?? null,
+      event.description,
+      event.location,
       event.start_time,
       event.end_time,
     );
   }
 
-  /* insert preferences */
-  const insertPreference = database.prepare(
-    "insert into preference(user_id, scene_id, level) values(?, ?, ?)",
+  /* insert event presences */
+  const insertEventPresence = database.prepare(
+    "insert into event_presence(event_id, user_id, status) values(?, ?, ?)",
   );
-  for (const preference of mainPreferences) {
-    insertPreference.run(
-      preference.user_id,
-      preference.scene_id,
-      preference.level,
+  for (const presence of mainEventPresences) {
+    insertEventPresence.run(
+      presence.event_id,
+      presence.user_id,
+      presence.status,
     );
   }
 
@@ -298,7 +371,11 @@ export const check = async (test: Test, caseName: keyof Test["cases"]) => {
   const response = await apiCall.set("Cookie", cookies);
 
   expect(response.status).toBe(c.response.status);
-  expect(response.body).toEqual(c.response.body);
+
+  // Allow for body match
+  if (c.response.body !== undefined) {
+    expect(response.body).toEqual(c.response.body);
+  }
 
   if (c.response.and) {
     c.response.and(response);

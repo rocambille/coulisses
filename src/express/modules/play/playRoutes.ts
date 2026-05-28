@@ -9,58 +9,72 @@ const router = Router();
 
 import type { RequestHandler } from "express";
 import authActions from "../auth/authActions";
+import troupeParamConverter from "../troupe/troupeParamConverter";
+import troupeRepository from "../troupe/troupeRepository";
 import playActions from "./playActions";
 import playParamConverter from "./playParamConverter";
-import playRepository from "./playRepository";
-import playValidator, { playMemberValidator } from "./playValidator";
+import playValidator from "./playValidator";
 
-const BASE_PATH = "/api/plays";
+const TROUPE_PLAYS_PATH = "/api/troupes/:troupeId/plays";
 const PLAY_PATH = "/api/plays/:playId";
-const MEMBERS_PATH = "/api/plays/:playId/members";
 
+router.param("troupeId", troupeParamConverter.convert);
 router.param("playId", playParamConverter.convert);
 
-// Authorization check: User must be a member of the play to view or modify it
-const checkIsMember: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.play.id);
-  const isMember = members.some((member) => member.id === req.me.id);
-
-  if (isMember) {
-    // For MVP, we can attach the user's role if needed or just pass
+// Authorization check for Troupe routes (browse/create plays)
+const checkIsTroupeMember: RequestHandler = (req, res, next) => {
+  if (troupeRepository.findMember(req.troupe.id, req.me.id) !== null) {
     next();
   } else {
     res.sendStatus(403);
   }
 };
 
-const checkIsTeacher: RequestHandler = async (req, res, next) => {
-  const members = await playRepository.getMembers(req.play.id);
-  const member = members.find((member) => member.id === req.me.id);
-
-  if (member?.role === "TEACHER") {
+const checkIsTroupeAdmin: RequestHandler = (req, res, next) => {
+  if (troupeRepository.findMember(req.troupe.id, req.me.id)?.role === "ADMIN") {
     next();
   } else {
     res.sendStatus(403);
   }
 };
 
-router.use([BASE_PATH, PLAY_PATH, MEMBERS_PATH], authActions.verifyAccessToken);
+// Authorization check for Play routes (read specific play)
+const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
+  if (troupeRepository.findMember(req.play.troupe_id, req.me.id) != null) {
+    next();
+  } else {
+    res.sendStatus(403);
+  }
+};
 
-router.post(BASE_PATH, playValidator.validate, playActions.add);
-router.get(BASE_PATH, playActions.browse);
+router.use([TROUPE_PLAYS_PATH, PLAY_PATH], authActions.verifyAccessToken);
 
-router.route(PLAY_PATH).all(checkIsMember).get(playActions.read);
+router.get(TROUPE_PLAYS_PATH, checkIsTroupeMember, playActions.browse);
+router.post(
+  TROUPE_PLAYS_PATH,
+  checkIsTroupeAdmin,
+  playValidator.validate,
+  playActions.add,
+);
 
-router
-  .route(PLAY_PATH)
-  .all(checkIsTeacher)
-  .put(playValidator.validate, playActions.edit)
-  .delete(playActions.destroy);
+router.get(PLAY_PATH, checkIsPlayTroupeMember, playActions.read);
 
-// Members
-router
-  .route(MEMBERS_PATH)
-  .get(checkIsMember, playActions.browseMembers)
-  .post(checkIsTeacher, playMemberValidator.validate, playActions.addMember);
+const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
+  if (
+    troupeRepository.findMember(req.play.troupe_id, req.me.id)?.role === "ADMIN"
+  ) {
+    next();
+  } else {
+    res.sendStatus(403);
+  }
+};
+
+router.put(
+  PLAY_PATH,
+  checkIsPlayTroupeAdmin,
+  playValidator.validate,
+  playActions.edit,
+);
+router.delete(PLAY_PATH, checkIsPlayTroupeAdmin, playActions.destroy);
 
 export default router;

@@ -17,9 +17,9 @@ function MagicLinkForm() {
 
   return sent ? (
     <p>
-      ✉️ A login link has been sent to your email address.
+      ✉️ Un lien de connexion a été envoyé à votre adresse e-mail.
       <br />
-      Check your inbox!
+      Consultez votre boîte de réception !
     </p>
   ) : (
     <form
@@ -39,8 +39,8 @@ function MagicLinkForm() {
       }}
     >
       <hgroup>
-        <h1>Login</h1>
-        <p>Enter your email to receive a login link.</p>
+        <h1>Connexion</h1>
+        <p>Entrez votre adresse e-mail pour recevoir un lien de connexion.</p>
       </hgroup>
 
       <input
@@ -48,10 +48,10 @@ function MagicLinkForm() {
         type="email"
         name="email"
         defaultValue=""
-        placeholder="your.address@mail.com"
+        placeholder="ton.adresse@mail.com"
         required
       />
-      <button type="submit">Receive my login link</button>
+      <button type="submit">Recevoir mon lien de connexion</button>
     </form>
   );
 }

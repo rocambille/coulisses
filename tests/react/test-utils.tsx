@@ -1,5 +1,6 @@
 import { act, render, renderHook } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import * as ReactRouter from "react-router";
 import { createRoutesStub } from "react-router";
 
 import { AuthProvider } from "../../src/react/components/auth/AuthContext";
@@ -214,6 +215,35 @@ export const setupMocks = ({
   invalidateCache("*");
 };
 
+export const setupTroupeLayoutMocks = ({
+  troupe,
+  members,
+  isAdmin,
+  playPreferences,
+  rolePreferences,
+  scenePreferences,
+  pushBreadcrumb,
+}: {
+  troupe: Troupe;
+  members: TroupeMember[];
+  isAdmin: boolean;
+  playPreferences: PlayPreference[];
+  rolePreferences: RolePreference[];
+  scenePreferences: ScenePreference[];
+  pushBreadcrumb?: (breadcrumb: NavItem[]) => void;
+}) => {
+  /* mock value returned by useOutletContext */
+  vi.spyOn(ReactRouter, "useOutletContext").mockReturnValue({
+    troupe,
+    members,
+    isAdmin,
+    playPreferences,
+    rolePreferences,
+    scenePreferences,
+    pushBreadcrumb: pushBreadcrumb ?? vi.fn(),
+  });
+};
+
 export const requestValue = (
   contractName: keyof typeof contracts,
   testName: keyof Contract,
@@ -231,11 +261,14 @@ export const responseValue = (
   contractName: keyof typeof contracts,
   testName: keyof Contract,
   caseName: keyof Test["cases"],
-  field: string,
+  field?: string,
 ) => {
   const body = contracts[contractName][testName].cases[caseName].response.body;
   if (body != null && typeof body === "object" && !Array.isArray(body)) {
-    return JSON.parse(JSON.stringify(body[field]));
+    if (field != null) {
+      return JSON.parse(JSON.stringify(body[field]));
+    }
+    return body;
   }
   throw new Error(`Case body is not an object: ${JSON.stringify(body)}`);
 };

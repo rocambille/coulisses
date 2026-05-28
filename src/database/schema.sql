@@ -17,8 +17,8 @@ create table magic_link_token (
 create table troupe (
   id integer primary key,
   name varchar(255) not null,
-  description text,
-  external_discussion_link varchar(255),
+  description text not null,
+  external_discussion_link varchar(255) not null,
   created_at datetime default current_timestamp
 );
 
@@ -32,11 +32,29 @@ create table troupe_member (
   foreign key(troupe_id) references troupe(id) on delete cascade
 );
 
+create trigger enforce_min_one_admin
+  before update on troupe_member
+  for each row
+  when OLD.role = 'ADMIN' and NEW.role != 'ADMIN'
+begin
+  select raise(ABORT, 'troupe must have at least one admin')
+  where (select count(*) from troupe_member where troupe_id = OLD.troupe_id and role = 'ADMIN') <= 1;
+end;
+
+create trigger enforce_min_one_admin_delete
+  before delete on troupe_member
+  for each row
+  when OLD.role = 'ADMIN'
+begin
+  select raise(ABORT, 'troupe must have at least one admin')
+  where (select count(*) from troupe_member where troupe_id = OLD.troupe_id and role = 'ADMIN') <= 1;
+end;
+
 create table play (
   id integer primary key,
   troupe_id integer not null,
   title varchar(255) not null,
-  description text,
+  description text not null,
   foreign key(troupe_id) references troupe(id) on delete cascade
 );
 
@@ -54,8 +72,8 @@ create table scene (
   id integer primary key,
   play_id integer not null,
   title varchar(255) not null,
-  description text,
-  cut_notes text,
+  description text not null,
+  cut_notes text not null,
   order_in_play integer not null default 0,
   duration_estimated_seconds integer not null default 0,
   is_active boolean default true,
@@ -66,7 +84,7 @@ create table role (
   id integer primary key,
   play_id integer not null,
   name varchar(255) not null,
-  description text,
+  description text not null,
   foreign key(play_id) references play(id) on delete cascade
 );
 
@@ -119,8 +137,8 @@ create table event (
   title varchar(255) not null,
   start_time datetime not null,
   end_time datetime not null,
-  location varchar(255),
-  description text,
+  location varchar(255) not null,
+  description text not null,
   foreign key(troupe_id) references troupe(id) on delete cascade,
   foreign key(owner_id) references user(id) on delete cascade
 );

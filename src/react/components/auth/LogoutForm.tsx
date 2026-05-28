@@ -18,11 +18,13 @@ function LogoutForm() {
   return (
     <form action={logout}>
       <hgroup>
-        <h1>Déconnexion</h1>
+        <h2>Déconnexion</h2>
         <p>Tu vas être déconnecté de ton compte.</p>
       </hgroup>
 
-      <button type="submit">Se déconnecter</button>
+      <button className="secondary" type="submit">
+        Se déconnecter
+      </button>
     </form>
   );
 }

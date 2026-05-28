@@ -1,17 +1,30 @@
 import { screen, waitFor } from "@testing-library/react";
-import * as AuthContext from "../../../../src/react/components/auth/AuthContext";
-import { useMembership } from "../../../../src/react/components/play/hooks";
 import PlayLayout from "../../../../src/react/components/play/PlayLayout";
 import {
-  renderHookAsync,
+  mainPlay,
+  mainPlayPreferences,
+  mainRolePreferences,
+  mainScenePreferences,
+  mainTroupe,
+  mainTroupeMembers,
   renderWithStub,
   setupMocks,
+  setupTroupeLayoutMocks,
   teacherUser,
 } from "../../test-utils";
 
 describe("<PlayLayout />", () => {
   beforeEach(() => {
     setupMocks();
+    setupTroupeLayoutMocks({
+      troupe: mainTroupe,
+      members: mainTroupeMembers,
+      isAdmin: true,
+      playPreferences: mainPlayPreferences,
+      rolePreferences: mainRolePreferences,
+      scenePreferences: mainScenePreferences,
+      pushBreadcrumb: vi.fn(),
+    });
   });
 
   afterEach(() => {
@@ -22,33 +35,10 @@ describe("<PlayLayout />", () => {
     await renderWithStub({
       path: "/plays/:playId",
       Component: PlayLayout,
-      initialEntries: ["/plays/1"],
+      initialEntries: [`/plays/${mainPlay.id}`],
       me: teacherUser,
     });
 
-    await waitFor(() => screen.getByRole("heading", { level: 1 }));
-  });
-});
-
-describe("useMembership", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("should throw when playId is not defined", async () => {
-    vi.spyOn(AuthContext, "useAuth").mockReturnValue({
-      me: null,
-      check: vi.fn(),
-      sendMagicLink: vi.fn(),
-      verifyMagicLink: vi.fn(),
-      logout: vi.fn(),
-    });
-
-    // Avoid exception noise in console
-    vi.spyOn(console, "error").mockImplementationOnce(() => {});
-
-    await expect(
-      renderHookAsync(() => useMembership(undefined)),
-    ).rejects.toThrow(/no playId provided/i);
+    await waitFor(() => screen.getByText(mainPlay.title));
   });
 });

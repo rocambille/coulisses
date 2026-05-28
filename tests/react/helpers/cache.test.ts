@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { cache, invalidateCache } from "../../../src/react/helpers/cache";
-import { setupMocks, teacherUser } from "../test-utils";
+import { responseValue, setupMocks } from "../test-utils";
 
 describe("React Helpers: cache", () => {
   beforeEach(() => {
@@ -15,27 +15,25 @@ describe("React Helpers: cache", () => {
 
   describe("cache()", () => {
     it("should return cached data", async () => {
-      const data = await cache(`/api/users/${teacherUser.id}`);
-      expect(data).toEqual(teacherUser);
+      const data = await cache("/api/users/me");
+      expect(data).toEqual(responseValue("users", "read", "me"));
       expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
     });
 
     it("should not fetch again when data is cached", async () => {
-      invalidateCache(`/api/users/${teacherUser.id}`);
+      invalidateCache("/api/users/me");
 
-      const data = await cache(`/api/users/${teacherUser.id}`);
-      expect(data).toEqual(teacherUser);
-
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-
-      const data2 = await cache(`/api/users/${teacherUser.id}`);
-      expect(data2).toEqual(teacherUser);
+      const data = await cache("/api/users/me");
+      expect(data).toEqual(responseValue("users", "read", "me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        1,
-        `/api/users/${teacherUser.id}`,
-      );
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
+
+      const data2 = await cache("/api/users/me");
+      expect(data2).toEqual(responseValue("users", "read", "me"));
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
     it("should return null when data is not available", async () => {
@@ -47,59 +45,54 @@ describe("React Helpers: cache", () => {
 
   describe("invalidateCache()", () => {
     it("should invalidate cache", async () => {
-      invalidateCache(`/api/users/${teacherUser.id}`);
+      invalidateCache("/api/users/me");
 
-      const data = await cache(`/api/users/${teacherUser.id}`);
-      expect(data).toEqual(teacherUser);
+      const data = await cache("/api/users/me");
+      expect(data).toEqual(responseValue("users", "read", "me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
 
-      invalidateCache(`/api/users/${teacherUser.id}`);
+      invalidateCache("/api/users/me");
 
-      const data2 = await cache(`/api/users/${teacherUser.id}`);
-      expect(data2).toEqual(teacherUser);
+      const data2 = await cache("/api/users/me");
+      expect(data2).toEqual(responseValue("users", "read", "me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
-        `/api/users/${teacherUser.id}`,
-      );
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/users/me");
     });
 
     it("should invalidate all cache when '*' is provided", async () => {
-      const data = await cache(`/api/users/${teacherUser.id}`);
-      expect(data).toEqual(teacherUser);
-      const data2 = await cache(`/api/users/${teacherUser.id}`);
-      expect(data2).toEqual(teacherUser);
+      const data = await cache("/api/users/me");
+      expect(data).toEqual(responseValue("users", "read", "me"));
+      const data2 = await cache("/api/users/me");
+      expect(data2).toEqual(responseValue("users", "read", "me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
 
       invalidateCache("*");
 
-      const data3 = await cache(`/api/users/${teacherUser.id}`);
-      expect(data3).toEqual(teacherUser);
+      const data3 = await cache("/api/users/me");
+      expect(data3).toEqual(responseValue("users", "read", "me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
-        `/api/users/${teacherUser.id}`,
-      );
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/users/me");
     });
 
     it("should not invalidate cache for paths that do not match", async () => {
-      const data = await cache(`/api/users/${teacherUser.id}`);
-      expect(data).toEqual(teacherUser);
-      const data2 = await cache(`/api/users/${teacherUser.id}`);
-      expect(data2).toEqual(teacherUser);
+      const data = await cache("/api/users/me");
+      expect(data).toEqual(responseValue("users", "read", "me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
 
-      invalidateCache("/api/users");
+      invalidateCache("/api/foo");
 
-      const data3 = await cache(`/api/users/${teacherUser.id}`);
-      expect(data3).toEqual(teacherUser);
+      const data2 = await cache("/api/users/me");
+      expect(data2).toEqual(responseValue("users", "read", "me"));
 
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).not.toHaveBeenCalledTimes(2);
     });
   });
 });

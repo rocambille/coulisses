@@ -1,22 +1,20 @@
 /*
   Purpose:
-  Members management page for the teacher.
-  Route: /plays/:playId/members
+  Members management page for the Troupe Admin.
+  Route: /troupes/:troupeId/members
 */
 
-import { use } from "react";
-import { useParams } from "react-router";
-import { cache } from "../../helpers/cache";
+import { useOutletContext, useParams } from "react-router";
 import { useMutate } from "../../helpers/mutate";
-import { useMembership } from "./hooks";
+import MemberRow from "./MemberRow";
 
-type Member = User & { role: string };
-
-function MembersPage() {
-  const { playId } = useParams();
+export default function MembersPage() {
+  const { troupeId } = useParams();
   const mutate = useMutate();
-  const { isTeacher } = useMembership(playId);
-  const members: Member[] = use(cache(`/api/plays/${playId}/members`));
+  const { members, isAdmin } = useOutletContext<{
+    members: TroupeMember[];
+    isAdmin: boolean;
+  }>();
 
   const handleInvite = async (formData: FormData) => {
     const email = formData.get("email")?.toString();
@@ -24,20 +22,14 @@ function MembersPage() {
 
     if (!email || !role) throw new Error("Invalid form submission");
 
-    await mutate(
-      `/api/plays/${playId}/members`,
-      "post",
-      {
-        email,
-        role,
-      },
-      [`/api/plays/${playId}/members`],
-    );
+    await mutate(`/api/troupes/${troupeId}/members`, "post", { email, role }, [
+      `/api/troupes/${troupeId}/members`,
+    ]);
   };
 
   return (
     <>
-      <h2>Membres</h2>
+      <h2>Membres de la troupe</h2>
 
       <table>
         <thead>
@@ -45,22 +37,19 @@ function MembersPage() {
             <th>Nom</th>
             <th>Email</th>
             <th>Rôle</th>
+            {isAdmin && <th>Action</th>}
           </tr>
         </thead>
         <tbody>
           {members.map((member) => (
-            <tr key={member.id}>
-              <td>{member.name}</td>
-              <td>{member.email}</td>
-              <td>{member.role === "TEACHER" ? "Professeur" : "Comédien"}</td>
-            </tr>
+            <MemberRow key={member.id} member={member} />
           ))}
         </tbody>
       </table>
 
-      {isTeacher && (
+      {isAdmin && (
         <details>
-          <summary>Inviter un membre</summary>
+          <summary>Inviter un nouveau membre</summary>
           <form action={handleInvite}>
             <input
               name="email"
@@ -70,8 +59,8 @@ function MembersPage() {
               required
             />
             <select name="role" aria-label="Rôle" defaultValue="ACTOR">
-              <option value="ACTOR">Comédien</option>
-              <option value="TEACHER">Professeur</option>
+              <option value="ACTOR">Acteur</option>
+              <option value="ADMIN">Administrateur</option>
             </select>
             <button type="submit">Inviter</button>
           </form>
@@ -80,5 +69,3 @@ function MembersPage() {
     </>
   );
 }
-
-export default MembersPage;

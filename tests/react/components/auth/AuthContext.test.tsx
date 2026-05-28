@@ -127,5 +127,78 @@ describe("React Components: AuthContext", () => {
 
       expectContractCall("auth", "logout", "anyone");
     });
+    it("should return an updateMe function", async () => {
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
+
+      const auth = result.current;
+
+      await act(
+        async () =>
+          await auth.updateMe({
+            email: String(requestValue("users", "edit", "me", "email")),
+            name: String(requestValue("users", "edit", "me", "name")),
+          }),
+      );
+
+      expectContractCall("users", "edit", "me");
+    });
+    it("should throw when updateMe fails", async () => {
+      setupMocks({
+        force500: [
+          {
+            path: "/api/users/me",
+            method: "put",
+          },
+        ],
+      });
+
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
+
+      const auth = result.current;
+
+      await expect(
+        auth.updateMe({
+          email: String(requestValue("users", "edit", "me", "email")),
+          name: String(requestValue("users", "edit", "me", "name")),
+        }),
+      ).rejects.toThrow(/update/i);
+
+      expectContractCall("users", "edit", "me");
+    });
+    it("should return a deleteMe function", async () => {
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
+
+      const auth = result.current;
+
+      await act(async () => await auth.deleteMe());
+
+      expectContractCall("users", "delete", "me");
+    });
+    it("should throw when deleteMe fails", async () => {
+      setupMocks({
+        force500: [
+          {
+            path: "/api/users/me",
+            method: "delete",
+          },
+        ],
+      });
+
+      const { result } = await renderHookAsync(() => useAuth(), {
+        wrapper: AuthProvider,
+      });
+
+      const auth = result.current;
+
+      await expect(auth.deleteMe()).rejects.toThrow(/delete/i);
+
+      expectContractCall("users", "delete", "me");
+    });
   });
 });

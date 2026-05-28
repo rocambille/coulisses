@@ -34,7 +34,7 @@ describe("<Layout />", () => {
     await screen.findByLabelText(/email/i);
   });
 
-  it("should render logout when authenticated", async () => {
+  it("should render account page when authenticated", async () => {
     await renderWithStub({
       path: "/",
       Component: () => <Layout />,
@@ -42,6 +42,6 @@ describe("<Layout />", () => {
       me: teacherUser,
     });
 
-    await screen.findByText(/déconnexion/i);
+    await screen.findByText(/compte/i);
   });
 });

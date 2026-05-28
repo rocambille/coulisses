@@ -1,32 +1,20 @@
 /*
   Purpose:
   Central UI routing entry point for the React application.
-
-  Responsibilities:
-  - Define the root layout of the application
-  - Compose feature modules (e.g. items)
-
-  Design notes:
-  - Routes are declared explicitly (no automatic discovery)
-  - Feature modules expose their own route fragments
-
-  This file is shared by:
-  - entry-client.tsx (client-side routing & hydration)
-  - entry-server.tsx (server-side rendering & data loading)
 */
 
 import { type RouteObject, useLoaderData } from "react-router";
-
-import LogoutForm from "./components/auth/LogoutForm";
+import AccountPage from "./components/auth/AccountPage";
+import { AuthProvider } from "./components/auth/AuthContext";
 import VerifyPage from "./components/auth/VerifyPage";
+import { DataRefreshProvider } from "./components/DataRefreshContext";
 import ErrorPage from "./components/ErrorPage";
+import Home from "./components/Home";
 import Layout from "./components/Layout";
-import { playRoutes } from "./components/play/index";
+
+import { troupeRoutes } from "./components/troupe";
 
 import "./index.css";
-import { AuthProvider } from "./components/auth/AuthContext";
-import DashboardPage from "./components/DashboardPage";
-import { DataRefreshProvider } from "./components/DataRefreshContext";
 
 /* ************************************************************************ */
 /* Routes definition                                                        */
@@ -34,10 +22,6 @@ import { DataRefreshProvider } from "./components/DataRefreshContext";
 
 const routes: RouteObject[] = [
   {
-    /*
-      Root component:
-      Wraps all pages with the global <Layout> and providers
-    */
     Component: () => {
       const { me } = useLoaderData<{ me: User | null }>();
 
@@ -49,41 +33,27 @@ const routes: RouteObject[] = [
         </AuthProvider>
       );
     },
-    /*
-      Error element: provides an <ErrorPage> for 400s and 500s
-    */
     errorElement: <ErrorPage />,
-    /*
-      Root loader:
-      - Fetches the current user from the /api/me endpoint
-      - Returns the user to the root component
-    */
     loader: async () => {
-      const response = await fetch("/api/me");
-
+      const response = await fetch("/api/users/me");
       const me: User | null = response.ok ? await response.json() : null;
 
       return { me };
     },
-    /*
-      Nested routes:
-      - index route: Home page
-      - feature routes: imported and spread from modules
-    */
     children: [
       {
         index: true,
-        element: <DashboardPage />,
+        element: <Home />, // Liste des troupes
       },
       {
-        path: "logout",
-        element: <LogoutForm />,
+        path: "me",
+        element: <AccountPage />,
       },
       {
         path: "verify",
         element: <VerifyPage />,
       },
-      ...playRoutes,
+      ...troupeRoutes,
     ],
   },
 ];

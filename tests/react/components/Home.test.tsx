@@ -1,5 +1,5 @@
 import { act, fireEvent, screen } from "@testing-library/react";
-import DashboardPage from "../../../src/react/components/DashboardPage";
+import Home from "../../../src/react/components/Home";
 import {
   expectContractCall,
   renderWithStub,
@@ -21,54 +21,54 @@ describe("<DashboardPage />", () => {
   it("should mount successfully", async () => {
     await renderWithStub({
       path: "/",
-      Component: DashboardPage,
+      Component: Home,
       initialEntries: ["/"],
       me: teacherUser,
     });
 
-    await screen.findByRole("heading", { level: 1, name: /mes pièces/i });
+    await screen.findByRole("heading", { level: 1, name: /mes troupes/i });
 
-    expectContractCall("plays", "browse", "teacher");
+    expectContractCall("troupes", "browse", "member");
   });
 
-  it("should display a message when the user has no plays", async () => {
-    setupMocks({ forceCases: { "plays.browse": "third" } });
+  it("should display a message when the user has no troupes", async () => {
+    setupMocks({ forceCases: { "troupes.browse": "empty" } });
 
     await renderWithStub({
       path: "/",
-      Component: DashboardPage,
+      Component: Home,
       initialEntries: ["/"],
       me: thirdUser,
     });
 
-    await screen.findByText(/aucune pièce/i);
+    await screen.findByText(/aucune troupe/i);
 
-    expectContractCall("plays", "browse", "third");
+    expectContractCall("troupes", "browse", "empty");
   });
 
-  it("should add a play", async () => {
+  it("should add a troupe", async () => {
     const { user } = await renderWithStub({
       path: "/",
-      Component: DashboardPage,
+      Component: Home,
       initialEntries: ["/"],
       me: teacherUser,
     });
 
     await user.type(
-      screen.getByLabelText(/titre/i),
-      String(requestValue("plays", "create", "teacher", "title")),
+      screen.getByLabelText(/nom/i),
+      String(requestValue("troupes", "create", "success", "name")),
     );
-    await user.click(screen.getByRole("button", { name: /ajouter/i }));
+    await user.click(screen.getByRole("button", { name: /créer/i }));
 
-    expectContractCall("plays", "create", "teacher");
+    expectContractCall("troupes", "create", "success");
   });
 
-  it("should alert when submitted data is invalid", async () => {
+  it("should alert when submitted data is not matching the contract", async () => {
     vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
 
     await renderWithStub({
       path: "/",
-      Component: DashboardPage,
+      Component: Home,
       initialEntries: ["/"],
       me: teacherUser,
     });

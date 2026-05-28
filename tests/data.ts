@@ -4,7 +4,7 @@
   This ensures consistency and eliminates duplication.
 
   Naming:
-  Use descriptive names (e.g., teacherUser, mainPlay) to make tests more readable.
+  Use descriptive names (e.g., teacherUser, mainPlay, mainTroupe) to make tests more readable.
 */
 
 // ---------------------------------------------------------
@@ -16,21 +16,29 @@ export const allUsers: User[] = [
     id: 1,
     email: "teacher@mail.com",
     name: "teacher",
+    created_at: "2026-01-01T00:00:00.000Z",
+    deleted_at: null,
   },
   {
     id: 2,
     email: "actor@mail.com",
     name: "actor",
+    created_at: "2026-01-01T00:00:00.000Z",
+    deleted_at: null,
   },
   {
     id: 3,
     email: "third@mail.com",
     name: "third",
+    created_at: "2026-01-01T00:00:00.000Z",
+    deleted_at: null,
   },
   {
     id: 4,
     email: "deleted@mail.com",
     name: "deleted",
+    created_at: "2026-01-01T00:00:00.000Z",
+    deleted_at: "2026-01-01T10:00:00.000Z",
   },
 ];
 
@@ -40,33 +48,82 @@ export const thirdUser = allUsers[2];
 export const deletedUser = allUsers[3];
 
 // ---------------------------------------------------------
-// Plays & Members
+// Troupes & Members
+// ---------------------------------------------------------
+
+export const allTroupes: Troupe[] = [
+  {
+    id: 1,
+    name: "Les Joyeux Lurons",
+    description: "Troupe amatrice du jeudi soir",
+    external_discussion_link: "https://chat.whatsapp.com/123",
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    id: 2,
+    name: "Troupe Vide",
+    description: "Une troupe sans membres",
+    external_discussion_link: "",
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
+];
+
+export const mainTroupe = allTroupes[0];
+export const emptyTroupe = allTroupes[1];
+
+export const mainTroupeMembers: TroupeMember[] = [
+  {
+    troupe_id: mainTroupe.id,
+    role: "ADMIN",
+    joined_at: "2026-01-01T00:00:00.000Z",
+    ...teacherUser,
+  },
+  {
+    troupe_id: mainTroupe.id,
+    role: "ACTOR",
+    joined_at: "2026-01-01T00:00:00.000Z",
+    ...actorUser,
+  },
+];
+
+export const emptyTroupeMembers: TroupeMember[] = [
+  {
+    troupe_id: emptyTroupe.id,
+    role: "ADMIN",
+    joined_at: "2026-01-01T00:00:00.000Z",
+    ...teacherUser,
+  },
+];
+
+// ---------------------------------------------------------
+// Plays
 // ---------------------------------------------------------
 
 export const allPlays: Play[] = [
   {
     id: 1,
+    troupe_id: mainTroupe.id,
     title: "Play 1",
     description: "Desc 1",
   },
   {
     id: 2,
+    troupe_id: mainTroupe.id,
     title: "Play 2",
     description: "Desc 2",
   },
 ];
 
 export const mainPlay = allPlays[0];
-
-export const mainPlayMembers: (User & { role: "TEACHER" | "ACTOR" })[] = [
-  { ...teacherUser, role: "TEACHER" },
-  { ...actorUser, role: "ACTOR" },
-];
-
 export const emptyPlay = allPlays[1];
 
-export const emptyPlayMembers: (User & { role: "TEACHER" | "ACTOR" })[] = [
-  { ...teacherUser, role: "TEACHER" },
+export const mainPlayPreferences: PlayPreference[] = [
+  {
+    user_id: actorUser.id,
+    play_id: mainPlay.id,
+    level: "HIGH",
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
 ];
 
 // ---------------------------------------------------------
@@ -78,8 +135,9 @@ export const mainScenes: Scene[] = [
     play_id: mainPlay.id,
     title: "Scene 1",
     description: "First scene",
-    duration: 10,
-    scene_order: 1,
+    cut_notes: "Couper la fin",
+    duration_estimated_seconds: 600,
+    order_in_play: 1,
     is_active: true,
   },
   {
@@ -87,8 +145,9 @@ export const mainScenes: Scene[] = [
     play_id: mainPlay.id,
     title: "Scene 2",
     description: "Second scene",
-    duration: 20,
-    scene_order: 2,
+    cut_notes: "",
+    duration_estimated_seconds: 1200,
+    order_in_play: 2,
     is_active: false,
   },
   {
@@ -96,8 +155,9 @@ export const mainScenes: Scene[] = [
     play_id: mainPlay.id,
     title: "Scene 3",
     description: "Third scene",
-    duration: 15,
-    scene_order: 3,
+    cut_notes: "",
+    duration_estimated_seconds: 900,
+    order_in_play: 3,
     is_active: true,
   },
 ];
@@ -108,7 +168,7 @@ export const mainRoles: RoleWithScenes[] = [
     play_id: mainPlay.id,
     name: "Role 1",
     description: "Major role",
-    scenes: [mainScenes[0]],
+    scenes: [mainScenes[0], mainScenes[1]],
   },
   {
     id: 2,
@@ -120,44 +180,104 @@ export const mainRoles: RoleWithScenes[] = [
 ];
 
 // ---------------------------------------------------------
-// Other data
+// Preferences & Castings
 // ---------------------------------------------------------
-export const mainPreferences: PreferenceWithUser[] = [
+export const mainScenePreferences: ScenePreference[] = [
   {
     user_id: teacherUser.id,
-    name: teacherUser.name,
-    email: teacherUser.email,
     scene_id: 1,
     level: "HIGH" as const,
+    created_at: "2026-01-01T00:00:00.000Z",
   },
   {
     user_id: actorUser.id,
-    name: actorUser.name,
-    email: actorUser.email,
     scene_id: 1,
     level: "MEDIUM" as const,
-  },
-  {
-    user_id: teacherUser.id,
-    name: teacherUser.name,
-    email: teacherUser.email,
-    scene_id: 2,
-    level: "LOW" as const,
-  },
-  {
-    user_id: teacherUser.id,
-    name: teacherUser.name,
-    email: teacherUser.email,
-    scene_id: 3,
-    level: "NOT_INTERESTED" as const,
+    created_at: "2026-01-01T00:00:00.000Z",
   },
 ];
 
-export const mainCastings: Casting[] = [{ role_id: 1, user_id: actorUser.id }];
+export const mainRolePreferences: RolePreference[] = [
+  {
+    user_id: teacherUser.id,
+    scene_id: 1,
+    role_id: 1,
+    level: "HIGH" as const,
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    user_id: actorUser.id,
+    scene_id: 2,
+    role_id: 1,
+    level: "NOT_INTERESTED" as const,
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
+];
 
+export const mainCastings: Casting[] = [
+  {
+    user_id: actorUser.id,
+    scene_id: 1,
+    role_id: 1,
+    assigned_at: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    user_id: actorUser.id,
+    scene_id: 2,
+    role_id: 1,
+    assigned_at: "2026-01-01T00:00:00.000Z",
+  },
+];
+
+const matrix = (
+  actors: TroupeMember[],
+  scenes: Scene[],
+  roles: RoleWithScenes[],
+  castings: Casting[],
+  preferences: RolePreference[],
+): CastingMatrix => ({
+  actors: actors.map<User>((a) => ({
+    id: a.id,
+    name: a.name,
+    email: a.email,
+    deleted_at: a.deleted_at,
+    created_at: a.created_at,
+  })),
+  scenes: scenes.map((s) => ({
+    ...s,
+    roles: roles.map(({ scenes, ...r }) => {
+      const casting = castings.find(
+        (c) => c.role_id === r.id && c.scene_id === s.id,
+      );
+      return {
+        ...r,
+        preferences: preferences.filter(
+          (rp) => rp.role_id === r.id && rp.scene_id === s.id,
+        ),
+        assigned_user: casting
+          ? (allUsers.find((u) => u.id === casting.user_id) ?? null)
+          : null,
+      };
+    }),
+  })),
+});
+
+export const mainMatrix = matrix(
+  mainTroupeMembers,
+  mainScenes,
+  mainRoles,
+  mainCastings,
+  mainRolePreferences,
+);
+export const emptyMatrix = matrix(emptyTroupeMembers, [], [], [], []);
+
+// ---------------------------------------------------------
+// Events
+// ---------------------------------------------------------
 export const openingNightEvent: EventData = {
   id: 1,
-  play_id: mainPlay.id,
+  troupe_id: mainTroupe.id,
+  owner_id: teacherUser.id,
   type: "SHOW" as const,
   title: "Opening Night",
   description: "Opening Night description",
@@ -168,24 +288,26 @@ export const openingNightEvent: EventData = {
 
 export const autoRehearsalEvent: EventData = {
   id: 2,
-  play_id: mainPlay.id,
-  type: "AUTO_REHEARSAL",
-  title: "Auto Rehearsal",
-  description: "Auto Rehearsal description",
+  troupe_id: mainTroupe.id,
+  owner_id: teacherUser.id,
+  type: "REHEARSAL" as const,
+  title: "Rehearsal",
+  description: "Rehearsal description",
   location: "Main Stage",
-  start_time: "2026-06-01T20:00:00.000Z",
-  end_time: "2026-06-01T22:30:00.000Z",
+  start_time: "2026-06-02T20:00:00.000Z",
+  end_time: "2026-06-02T22:30:00.000Z",
 };
 
 export const fixedRehearsalEvent: EventData = {
   id: 3,
-  play_id: mainPlay.id,
-  type: "FIXED_REHEARSAL",
-  title: "Fixed Rehearsal",
-  description: "Fixed Rehearsal description",
+  troupe_id: mainTroupe.id,
+  owner_id: teacherUser.id,
+  type: "COURSE" as const,
+  title: "Course",
+  description: "Course description",
   location: "Main Stage",
-  start_time: "2026-06-01T20:00:00.000Z",
-  end_time: "2026-06-01T22:30:00.000Z",
+  start_time: "2026-06-03T20:00:00.000Z",
+  end_time: "2026-06-03T22:30:00.000Z",
 };
 
 export const allEvents = [
@@ -194,21 +316,17 @@ export const allEvents = [
   fixedRehearsalEvent,
 ];
 
-const matrix = (
-  scenes: Scene[],
-  roles: RoleWithScenes[],
-  castings: Casting[],
-): CastingMatrix => {
-  return {
-    scenes: [...scenes],
-    roles: roles.map(({ scenes, ...r }) => ({
-      ...r,
-      scene_ids: scenes.map((s) => s.id),
-      user_id: castings.find((c) => c.role_id === r.id)?.user_id ?? null,
-    })),
-  };
-};
-
-export const mainMatrix = matrix(mainScenes, mainRoles, mainCastings);
-
-export const emptyMatrix = matrix([], [], []);
+export const mainEventPresences: EventPresence[] = [
+  {
+    event_id: openingNightEvent.id,
+    user_id: actorUser.id,
+    status: "PRESENT",
+    updated_at: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    event_id: openingNightEvent.id,
+    user_id: teacherUser.id,
+    status: "PENDING",
+    updated_at: "2026-01-01T00:00:00.000Z",
+  },
+];

@@ -41,17 +41,17 @@ function VerifyPage() {
   if (error) {
     return (
       <article>
-        <header>Invalid or expired link</header>
+        <header>Lien invalide ou expiré</header>
         <p>
-          This login link is no longer valid. It may have expired or already
-          been used.
+          Ce lien de connexion n'est plus valide. Il a peut-être expiré ou a
+          déjà été utilisé.
         </p>
-        <Link to="/">Request a new link</Link>
+        <Link to="/">Demander un nouveau lien</Link>
       </article>
     );
   }
 
-  return <p aria-busy="true">Verification in progress...</p>;
+  return <p aria-busy="true">Verification en cours...</p>;
 }
 
 export default VerifyPage;

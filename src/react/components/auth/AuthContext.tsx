@@ -5,7 +5,7 @@
   This context:
   - Stores the currently authenticated user (or null)
   - Exposes high-level auth actions (sendMagicLink, verifyMagicLink, logout)
-  - Performs an initial session check on mount (/api/me)
+  - Performs an initial session check on mount (/api/users/me)
 
   Usage:
   - Wrap the app with <AuthProvider>
@@ -20,6 +20,7 @@ import {
   useState,
 } from "react";
 import { HttpError } from "../../../errors/HttpError";
+import { cache } from "../../helpers/cache";
 import { apiMutate } from "../../helpers/mutate";
 
 /* ************************************************************************ */
@@ -32,6 +33,10 @@ type AuthContextType = {
   sendMagicLink: (email: string) => Promise<void>;
   verifyMagicLink: (token: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateMe: (
+    newMe: Omit<User, "id" | "created_at" | "deleted_at">,
+  ) => Promise<void>;
+  deleteMe: () => Promise<void>;
 };
 
 /* ************************************************************************ */
@@ -86,6 +91,29 @@ export function AuthProvider({
     }
   }, []);
 
+  const updateMe = useCallback(
+    async (newMe: Omit<User, "id" | "created_at" | "deleted_at">) => {
+      const response = await apiMutate("/api/users/me", "put", newMe);
+
+      if (response.ok) {
+        setUser(await cache("/api/users/me"));
+      } else {
+        throw new HttpError(response.status, "Update of the user failed");
+      }
+    },
+    [],
+  );
+
+  const deleteMe = useCallback(async () => {
+    const response = await apiMutate("/api/users/me", "delete");
+
+    if (response.ok) {
+      setUser(null);
+    } else {
+      throw new HttpError(response.status, "Delete of the user failed");
+    }
+  }, []);
+
   /* ********************************************************************** */
   /* Provider value                                                         */
   /* ********************************************************************** */
@@ -98,6 +126,8 @@ export function AuthProvider({
         sendMagicLink,
         verifyMagicLink,
         logout,
+        updateMe,
+        deleteMe,
       }}
     >
       {children}

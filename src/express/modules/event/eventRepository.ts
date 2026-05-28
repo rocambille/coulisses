@@ -5,32 +5,39 @@
 
 import database from "../../../database";
 
-const mapRawTypeToEventType = (type: string): EventData["type"] => {
+const mapRawTypeToEventType = (type: string): EventType => {
   switch (type) {
+    case "COURSE":
+      return "COURSE";
+    case "REHEARSAL":
+      return "REHEARSAL";
     case "SHOW":
       return "SHOW";
-    case "FIXED_REHEARSAL":
-      return "FIXED_REHEARSAL";
-    case "AUTO_REHEARSAL":
-      return "AUTO_REHEARSAL";
+    case "OTHER":
+      return "OTHER";
     default:
       throw new Error(`Invalid event type: ${type}`);
   }
 };
 
 class EventRepository {
-  create(event: Omit<EventData, "id">): RowId {
+  create(
+    troupeId: RowId,
+    ownerId: RowId,
+    event: Omit<EventData, "id" | "troupe_id" | "owner_id">,
+  ): RowId {
     const result = database
       .prepare(
-        `insert into event (play_id, type, title, description, location, start_time, end_time) 
-       values (?, ?, ?, ?, ?, ?, ?)`,
+        `insert into event (troupe_id, owner_id, type, title, description, location, start_time, end_time) 
+         values (?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
-        event.play_id,
+        troupeId,
+        ownerId,
         event.type,
         event.title,
-        event.description ?? null,
-        event.location ?? null,
+        event.description,
+        event.location,
         event.start_time,
         event.end_time,
       );
@@ -47,7 +54,8 @@ class EventRepository {
 
     const {
       id,
-      play_id,
+      troupe_id,
+      owner_id,
       type,
       title,
       description,
@@ -56,68 +64,71 @@ class EventRepository {
       end_time,
     } = row;
 
-    const eventData: EventData = {
+    return {
       id: Number(id),
-      play_id: Number(play_id),
+      troupe_id: Number(troupe_id),
+      owner_id: Number(owner_id),
       type: mapRawTypeToEventType(String(type)),
       title: String(title),
+      description: String(description),
+      location: String(location),
       start_time: String(start_time),
       end_time: String(end_time),
     };
-    if (description != null) eventData.description = String(description);
-    if (location != null) eventData.location = String(location);
-
-    return eventData;
   }
 
-  findByPlay(playId: RowId): EventData[] {
+  findByTroupe(troupeId: RowId): EventData[] {
     const rows = database
-      .prepare(`select * from event where play_id = ? order by start_time asc`)
-      .all(playId);
+      .prepare(
+        `select * from event where troupe_id = ? order by start_time asc`,
+      )
+      .all(troupeId);
 
     return rows.map<EventData>(
       ({
         id,
-        play_id,
+        troupe_id,
+        owner_id,
         type,
         title,
         description,
         location,
         start_time,
         end_time,
-      }) => {
-        const eventData: EventData = {
-          id: Number(id),
-          play_id: Number(play_id),
-          type: mapRawTypeToEventType(String(type)),
-          title: String(title),
-          start_time: String(start_time),
-          end_time: String(end_time),
-        };
-        if (description != null) eventData.description = String(description);
-        if (location != null) eventData.location = String(location);
-        return eventData;
-      },
+      }) => ({
+        id: Number(id),
+        troupe_id: Number(troupe_id),
+        owner_id: Number(owner_id),
+        type: mapRawTypeToEventType(String(type)),
+        title: String(title),
+        description: String(description),
+        location: String(location),
+        start_time: String(start_time),
+        end_time: String(end_time),
+      }),
     );
   }
 
-  update(eventId: RowId, event: Omit<EventData, "id" | "play_id">): boolean {
+  update(
+    eventId: RowId,
+    event: Omit<EventData, "id" | "troupe_id" | "owner_id">,
+  ): boolean {
+    const query = `update event 
+                   set type = ?, 
+                       title = ?, 
+                       description = ?, 
+                       location = ?, 
+                       start_time = ?, 
+                       end_time = ? 
+                   where id = ?`;
+
     const result = database
-      .prepare(
-        `update event set 
-        type = ?, 
-        title = ?, 
-        description = ?, 
-        location = ?, 
-        start_time = ?, 
-        end_time = ? 
-       where id = ?`,
-      )
+      .prepare(query)
       .run(
         event.type,
         event.title,
-        event.description ?? null,
-        event.location ?? null,
+        event.description,
+        event.location,
         event.start_time,
         event.end_time,
         eventId,
@@ -130,6 +141,21 @@ class EventRepository {
     const result = database
       .prepare(`delete from event where id = ?`)
       .run(eventId);
+    return result.changes > 0;
+  }
+
+  setPresence(
+    eventId: RowId,
+    userId: RowId,
+    status: "PRESENT" | "ABSENT",
+  ): boolean {
+    const result = database
+      .prepare(
+        `insert into event_presence (event_id, user_id, status)
+         values (?, ?, ?)
+         on conflict(event_id, user_id) do update set status = excluded.status`,
+      )
+      .run(eventId, userId, status);
 
     return result.changes > 0;
   }

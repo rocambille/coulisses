@@ -23,7 +23,7 @@ values
 insert into scene(id, play_id, title, description, cut_notes, order_in_play, duration_estimated_seconds, is_active)
 values
   (1, 1, 'Acte 1 Scène 1', 'Sur les remparts', 'Couper le monologue du début', 1, 900, 1),
-  (2, 1, 'Acte 1 Scène 2', 'Salle d''Audience', null, 2, 1200, 1);
+  (2, 1, 'Acte 1 Scène 2', 'Salle d''Audience', '', 2, 1200, 1);
 
 insert into role(id, play_id, name, description)
 values

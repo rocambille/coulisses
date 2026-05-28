@@ -7,7 +7,6 @@
 import { use, useState } from "react";
 import { useParams } from "react-router";
 import z, { ZodError } from "zod";
-
 import { cache } from "../../helpers/cache";
 import {
   fromInputParts,
@@ -16,22 +15,12 @@ import {
   toInputTime,
 } from "../../helpers/datetime";
 import { useMutate } from "../../helpers/mutate";
-import { useMembership } from "./hooks";
-
-type EventData = {
-  id: RowId;
-  play_id: RowId;
-  type: "SHOW" | "FIXED_REHEARSAL" | "AUTO_REHEARSAL";
-  title: string;
-  description?: string;
-  location?: string;
-  start_time: string;
-  end_time: string;
-};
+import { useAuth } from "../auth/AuthContext";
+import PresenceToggle from "../ui/PresenceToggle";
 
 const eventSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
-  type: z.enum(["SHOW", "FIXED_REHEARSAL", "AUTO_REHEARSAL"]),
+  type: z.enum(["SHOW", "COURSE", "REHEARSAL", "OTHER"]),
   start_date: z.iso.date(),
   start_time: z.iso.time(),
   end_date: z.iso.date(),
@@ -106,11 +95,11 @@ const MONTHS = [
 ];
 
 function CalendarPage() {
-  const { playId } = useParams();
+  const { troupeId } = useParams();
+  const { me } = useAuth();
   const mutate = useMutate();
-  const { isTeacher } = useMembership(playId);
 
-  const events: EventData[] = use(cache(`/api/plays/${playId}/events`));
+  const events: EventData[] = use(cache(`/api/troupes/${troupeId}/events`));
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
@@ -142,10 +131,10 @@ function CalendarPage() {
       const parsedData = validate(formData);
 
       const response = await mutate(
-        `/api/plays/${playId}/events`,
+        `/api/troupes/${troupeId}/events`,
         "post",
         parsedData,
-        [`/api/plays/${playId}/events`],
+        [`/api/troupes/${troupeId}/events`],
       );
 
       if (response.ok) {
@@ -168,7 +157,7 @@ function CalendarPage() {
         `/api/events/${selectedEvent.id}`,
         "put",
         parsedData,
-        [`/api/plays/${playId}/events`],
+        [`/api/troupes/${troupeId}/events`],
       );
 
       if (response.ok) {
@@ -187,7 +176,7 @@ function CalendarPage() {
       `/api/events/${eventId}`,
       "delete",
       undefined,
-      [`/api/plays/${playId}/events`],
+      [`/api/troupes/${troupeId}/events`],
     );
 
     if (response.ok) {
@@ -296,26 +285,24 @@ function CalendarPage() {
                 flexDirection: "column",
               }}
             >
-              {isTeacher && (
-                <button
-                  type="button"
-                  aria-label={`Ajouter un événement le ${toInputDate(currentDayDate.toISOString())}`}
-                  onClick={() => {
-                    setSelectedDate(currentDayDate);
-                  }}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    opacity: 0,
-                    cursor: "pointer",
-                    zIndex: 1,
-                    border: "none",
-                    background: "transparent",
-                  }}
-                />
-              )}
+              <button
+                type="button"
+                aria-label={`Ajouter un événement le ${toInputDate(currentDayDate.toISOString())}`}
+                onClick={() => {
+                  setSelectedDate(currentDayDate);
+                }}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  opacity: 0,
+                  cursor: "pointer",
+                  zIndex: 1,
+                  border: "none",
+                  background: "transparent",
+                }}
+              />
               <div
                 style={{
                   fontWeight: "bold",
@@ -374,7 +361,7 @@ function CalendarPage() {
         })}
       </div>
 
-      {showAddModal && isTeacher && (
+      {showAddModal && (
         <dialog open>
           <article>
             <header>
@@ -396,7 +383,9 @@ function CalendarPage() {
                 Type
                 <select name="type" required>
                   <option value="SHOW">Représentation</option>
-                  <option value="FIXED_REHEARSAL">Répétition</option>
+                  <option value="REHEARSAL">Répétition</option>
+                  <option value="COURSE">Cours</option>
+                  <option value="OTHER">Autre</option>
                 </select>
               </label>
 
@@ -472,8 +461,9 @@ function CalendarPage() {
                   setSelectedEvent(null);
                 }}
               ></button>
+              Détails de l'événement
             </header>
-            {isTeacher ? (
+            {selectedEvent.owner_id === me?.id ? (
               <form aria-label="event form" action={handleEdit}>
                 <label>
                   Titre
@@ -492,7 +482,9 @@ function CalendarPage() {
                     required
                   >
                     <option value="SHOW">Représentation</option>
-                    <option value="FIXED_REHEARSAL">Répétition</option>
+                    <option value="REHEARSAL">Répétition</option>
+                    <option value="COURSE">Cours</option>
+                    <option value="OTHER">Autre</option>
                   </select>
                 </label>
 
@@ -566,11 +558,15 @@ function CalendarPage() {
                 </footer>
               </form>
             ) : (
-              <p>
+              <div>
                 <strong>Type:</strong>{" "}
                 {selectedEvent.type === "SHOW"
                   ? "🎭 Représentation"
-                  : "📅 Répétition"}
+                  : selectedEvent.type === "REHEARSAL"
+                    ? "📅 Répétition"
+                    : selectedEvent.type === "COURSE"
+                      ? "🎓 Cours"
+                      : "📌 Autre"}
                 <br />
                 <strong>Début:</strong>{" "}
                 {toDisplayString(selectedEvent.start_time)}
@@ -588,7 +584,14 @@ function CalendarPage() {
                     <strong>Description:</strong> {selectedEvent.description}
                   </>
                 )}
-              </p>
+                <div style={{ marginTop: "1rem" }}>
+                  <strong>Ma présence : </strong>
+                  <PresenceToggle
+                    eventId={Number(selectedEvent.id)}
+                    initialStatus="PENDING"
+                  />
+                </div>
+              </div>
             )}
           </article>
         </dialog>

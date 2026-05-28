@@ -12,15 +12,16 @@ class SceneRepository {
   ): RowId {
     const result = database
       .prepare(
-        `insert into scene (play_id, title, description, duration, scene_order) 
-       values (?, ?, ?, ?, ?)`,
+        `insert into scene (play_id, title, description, cut_notes, order_in_play, duration_estimated_seconds) 
+         values (?, ?, ?, ?, ?, ?)`,
       )
       .run(
         playId,
         scene.title,
-        scene.description ?? null,
-        scene.duration ?? null,
-        scene.scene_order,
+        scene.description,
+        scene.cut_notes,
+        scene.order_in_play,
+        scene.duration_estimated_seconds,
       );
 
     return result.lastInsertRowid;
@@ -35,78 +36,76 @@ class SceneRepository {
       id,
       title,
       description,
+      cut_notes,
       play_id,
-      duration,
-      scene_order,
+      duration_estimated_seconds,
+      order_in_play,
       is_active,
     } = row;
 
-    const scene: Scene = {
+    return {
       id: Number(id),
       title: String(title),
+      description: String(description),
+      cut_notes: String(cut_notes),
       play_id: Number(play_id),
-      scene_order: Number(scene_order),
+      order_in_play: Number(order_in_play),
+      duration_estimated_seconds: Number(duration_estimated_seconds),
       is_active: Boolean(is_active),
     };
-    if (description != null) scene.description = String(description);
-    if (duration != null) scene.duration = Number(duration);
-
-    return scene;
   }
 
-  findByPlay(play: Play): Scene[] {
+  findByPlay(playId: RowId): Scene[] {
     const rows = database
-      .prepare("select * from scene where play_id = ? order by scene_order asc")
-      .all(play.id);
+      .prepare(
+        "select * from scene where play_id = ? order by order_in_play asc",
+      )
+      .all(playId);
 
     return rows.map<Scene>(
       ({
         id,
         title,
         description,
+        cut_notes,
         play_id,
-        duration,
-        scene_order,
+        duration_estimated_seconds,
+        order_in_play,
         is_active,
-      }) => {
-        const scene: Scene = {
-          id: Number(id),
-          title: String(title),
-          play_id: Number(play_id),
-          scene_order: Number(scene_order),
-          is_active: Boolean(is_active),
-        };
-        if (description != null) scene.description = String(description);
-        if (duration != null) scene.duration = Number(duration);
-        return scene;
-      },
+      }) => ({
+        id: Number(id),
+        title: String(title),
+        description: String(description),
+        cut_notes: String(cut_notes),
+        play_id: Number(play_id),
+        order_in_play: Number(order_in_play),
+        duration_estimated_seconds: Number(duration_estimated_seconds),
+        is_active: Boolean(is_active),
+      }),
     );
   }
 
-  update(id: RowId, scene: Omit<Scene, "id">): boolean {
-    // Dynamic update based on provided fields
-    const fields: string[] = [];
-    const values: (string | RowId | null)[] = [];
+  update(id: RowId, scene: Omit<Scene, "id" | "play_id">): boolean {
+    const query = `update scene 
+                   set title = ?,
+                       description = ?,
+                       cut_notes = ?,
+                       duration_estimated_seconds = ?,
+                       order_in_play = ?,
+                       is_active = ?
+                   where id = ?`;
 
-    fields.push("title = ?");
-    values.push(scene.title);
-
-    fields.push("description = ?");
-    values.push(scene.description ?? null);
-
-    fields.push("duration = ?");
-    values.push(scene.duration ?? null);
-
-    fields.push("scene_order = ?");
-    values.push(scene.scene_order);
-
-    fields.push("is_active = ?");
-    values.push(scene.is_active ? 1 : 0);
-
-    values.push(id);
-    const query = `update scene set ${fields.join(", ")} where id = ?`;
-
-    const result = database.prepare(query).run(...values);
+    const result = database
+      .prepare(query)
+      .run(
+        scene.title,
+        scene.description,
+        scene.cut_notes,
+        scene.duration_estimated_seconds,
+        scene.order_in_play,
+        scene.is_active ? 1 : 0,
+        id,
+      );
     return result.changes > 0;
   }
 

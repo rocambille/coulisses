@@ -104,6 +104,7 @@ await importAndUse("./modules/play/playRoutes");
 await importAndUse("./modules/preference/preferenceRoutes");
 await importAndUse("./modules/role/roleRoutes");
 await importAndUse("./modules/scene/sceneRoutes");
+await importAndUse("./modules/troupe/troupeRoutes");
 await importAndUse("./modules/user/userRoutes");
 
 /* ************************************************************************ */

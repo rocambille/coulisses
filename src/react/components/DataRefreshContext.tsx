@@ -32,7 +32,7 @@ const DataRefreshContext = createContext<DataRefreshContextType | undefined>(
 /* ************************************************************************ */
 
 export function DataRefreshProvider({ children }: { children: ReactNode }) {
-  const [tick, setTick] = useState(0);
+  const [tick, setTick] = useState(1);
 
   const refresh = () => setTick((t) => t + 1);
 
