@@ -62,7 +62,7 @@ export default function MemberRow({ member }: MemberRowProps) {
         <>
           <td>
             <select
-              aria-label={`modifier ${member.id}`}
+              aria-label={`Modifier le rôle du membre ${member.id}`}
               style={{
                 fontSize: "smaller",
                 margin: 0,
@@ -77,7 +77,7 @@ export default function MemberRow({ member }: MemberRowProps) {
           </td>
           <td>
             <button
-              aria-label={`retirer ${member.id}`}
+              aria-label={`Retirer le membre ${member.id} de la troupe`}
               type="button"
               onClick={handleRemove}
               className="outline contrast"

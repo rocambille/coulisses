@@ -64,7 +64,7 @@ function DashboardPage() {
 
       <details>
         <summary>Créer une nouvelle troupe</summary>
-        <form aria-label="troupe form" action={handleAdd}>
+        <form aria-label="Formulaire d'ajout d'une troupe" action={handleAdd}>
           <input
             name="name"
             placeholder="Nom de la troupe"

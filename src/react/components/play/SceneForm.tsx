@@ -5,7 +5,17 @@
 */
 
 import { useParams } from "react-router";
+import z from "zod";
 import { useMutate } from "../../helpers/mutate";
+
+const sceneFormSchema = z.object({
+  title: z.string().min(1, "Le titre est requis"),
+  description: z.string(),
+  cut_notes: z.string(),
+  duration_estimated_seconds: z.int().nonnegative(),
+  order_in_play: z.int(),
+  is_active: z.boolean(),
+});
 
 export default function SceneForm({
   scene,
@@ -21,26 +31,33 @@ export default function SceneForm({
 
   const handleEdit = async (sceneId: Scene["id"], formData: FormData) => {
     const title = formData.get("title")?.toString();
-    const description = formData.get("description")?.toString() ?? "";
-    const cut_notes = formData.get("cut_notes")?.toString() ?? "";
-    const duration = Number(formData.get("duration_estimated_seconds"));
-    const order = Number(formData.get("order_in_play"));
+    const description = formData.get("description")?.toString();
+    const cut_notes = formData.get("cut_notes")?.toString();
+    const duration_estimated_seconds = Number(
+      formData.get("duration_estimated_seconds"),
+    );
+    const order_in_play = Number(formData.get("order_in_play"));
     const is_active = formData.get("is_active") === "on";
 
-    if (!title || Number.isNaN(order)) {
-      throw new Error("Invalid form submission");
+    const parsed = sceneFormSchema.safeParse({
+      title,
+      description,
+      cut_notes,
+      duration_estimated_seconds,
+      order_in_play,
+      is_active,
+    });
+
+    if (!parsed.success) {
+      alert(z.prettifyError(parsed.error));
+      return;
     }
 
     const response = await mutate(
       `/api/scenes/${sceneId}`,
       "put",
       {
-        title,
-        description,
-        cut_notes,
-        duration_estimated_seconds: duration,
-        order_in_play: order,
-        is_active,
+        ...parsed.data,
       },
       [`/api/plays/${playId}/scenes`],
     );
@@ -52,7 +69,10 @@ export default function SceneForm({
 
   return (
     <article>
-      <form action={(formData) => handleEdit(Number(scene.id), formData)}>
+      <form
+        aria-label={`Formulaire d'édition de la scène ${scene.id}`}
+        action={(formData) => handleEdit(Number(scene.id), formData)}
+      >
         <label>
           Titre
           <input
@@ -87,6 +107,7 @@ export default function SceneForm({
               aria-label={`Durée estimée de la scène ${scene.id}`}
               name="duration_estimated_seconds"
               type="number"
+              min={0}
               defaultValue={scene.duration_estimated_seconds}
               required
             />

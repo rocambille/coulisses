@@ -6,10 +6,15 @@
 
 import React, { use, useState } from "react";
 import { useOutletContext, useParams } from "react-router";
+import z from "zod";
 import { cache } from "../../helpers/cache";
 import { useMutate } from "../../helpers/mutate";
 import SceneCard from "./SceneCard";
 import SceneForm from "./SceneForm";
+
+const sceneSchema = z.object({
+  title: z.string().min(1, "Le titre est requis"),
+});
 
 export default function ScenesPage() {
   const { playId } = useParams();
@@ -26,14 +31,20 @@ export default function ScenesPage() {
   const roles = use<RoleWithScenes[]>(cache(`/api/plays/${playId}/roles`));
 
   const handleAdd = async (formData: FormData) => {
-    const title = formData.get("title")?.toString();
-    if (!title) throw new Error("Invalid form submission");
+    const parsed = sceneSchema.safeParse({
+      title: formData.get("title")?.toString(),
+    });
+
+    if (!parsed.success) {
+      alert(z.prettifyError(parsed.error));
+      return;
+    }
 
     await mutate(
       `/api/plays/${playId}/scenes`,
       "post",
       {
-        title,
+        title: parsed.data.title,
         description: "",
         cut_notes: "",
         duration_estimated_seconds: 0,
@@ -96,7 +107,7 @@ export default function ScenesPage() {
       {isAdmin && (
         <details>
           <summary>Ajouter une scène</summary>
-          <form action={handleAdd}>
+          <form aria-label="Formulaire d'ajout d'une scène" action={handleAdd}>
             <label>
               Titre
               <input name="title" required />

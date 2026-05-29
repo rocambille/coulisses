@@ -373,7 +373,10 @@ function CalendarPage() {
               ></button>
               Nouvel événement
             </header>
-            <form aria-label="event form" action={handleAdd}>
+            <form
+              aria-label="Formulaire d'ajout d'un événement"
+              action={handleAdd}
+            >
               <label>
                 Titre
                 <input name="title" required />
@@ -464,7 +467,10 @@ function CalendarPage() {
               Détails de l'événement
             </header>
             {selectedEvent.owner_id === me?.id ? (
-              <form aria-label="event form" action={handleEdit}>
+              <form
+                aria-label={`Formulaire de modification de l'événement ${selectedEvent.id}`}
+                action={handleEdit}
+              >
                 <label>
                   Titre
                   <input

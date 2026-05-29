@@ -61,7 +61,10 @@ export default function MembersPage() {
       {isAdmin && (
         <details>
           <summary>Inviter un nouveau membre</summary>
-          <form aria-label="invite form" action={handleInvite}>
+          <form
+            aria-label="Formulaire d'invitation d'un membre"
+            action={handleInvite}
+          >
             <input
               name="email"
               type="email"

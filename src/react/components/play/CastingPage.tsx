@@ -15,8 +15,6 @@ export default function CastingPage() {
   const mutate = useMutate();
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
 
-  if (!playId) return null;
-
   // The matrix directly provides actors and scenes with roles and preferences
   const dashboard = use<CastingMatrix>(cache(`/api/plays/${playId}/castings`));
   // dashboard object is: { actors: User[], scenes: Array<{ id, title, order_in_play, roles: Array<{ id, name, is_assigned, assigned_user_id, assigned_user_name, preferences: Array<{ user_id, level }> }> }> }
@@ -25,8 +23,6 @@ export default function CastingPage() {
   const scenes = dashboard.scenes;
 
   const handleAssign = async (sceneId: RowId, roleId: RowId, userId: RowId) => {
-    if (!isAdmin) return;
-
     await mutate(
       `/api/castings`,
       "post",
@@ -40,8 +36,6 @@ export default function CastingPage() {
     roleId: RowId,
     userId: RowId,
   ) => {
-    if (!isAdmin) return;
-
     await mutate(
       `/api/castings`,
       "delete",

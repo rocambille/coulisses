@@ -23,7 +23,7 @@ function MagicLinkForm() {
     </p>
   ) : (
     <form
-      aria-label="login form"
+      aria-label="Formulaire de connexion"
       action={(formData) => {
         const email = formData.get("email")?.toString();
 

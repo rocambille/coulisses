@@ -6,9 +6,16 @@
 
 import { use } from "react";
 import { useOutletContext, useParams } from "react-router";
+import z from "zod";
 import { cache } from "../../helpers/cache";
 import { useMutate } from "../../helpers/mutate";
 import RoleBadge from "../ui/RoleBadge";
+
+const roleFormSchema = z.object({
+  name: z.string().min(1, "Le nom est requis"),
+  description: z.string(),
+  sceneIds: z.array(z.number()),
+});
 
 export default function RolesPage() {
   const { playId } = useParams();
@@ -23,14 +30,20 @@ export default function RolesPage() {
     const description = formData.get("description")?.toString();
     const sceneIds = formData.getAll("sceneIds").map(Number);
 
-    if (!name) throw new Error("Invalid form submission");
+    const parsed = roleFormSchema.safeParse({
+      name,
+      description,
+      sceneIds,
+    });
 
-    await mutate(
+    if (!parsed.success) {
+      alert(z.prettifyError(parsed.error));
+      return;
+    }
+
+    await mutate(`/api/plays/${playId}/roles`, "post", { ...parsed.data }, [
       `/api/plays/${playId}/roles`,
-      "post",
-      { name, description, sceneIds },
-      [`/api/plays/${playId}/roles`],
-    );
+    ]);
   };
 
   const handleDelete = async (roleId: Role["id"]) => {
@@ -89,7 +102,7 @@ export default function RolesPage() {
       {isAdmin && (
         <details>
           <summary>Ajouter un rôle</summary>
-          <form action={handleAdd}>
+          <form aria-label="Formulaire d'ajout d'un rôle" action={handleAdd}>
             <label htmlFor="role-name">Nom du rôle</label>
             <input id="role-name" name="name" required />
             <label htmlFor="role-description">Description (optionnel)</label>

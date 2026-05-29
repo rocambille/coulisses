@@ -88,7 +88,10 @@ export default function TroupeDashboardPage() {
       {isAdmin && (
         <details>
           <summary>Ajouter une pièce</summary>
-          <form aria-label="play form" action={handleAddPlay}>
+          <form
+            aria-label="Formulaire d'ajout d'une pièce"
+            action={handleAddPlay}
+          >
             <label htmlFor="play-title-input">Titre de la pièce</label>
             <input id="play-title-input" name="title" required />
             <label htmlFor="play-description-input">

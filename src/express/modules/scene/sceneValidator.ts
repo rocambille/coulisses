@@ -9,8 +9,8 @@ const sceneDTOSchema = z.object({
   title: z.string().max(255),
   description: z.string(),
   cut_notes: z.string(),
-  duration_estimated_seconds: z.number(),
-  order_in_play: z.number(),
+  duration_estimated_seconds: z.int().nonnegative(),
+  order_in_play: z.int(),
   is_active: z.boolean(),
 });
 

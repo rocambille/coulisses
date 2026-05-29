@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import ScenesPage from "../../../../src/react/components/play/ScenesPage";
 import {
   actorUser,
@@ -127,6 +127,23 @@ describe("React: ScenesPage", () => {
       expectContractCall("scenes", "add", "as_admin");
     });
 
+    it("should alert when submitted data is invalid", async () => {
+      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
+
+      await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: teacherUser,
+      });
+
+      await act(async () => {
+        await fireEvent.submit(screen.getByRole("form"));
+      });
+
+      expect(alert).toHaveBeenCalled();
+    });
+
     it("should display edit form when clicking on edit button", async () => {
       const { user } = await renderWithStub({
         path: "/plays/:playId/scenes",
@@ -219,6 +236,39 @@ describe("React: ScenesPage", () => {
       );
 
       expectContractCall("scenes", "edit", "as_admin");
+    });
+
+    it("should alert when submitted data for editing a scene is invalid", async () => {
+      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
+
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: teacherUser,
+      });
+
+      await user.click(
+        screen.getByLabelText(
+          new RegExp(`modifier.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+      );
+
+      await user.clear(
+        screen.getByLabelText(
+          new RegExp(`titre.*scène.*${mainScenes[0].id}`, "i"),
+        ),
+      );
+
+      await act(async () => {
+        await fireEvent.submit(
+          screen.getByRole("form", {
+            name: new RegExp(`édition.*scène.*${mainScenes[0].id}`, "i"),
+          }),
+        );
+      });
+
+      expect(alert).toHaveBeenCalled();
     });
 
     it("should delete a scene", async () => {

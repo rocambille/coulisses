@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import RolesPage from "../../../../src/react/components/play/RolesPage";
 import {
   actorUser,
@@ -90,6 +90,23 @@ describe("React: RolesPage", () => {
       await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
       expectContractCall("roles", "add", "as_admin");
+    });
+
+    it("should alert when submitted data is invalid", async () => {
+      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
+
+      await renderWithStub({
+        path: "/plays/:playId/roles",
+        Component: RolesPage,
+        initialEntries: [`/plays/${mainPlay.id}/roles`],
+        me: teacherUser,
+      });
+
+      await act(async () => {
+        await fireEvent.submit(screen.getByRole("form"));
+      });
+
+      expect(alert).toHaveBeenCalled();
     });
 
     it("should delete a role", async () => {

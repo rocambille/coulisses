@@ -23,7 +23,7 @@ function AccountDetailsForm() {
 
   return (
     <form
-      aria-label="account details form"
+      aria-label="Formulaire de modification de mes informations"
       action={(formData: FormData) => {
         const email = formData.get("email")?.toString();
         const name = formData.get("name")?.toString();
