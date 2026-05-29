@@ -43,8 +43,24 @@ describe("<MagicLinkForm />", () => {
 
     expectContractCall("auth", "magic_link", "success");
   });
+  it("should submit new email and show confirmation", async () => {
+    const { user } = await renderWithStub({
+      path: "/",
+      Component: MagicLinkForm,
+      initialEntries: ["/"],
+      me: null,
+    });
+
+    await user.type(
+      screen.getByLabelText(/^email$/i),
+      String(requestValue("auth", "magic_link", "new_user", "email")),
+    );
+    await user.click(screen.getByRole("button"));
+
+    expectContractCall("auth", "magic_link", "new_user");
+  });
   it("should fail when email is invalid", async () => {
-    vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+    vi.spyOn(window, "alert").mockImplementationOnce(() => {});
 
     await renderWithStub({
       path: "/",

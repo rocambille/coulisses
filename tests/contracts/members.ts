@@ -1,5 +1,6 @@
 import {
   actorUser,
+  emptyTroupe,
   mainTroupe,
   mainTroupeMembers,
   teacherUser,
@@ -45,6 +46,24 @@ export default (<Contract>{
         },
         response: { status: 204, body: {} },
       },
+      conflict: {
+        specialPath: `/api/troupes/${emptyTroupe.id}/members/${teacherUser.id}`,
+        request: {
+          body: {
+            email: teacherUser.email,
+            name: teacherUser.name,
+            role: "ACTOR",
+          },
+          jwtPayload: { sub: teacherUser.id },
+        },
+        response: {
+          status: 409,
+          body: {
+            error:
+              "Vous devez laisser au moins un administrateur dans la troupe.",
+          },
+        },
+      },
     },
   },
   delete: {
@@ -54,6 +73,17 @@ export default (<Contract>{
       as_admin: {
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 204, body: {} },
+      },
+      conflict: {
+        specialPath: `/api/troupes/${emptyTroupe.id}/members/${teacherUser.id}`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: {
+          status: 409,
+          body: {
+            error:
+              "Vous devez laisser au moins un administrateur dans la troupe.",
+          },
+        },
       },
     },
   },

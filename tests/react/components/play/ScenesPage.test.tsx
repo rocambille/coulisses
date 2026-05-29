@@ -222,7 +222,7 @@ describe("React: ScenesPage", () => {
     });
 
     it("should delete a scene", async () => {
-      vi.spyOn(window, "confirm").mockReturnValue(true);
+      vi.spyOn(window, "confirm").mockReturnValueOnce(true);
 
       const { user } = await renderWithStub({
         path: "/plays/:playId/scenes",
@@ -241,7 +241,7 @@ describe("React: ScenesPage", () => {
     });
 
     it("should not delete a scene when user cancels", async () => {
-      vi.spyOn(window, "confirm").mockReturnValue(false);
+      vi.spyOn(window, "confirm").mockReturnValueOnce(false);
 
       const { user } = await renderWithStub({
         path: "/plays/:playId/scenes",

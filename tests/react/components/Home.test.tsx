@@ -75,7 +75,7 @@ describe("<DashboardPage />", () => {
   });
 
   it("should alert when submitted data is not matching the contract", async () => {
-    vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+    vi.spyOn(window, "alert").mockImplementationOnce(() => {});
 
     await renderWithStub({
       path: "/",

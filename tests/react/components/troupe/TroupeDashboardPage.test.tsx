@@ -105,7 +105,7 @@ describe("React: TroupeDashboardPage", () => {
     });
 
     it("should alert when submitted data is invalid", async () => {
-      vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
 
       await renderWithStub({
         path: "/troupes/:troupeId",

@@ -192,7 +192,7 @@ describe("React: CalendarPage", () => {
     });
 
     it("should alert when submitted data is invalid", async () => {
-      vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
 
       const { user } = await renderWithStub({
         path: "/troupes/:troupeId/calendar",
@@ -286,7 +286,7 @@ describe("React: CalendarPage", () => {
 
     it("should open form and delete an event", async () => {
       vi.setSystemTime(new Date(openingNightEvent.start_time));
-      vi.spyOn(window, "confirm").mockReturnValue(true);
+      vi.spyOn(window, "confirm").mockReturnValueOnce(true);
 
       const { user } = await renderWithStub({
         path: "/troupes/:troupeId/calendar",

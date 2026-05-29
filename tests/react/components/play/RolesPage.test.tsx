@@ -93,7 +93,7 @@ describe("React: RolesPage", () => {
     });
 
     it("should delete a role", async () => {
-      vi.spyOn(window, "confirm").mockReturnValue(true);
+      vi.spyOn(window, "confirm").mockReturnValueOnce(true);
 
       const { user } = await renderWithStub({
         path: "/plays/:playId/roles",
@@ -112,7 +112,7 @@ describe("React: RolesPage", () => {
     });
 
     it("should not delete a role when user cancels", async () => {
-      vi.spyOn(window, "confirm").mockReturnValue(false);
+      vi.spyOn(window, "confirm").mockReturnValueOnce(false);
 
       const { user } = await renderWithStub({
         path: "/plays/:playId/roles",

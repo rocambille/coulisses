@@ -54,7 +54,7 @@ describe("<AccountPage />", () => {
   });
 
   it("should alert when submitted data is invalid", async () => {
-    vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+    vi.spyOn(window, "alert").mockImplementationOnce(() => {});
 
     const { user } = await renderWithStub({
       path: "/",
@@ -86,7 +86,7 @@ describe("<AccountPage />", () => {
   });
 
   it("should submit delete form", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
+    vi.spyOn(window, "confirm").mockReturnValueOnce(true);
 
     const { user } = await renderWithStub({
       path: "/",
@@ -101,7 +101,7 @@ describe("<AccountPage />", () => {
   });
 
   it("should not submit delete form when user cancels", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
+    vi.spyOn(window, "confirm").mockReturnValueOnce(false);
 
     const { user } = await renderWithStub({
       path: "/",
