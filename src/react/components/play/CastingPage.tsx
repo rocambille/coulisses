@@ -51,140 +51,141 @@ export default function CastingPage() {
         <p>Croisement des scènes, rôles et acteurs.</p>
       </hgroup>
 
-      <div style={{ overflowX: "auto" }}>
-        <table className="striped">
-          <thead>
-            <tr>
-              <th style={{ minWidth: "150px" }}>Scène</th>
-              <th style={{ minWidth: "100px" }}>Rôle</th>
-              <th>Assigné(e)</th>
-              {actors.map((actor) => (
-                <th key={actor.id} style={{ textAlign: "center" }}>
-                  {actor.name}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {scenes.map((scene) => (
-              <React.Fragment key={scene.id}>
-                {scene.roles.map((role, roleIndex) => {
-                  const assignedUser = role.assigned_user;
-                  return (
-                    <tr key={`${scene.id}-${role.id}`}>
-                      {roleIndex === 0 ? (
-                        <td
-                          rowSpan={scene.roles.length}
+      <table
+        className="striped"
+        style={{ display: "block", overflowX: "auto" }}
+      >
+        <thead>
+          <tr>
+            <th style={{ minWidth: "150px" }}>Scène</th>
+            <th style={{ minWidth: "100px" }}>Rôle</th>
+            <th>Assigné(e)</th>
+            {actors.map((actor) => (
+              <th key={actor.id} style={{ textAlign: "center" }}>
+                {actor.name}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {scenes.map((scene) => (
+            <React.Fragment key={scene.id}>
+              {scene.roles.map((role, roleIndex) => {
+                const assignedUser = role.assigned_user;
+                return (
+                  <tr key={`${scene.id}-${role.id}`}>
+                    {roleIndex === 0 ? (
+                      <td
+                        rowSpan={scene.roles.length}
+                        style={{
+                          verticalAlign: "middle",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {scene.order_in_play}. {scene.title}
+                      </td>
+                    ) : null}
+                    <td>{role.name}</td>
+                    <td>
+                      {assignedUser ? (
+                        <div
                           style={{
-                            verticalAlign: "middle",
-                            fontWeight: "bold",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
                           }}
                         >
-                          {scene.order_in_play}. {scene.title}
-                        </td>
-                      ) : null}
-                      <td>{role.name}</td>
-                      <td>
-                        {assignedUser ? (
+                          <span
+                            style={{
+                              color: "var(--pico-color-emerald-500)",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {assignedUser.name}
+                          </span>
+                          {isAdmin && (
+                            <button
+                              aria-label={`Désassigner le rôle ${role.id} dans la scène ${scene.id} à ${assignedUser.id}`}
+                              type="button"
+                              className="outline secondary"
+                              style={{
+                                padding: "0.1rem 0.3rem",
+                                fontSize: "0.7rem",
+                                width: "auto",
+                                margin: 0,
+                              }}
+                              onClick={() =>
+                                handleUnassign(
+                                  scene.id,
+                                  role.id,
+                                  assignedUser.id,
+                                )
+                              }
+                              title="Désassigner"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ color: "var(--pico-muted-color)" }}>
+                          Personne
+                        </span>
+                      )}
+                    </td>
+                    {actors.map((actor) => {
+                      const pref = role.preferences.find(
+                        (p) => p.user_id === actor.id,
+                      );
+                      return (
+                        <td key={actor.id} style={{ textAlign: "center" }}>
                           <div
                             style={{
                               display: "flex",
+                              flexDirection: "column",
                               alignItems: "center",
-                              gap: "0.5rem",
+                              gap: "0.2rem",
                             }}
                           >
-                            <span
-                              style={{
-                                color: "var(--pico-color-emerald-500)",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {assignedUser.name}
-                            </span>
-                            {isAdmin && (
+                            {pref ? (
+                              <PreferenceBadge level={pref.level} />
+                            ) : (
+                              <span
+                                style={{ color: "var(--pico-muted-color)" }}
+                              >
+                                -
+                              </span>
+                            )}
+
+                            {isAdmin && !role.assigned_user && (
                               <button
-                                aria-label={`Désassigner le rôle ${role.id} dans la scène ${scene.id} à ${assignedUser.id}`}
+                                aria-label={`Assigner le rôle ${role.id} dans la scène ${scene.id} à ${actor.id}`}
                                 type="button"
-                                className="outline secondary"
+                                className="outline"
                                 style={{
                                   padding: "0.1rem 0.3rem",
-                                  fontSize: "0.7rem",
+                                  fontSize: "0.6rem",
                                   width: "auto",
                                   margin: 0,
                                 }}
                                 onClick={() =>
-                                  handleUnassign(
-                                    scene.id,
-                                    role.id,
-                                    assignedUser.id,
-                                  )
+                                  handleAssign(scene.id, role.id, actor.id)
                                 }
-                                title="Désassigner"
                               >
-                                ✕
+                                Assigner
                               </button>
                             )}
                           </div>
-                        ) : (
-                          <span style={{ color: "var(--pico-muted-color)" }}>
-                            Personne
-                          </span>
-                        )}
-                      </td>
-                      {actors.map((actor) => {
-                        const pref = role.preferences.find(
-                          (p) => p.user_id === actor.id,
-                        );
-                        return (
-                          <td key={actor.id} style={{ textAlign: "center" }}>
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                gap: "0.2rem",
-                              }}
-                            >
-                              {pref ? (
-                                <PreferenceBadge level={pref.level} />
-                              ) : (
-                                <span
-                                  style={{ color: "var(--pico-muted-color)" }}
-                                >
-                                  -
-                                </span>
-                              )}
-
-                              {isAdmin && !role.assigned_user && (
-                                <button
-                                  aria-label={`Assigner le rôle ${role.id} dans la scène ${scene.id} à ${actor.id}`}
-                                  type="button"
-                                  className="outline"
-                                  style={{
-                                    padding: "0.1rem 0.3rem",
-                                    fontSize: "0.6rem",
-                                    width: "auto",
-                                    margin: 0,
-                                  }}
-                                  onClick={() =>
-                                    handleAssign(scene.id, role.id, actor.id)
-                                  }
-                                >
-                                  Assigner
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </tbody>
+      </table>
     </>
   );
 }

@@ -68,86 +68,84 @@ export default function SceneForm({
   };
 
   return (
-    <article>
-      <form
-        aria-label={`Formulaire d'édition de la scène ${scene.id}`}
-        action={(formData) => handleEdit(Number(scene.id), formData)}
-      >
+    <form
+      aria-label={`Formulaire d'édition de la scène ${scene.id}`}
+      action={(formData) => handleEdit(Number(scene.id), formData)}
+    >
+      <label>
+        Titre
+        <input
+          aria-label={`Titre de la scène ${scene.id}`}
+          name="title"
+          defaultValue={scene.title}
+          required
+        />
+      </label>
+      <label>
+        Description
+        <input
+          aria-label={`Description de la scène ${scene.id}`}
+          name="description"
+          defaultValue={scene.description}
+        />
+      </label>
+      <div className="grid">
         <label>
-          Titre
+          Ordre d'apparition
           <input
-            aria-label={`Titre de la scène ${scene.id}`}
-            name="title"
-            defaultValue={scene.title}
+            aria-label={`Ordre d'apparition de la scène ${scene.id}`}
+            name="order_in_play"
+            type="number"
+            defaultValue={scene.order_in_play}
             required
           />
         </label>
         <label>
-          Description
+          Durée (secondes)
           <input
-            aria-label={`Description de la scène ${scene.id}`}
-            name="description"
-            defaultValue={scene.description}
+            aria-label={`Durée estimée de la scène ${scene.id}`}
+            name="duration_estimated_seconds"
+            type="number"
+            min={0}
+            defaultValue={scene.duration_estimated_seconds}
+            required
           />
         </label>
-        <div className="grid">
-          <label>
-            Ordre d'apparition
-            <input
-              aria-label={`Ordre d'apparition de la scène ${scene.id}`}
-              name="order_in_play"
-              type="number"
-              defaultValue={scene.order_in_play}
-              required
-            />
-          </label>
-          <label>
-            Durée (secondes)
-            <input
-              aria-label={`Durée estimée de la scène ${scene.id}`}
-              name="duration_estimated_seconds"
-              type="number"
-              min={0}
-              defaultValue={scene.duration_estimated_seconds}
-              required
-            />
-          </label>
-        </div>
-        <label>
-          Notes de coupe (cut)
-          <input
-            aria-label={`Notes de coupe de la scène ${scene.id}`}
-            name="cut_notes"
-            defaultValue={scene.cut_notes}
-          />
-        </label>
-        <label>
-          <input
-            aria-label={`Scène active (incluse dans le montage) ${scene.id}`}
-            name="is_active"
-            type="checkbox"
-            defaultChecked={scene.is_active}
-          />
-          Scène active (incluse dans le montage)
-        </label>
-        <footer style={{ marginTop: "1rem" }}>
-          <button
-            aria-label={`Annuler la modification de la scène ${scene.id}`}
-            type="button"
-            className="secondary outline"
-            onClick={onCancel}
-            style={{ marginRight: "0.5rem" }}
-          >
-            Annuler
-          </button>
-          <button
-            aria-label={`Enregistrer les modifications de la scène ${scene.id}`}
-            type="submit"
-          >
-            Enregistrer
-          </button>
-        </footer>
-      </form>
-    </article>
+      </div>
+      <label>
+        Notes de coupe (cut)
+        <input
+          aria-label={`Notes de coupe de la scène ${scene.id}`}
+          name="cut_notes"
+          defaultValue={scene.cut_notes}
+        />
+      </label>
+      <label>
+        <input
+          aria-label={`Scène active (incluse dans le montage) ${scene.id}`}
+          name="is_active"
+          type="checkbox"
+          defaultChecked={scene.is_active}
+        />
+        Scène active (incluse dans le montage)
+      </label>
+      <footer style={{ marginTop: "1rem" }}>
+        <button
+          aria-label={`Annuler la modification de la scène ${scene.id}`}
+          type="button"
+          className="secondary outline"
+          onClick={onCancel}
+          style={{ marginRight: "0.5rem" }}
+        >
+          Annuler
+        </button>
+        <button
+          aria-label={`Enregistrer les modifications de la scène ${scene.id}`}
+          type="submit"
+        >
+          Enregistrer
+        </button>
+      </footer>
+    </form>
   );
 }
