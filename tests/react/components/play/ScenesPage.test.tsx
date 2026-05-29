@@ -74,7 +74,7 @@ describe("React: ScenesPage", () => {
         "HIGH",
       );
 
-      expectContractCall("scenes", "set_preference", "member");
+      expectContractCall("preferences", "set_scene", "as_member");
     });
 
     it("should select no preference when user has no preference", async () => {
@@ -120,11 +120,11 @@ describe("React: ScenesPage", () => {
 
       await user.type(
         screen.getByLabelText(/titre/i),
-        String(requestValue("scenes", "create", "admin", "title")),
+        String(requestValue("scenes", "add", "as_admin", "title")),
       );
       await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-      expectContractCall("scenes", "create", "admin");
+      expectContractCall("scenes", "add", "as_admin");
     });
 
     it("should display edit form when clicking on edit button", async () => {
@@ -207,7 +207,7 @@ describe("React: ScenesPage", () => {
         screen.getByLabelText(
           new RegExp(`titre.*scène.*${mainScenes[0].id}`, "i"),
         ),
-        String(requestValue("scenes", "edit", "admin", "title")),
+        String(requestValue("scenes", "edit", "as_admin", "title")),
       );
       await user.click(
         screen.getByLabelText(
@@ -218,7 +218,7 @@ describe("React: ScenesPage", () => {
         ),
       );
 
-      expectContractCall("scenes", "edit", "admin");
+      expectContractCall("scenes", "edit", "as_admin");
     });
 
     it("should delete a scene", async () => {
@@ -237,7 +237,7 @@ describe("React: ScenesPage", () => {
         ),
       );
 
-      expectContractCall("scenes", "delete", "admin");
+      expectContractCall("scenes", "delete", "as_admin");
     });
 
     it("should not delete a scene when user cancels", async () => {

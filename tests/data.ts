@@ -62,7 +62,7 @@ export const allTroupes: Troupe[] = [
   {
     id: 2,
     name: "Troupe Vide",
-    description: "Une troupe sans membres",
+    description: "",
     external_discussion_link: "",
     created_at: "2026-01-01T00:00:00.000Z",
   },

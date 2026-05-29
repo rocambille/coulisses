@@ -28,7 +28,7 @@ describe("<DashboardPage />", () => {
 
     await screen.findByRole("heading", { level: 1, name: /mes troupes/i });
 
-    expectContractCall("troupes", "browse", "member");
+    expectContractCall("troupes", "browse", "as_member");
   });
 
   it("should display a message when the user has no troupes", async () => {
@@ -46,6 +46,17 @@ describe("<DashboardPage />", () => {
     expectContractCall("troupes", "browse", "empty");
   });
 
+  it("should display something when the troupe has no description", async () => {
+    await renderWithStub({
+      path: "/",
+      Component: Home,
+      initialEntries: ["/"],
+      me: teacherUser,
+    });
+
+    await screen.findByText("👺");
+  });
+
   it("should add a troupe", async () => {
     const { user } = await renderWithStub({
       path: "/",
@@ -56,11 +67,11 @@ describe("<DashboardPage />", () => {
 
     await user.type(
       screen.getByLabelText(/nom/i),
-      String(requestValue("troupes", "create", "success", "name")),
+      String(requestValue("troupes", "add", "as_admin", "name")),
     );
     await user.click(screen.getByRole("button", { name: /créer/i }));
 
-    expectContractCall("troupes", "create", "success");
+    expectContractCall("troupes", "add", "as_admin");
   });
 
   it("should alert when submitted data is not matching the contract", async () => {

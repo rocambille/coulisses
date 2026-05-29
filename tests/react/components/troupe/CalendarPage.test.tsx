@@ -160,7 +160,7 @@ describe("React: CalendarPage", () => {
     it("should open form and create a new event on a date", async () => {
       vi.setSystemTime(
         new Date(
-          String(requestValue("events", "create", "member", "start_time")),
+          String(requestValue("events", "add", "as_member", "start_time")),
         ),
       );
 
@@ -174,7 +174,7 @@ describe("React: CalendarPage", () => {
       await user.click(
         screen.getByLabelText(
           new RegExp(
-            `ajouter.*${String(requestValue("events", "create", "member", "start_time")).split("T")[0]}`,
+            `ajouter.*${String(requestValue("events", "add", "as_member", "start_time")).split("T")[0]}`,
             "i",
           ),
         ),
@@ -182,12 +182,12 @@ describe("React: CalendarPage", () => {
 
       await user.type(
         screen.getByLabelText(/titre/i),
-        String(requestValue("events", "create", "member", "title")),
+        String(requestValue("events", "add", "as_member", "title")),
       );
 
       await user.click(screen.getByRole("button", { name: /^ajouter$/i }));
 
-      expectContractCall("events", "create", "member");
+      expectContractCall("events", "add", "as_member");
       await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
     });
 

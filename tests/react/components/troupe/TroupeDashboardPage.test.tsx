@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import TroupeDashboardPage from "../../../../src/react/components/troupe/TroupeDashboardPage";
 import {
   actorUser,
@@ -97,11 +97,28 @@ describe("React: TroupeDashboardPage", () => {
 
       await user.type(
         screen.getByLabelText(/titre/i),
-        String(requestValue("plays", "create", "admin", "title")),
+        String(requestValue("plays", "add", "as_admin", "title")),
       );
       await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-      expectContractCall("plays", "create", "admin");
+      expectContractCall("plays", "add", "as_admin");
+    });
+
+    it("should alert when submitted data is invalid", async () => {
+      vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+
+      await renderWithStub({
+        path: "/troupes/:troupeId",
+        Component: TroupeDashboardPage,
+        initialEntries: [`/troupes/${mainTroupe.id}`],
+        me: teacherUser,
+      });
+
+      await act(async () => {
+        await fireEvent.submit(screen.getByRole("form"));
+      });
+
+      expect(alert).toHaveBeenCalled();
     });
   });
 });

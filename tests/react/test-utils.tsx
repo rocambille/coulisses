@@ -6,7 +6,7 @@ import { createRoutesStub } from "react-router";
 import { AuthProvider } from "../../src/react/components/auth/AuthContext";
 import { DataRefreshProvider } from "../../src/react/components/DataRefreshContext";
 import { invalidateCache } from "../../src/react/helpers/cache";
-import { type Contract, contracts, type Json, type Test } from "../contracts";
+import contracts from "../contracts";
 
 export * from "../data";
 
@@ -143,6 +143,7 @@ export const renderWithStub = async ({
   loader,
   initialEntries,
   me,
+  children,
 }: {
   path: NonNullable<StubRouteObject["path"]>;
   Component: NonNullable<StubRouteObject["Component"]>;
@@ -150,6 +151,7 @@ export const renderWithStub = async ({
   loader?: StubRouteObject["loader"];
   initialEntries: string[];
   me: User | null;
+  children?: StubRouteObject["children"];
 }) => {
   const Stub = createRoutesStub([
     {
@@ -168,6 +170,7 @@ export const renderWithStub = async ({
           throw error;
         }),
       loader,
+      children,
     },
   ]);
   const view = await act(async () =>

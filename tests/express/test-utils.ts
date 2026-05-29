@@ -298,7 +298,7 @@ vi.mock("nodemailer", async (importActual) => {
 // Helpers
 // -------------------------
 
-import { type Contract, contracts, type Test } from "../contracts";
+import contracts from "../contracts";
 
 export const setupMocks = () => {
   mockDatabase();

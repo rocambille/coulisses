@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import MembersPage from "../../../../src/react/components/troupe/MembersPage";
 import {
   actorUser,
@@ -73,11 +73,48 @@ describe("React: MembersPage", () => {
 
       await user.type(
         screen.getByLabelText(/email/i),
-        String(requestValue("troupes", "invite", "admin", "email")),
+        String(requestValue("members", "add", "as_admin", "email")),
       );
       await user.click(screen.getByRole("button", { name: /inviter/i }));
 
-      expectContractCall("troupes", "invite", "admin");
+      expectContractCall("members", "add", "as_admin");
+    });
+
+    it("should alert when submitted data is invalid", async () => {
+      vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+
+      await renderWithStub({
+        path: "/troupes/:troupeId/members",
+        Component: MembersPage,
+        initialEntries: [`/troupes/${mainTroupe.id}/members`],
+        me: teacherUser,
+      });
+
+      await act(async () => {
+        await fireEvent.submit(screen.getByRole("form"));
+      });
+
+      expect(alert).toHaveBeenCalled();
+    });
+
+    it("should update a member successfully", async () => {
+      vi.spyOn(window, "confirm").mockReturnValue(true);
+
+      const { user } = await renderWithStub({
+        path: "/troupes/:troupeId/members",
+        Component: MembersPage,
+        initialEntries: [`/troupes/${mainTroupe.id}/members`],
+        me: teacherUser,
+      });
+
+      await user.selectOptions(
+        screen.getByRole("combobox", {
+          name: new RegExp(`modifier.*${actorUser.id}`, "i"),
+        }),
+        "ADMIN",
+      );
+
+      expectContractCall("members", "edit", "as_admin");
     });
 
     it("should remove a member successfully", async () => {
@@ -96,7 +133,7 @@ describe("React: MembersPage", () => {
         }),
       );
 
-      expectContractCall("troupes", "remove_member", "admin");
+      expectContractCall("members", "delete", "as_admin");
     });
 
     it("should cancel removing a member", async () => {

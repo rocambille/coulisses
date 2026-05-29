@@ -129,3 +129,39 @@ type NavItem = {
   label: string;
   to: string;
 };
+
+type Json =
+  | string
+  | number
+  | bigint
+  | boolean
+  | null
+  | undefined
+  | JsonObject
+  | JsonArray;
+
+type JsonObject = { [key: string]: Json };
+type JsonArray = Json[];
+
+type Case = {
+  only?: boolean;
+  specialPath?: string;
+  request: {
+    body?: JsonObject;
+    jwtPayload?: { sub: RowId | string } | null;
+    withoutCsrfProtection?: boolean;
+  };
+  response: {
+    status: number;
+    body?: JsonObject | JsonArray;
+    and?: (response: { headers: { [key: string]: string } }) => void;
+  };
+};
+
+type Test = {
+  method: "get" | "post" | "put" | "delete";
+  path: string;
+  cases: Record<string, Case>;
+};
+
+type Contract = Record<string, Test>;

@@ -72,12 +72,12 @@ describe("React: CastingPage", () => {
       });
 
       const label = new RegExp(
-        `assigner.*rôle.*${requestValue("castings", "assign", "admin", "role_id")}.*scène.*${requestValue("castings", "assign", "admin", "scene_id")}.*à.*${requestValue("castings", "assign", "admin", "user_id")}`,
+        `assigner.*rôle.*${requestValue("castings", "assign", "as_admin", "role_id")}.*scène.*${requestValue("castings", "assign", "as_admin", "scene_id")}.*à.*${requestValue("castings", "assign", "as_admin", "user_id")}`,
         "i",
       );
       await user.click(await screen.getByRole("button", { name: label }));
 
-      expectContractCall("castings", "assign", "admin");
+      expectContractCall("castings", "assign", "as_admin");
     });
 
     it("should unassign a role successfully", async () => {
@@ -89,12 +89,12 @@ describe("React: CastingPage", () => {
       });
 
       const label = new RegExp(
-        `désassigner.*rôle.*${requestValue("castings", "unassign", "admin", "role_id")}.*scène.*${requestValue("castings", "unassign", "admin", "scene_id")}.*à.*${requestValue("castings", "unassign", "admin", "user_id")}`,
+        `désassigner.*rôle.*${requestValue("castings", "unassign", "as_admin", "role_id")}.*scène.*${requestValue("castings", "unassign", "as_admin", "scene_id")}.*à.*${requestValue("castings", "unassign", "as_admin", "user_id")}`,
         "i",
       );
       await user.click(await screen.getByRole("button", { name: label }));
 
-      expectContractCall("castings", "unassign", "admin");
+      expectContractCall("castings", "unassign", "as_admin");
     });
   });
 });

@@ -85,11 +85,11 @@ describe("React: RolesPage", () => {
 
       await user.type(
         screen.getByLabelText(/nom/i),
-        String(requestValue("roles", "create", "admin", "name")),
+        String(requestValue("roles", "add", "as_admin", "name")),
       );
       await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
-      expectContractCall("roles", "create", "admin");
+      expectContractCall("roles", "add", "as_admin");
     });
 
     it("should delete a role", async () => {
@@ -108,7 +108,7 @@ describe("React: RolesPage", () => {
         }),
       );
 
-      expectContractCall("roles", "delete", "admin");
+      expectContractCall("roles", "delete", "as_admin");
     });
 
     it("should not delete a role when user cancels", async () => {

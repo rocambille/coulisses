@@ -16,7 +16,7 @@ describe("React Helpers: cache", () => {
   describe("cache()", () => {
     it("should return cached data", async () => {
       const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read", "me"));
+      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
     });
@@ -25,13 +25,13 @@ describe("React Helpers: cache", () => {
       invalidateCache("/api/users/me");
 
       const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read", "me"));
+      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
 
       const data2 = await cache("/api/users/me");
-      expect(data2).toEqual(responseValue("users", "read", "me"));
+      expect(data2).toEqual(responseValue("users", "read_me", "as_me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
@@ -48,7 +48,7 @@ describe("React Helpers: cache", () => {
       invalidateCache("/api/users/me");
 
       const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read", "me"));
+      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
@@ -56,7 +56,7 @@ describe("React Helpers: cache", () => {
       invalidateCache("/api/users/me");
 
       const data2 = await cache("/api/users/me");
-      expect(data2).toEqual(responseValue("users", "read", "me"));
+      expect(data2).toEqual(responseValue("users", "read_me", "as_me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/users/me");
@@ -64,9 +64,9 @@ describe("React Helpers: cache", () => {
 
     it("should invalidate all cache when '*' is provided", async () => {
       const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read", "me"));
+      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
       const data2 = await cache("/api/users/me");
-      expect(data2).toEqual(responseValue("users", "read", "me"));
+      expect(data2).toEqual(responseValue("users", "read_me", "as_me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
@@ -74,7 +74,7 @@ describe("React Helpers: cache", () => {
       invalidateCache("*");
 
       const data3 = await cache("/api/users/me");
-      expect(data3).toEqual(responseValue("users", "read", "me"));
+      expect(data3).toEqual(responseValue("users", "read_me", "as_me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/users/me");
@@ -82,7 +82,7 @@ describe("React Helpers: cache", () => {
 
     it("should not invalidate cache for paths that do not match", async () => {
       const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read", "me"));
+      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
@@ -90,7 +90,7 @@ describe("React Helpers: cache", () => {
       invalidateCache("/api/foo");
 
       const data2 = await cache("/api/users/me");
-      expect(data2).toEqual(responseValue("users", "read", "me"));
+      expect(data2).toEqual(responseValue("users", "read_me", "as_me"));
 
       expect(global.fetch).not.toHaveBeenCalledTimes(2);
     });

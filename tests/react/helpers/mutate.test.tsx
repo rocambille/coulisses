@@ -23,17 +23,17 @@ describe("React Helpers: mutate", () => {
   describe("apiMutate()", () => {
     it("should send a mutation request with a body", async () => {
       await apiMutate("/api/users/me", "put", {
-        email: requestValue("users", "edit", "me", "email"),
-        name: requestValue("users", "edit", "me", "name"),
+        email: requestValue("users", "edit_me", "as_me", "email"),
+        name: requestValue("users", "edit_me", "as_me", "name"),
       });
 
-      expectContractCall("users", "edit", "me");
+      expectContractCall("users", "edit_me", "as_me");
     });
 
     it("should send a mutation request without a body", async () => {
       await apiMutate("/api/users/me", "delete");
 
-      expectContractCall("users", "delete", "me");
+      expectContractCall("users", "delete_me", "as_me");
     });
   });
 
@@ -65,7 +65,7 @@ describe("React Helpers: mutate", () => {
 
       await act(() => mutate("/api/users/me", "delete", null, ["/api/users"]));
 
-      expectContractCall("users", "delete", "me");
+      expectContractCall("users", "delete_me", "as_me");
       expect(invalidateCacheMock).toHaveBeenCalledWith("/api/users");
     });
 
@@ -83,7 +83,7 @@ describe("React Helpers: mutate", () => {
 
       await act(() => mutate("/api/users/me", "delete", null, ["/api/users"]));
 
-      expectContractCall("users", "delete", "me");
+      expectContractCall("users", "delete_me", "as_me");
       expect(invalidateCacheMock).not.toHaveBeenCalled();
     });
   });

@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 
 import AccountPage from "../../../../src/react/components/auth/AccountPage";
 import {
@@ -41,16 +41,35 @@ describe("<AccountPage />", () => {
     await user.clear(screen.getByRole("textbox", { name: /email/i }));
     await user.type(
       screen.getByRole("textbox", { name: /email/i }),
-      String(requestValue("users", "edit", "me", "email")),
+      String(requestValue("users", "edit_me", "as_me", "email")),
     );
     await user.clear(screen.getByRole("textbox", { name: /nom/i }));
     await user.type(
       screen.getByRole("textbox", { name: /nom/i }),
-      String(requestValue("users", "edit", "me", "name")),
+      String(requestValue("users", "edit_me", "as_me", "name")),
     );
     await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
-    expectContractCall("users", "edit", "me");
+    expectContractCall("users", "edit_me", "as_me");
+  });
+
+  it("should alert when submitted data is invalid", async () => {
+    vi.spyOn(globalThis, "alert").mockImplementationOnce(() => {});
+
+    const { user } = await renderWithStub({
+      path: "/",
+      Component: AccountPage,
+      initialEntries: ["/"],
+      me: teacherUser,
+    });
+
+    await user.clear(screen.getByRole("textbox", { name: /email/i }));
+    await user.clear(screen.getByRole("textbox", { name: /nom/i }));
+    await act(async () => {
+      await fireEvent.submit(screen.getByRole("form"));
+    });
+
+    expect(alert).toHaveBeenCalled();
   });
 
   it("should submit logout form", async () => {
@@ -78,7 +97,7 @@ describe("<AccountPage />", () => {
 
     await user.click(screen.getByRole("button", { name: /supprimer/i }));
 
-    expectContractCall("users", "delete", "me");
+    expectContractCall("users", "delete_me", "as_me");
   });
 
   it("should not submit delete form when user cancels", async () => {

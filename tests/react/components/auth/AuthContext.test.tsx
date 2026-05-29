@@ -137,12 +137,12 @@ describe("React Components: AuthContext", () => {
       await act(
         async () =>
           await auth.updateMe({
-            email: String(requestValue("users", "edit", "me", "email")),
-            name: String(requestValue("users", "edit", "me", "name")),
+            email: String(requestValue("users", "edit_me", "as_me", "email")),
+            name: String(requestValue("users", "edit_me", "as_me", "name")),
           }),
       );
 
-      expectContractCall("users", "edit", "me");
+      expectContractCall("users", "edit_me", "as_me");
     });
     it("should throw when updateMe fails", async () => {
       setupMocks({
@@ -162,12 +162,12 @@ describe("React Components: AuthContext", () => {
 
       await expect(
         auth.updateMe({
-          email: String(requestValue("users", "edit", "me", "email")),
-          name: String(requestValue("users", "edit", "me", "name")),
+          email: String(requestValue("users", "edit_me", "as_me", "email")),
+          name: String(requestValue("users", "edit_me", "as_me", "name")),
         }),
       ).rejects.toThrow(/update/i);
 
-      expectContractCall("users", "edit", "me");
+      expectContractCall("users", "edit_me", "as_me");
     });
     it("should return a deleteMe function", async () => {
       const { result } = await renderHookAsync(() => useAuth(), {
@@ -178,7 +178,7 @@ describe("React Components: AuthContext", () => {
 
       await act(async () => await auth.deleteMe());
 
-      expectContractCall("users", "delete", "me");
+      expectContractCall("users", "delete_me", "as_me");
     });
     it("should throw when deleteMe fails", async () => {
       setupMocks({
@@ -198,7 +198,7 @@ describe("React Components: AuthContext", () => {
 
       await expect(auth.deleteMe()).rejects.toThrow(/delete/i);
 
-      expectContractCall("users", "delete", "me");
+      expectContractCall("users", "delete_me", "as_me");
     });
   });
 });
