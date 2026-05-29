@@ -10,22 +10,31 @@
   - https://react.dev/reference/react-dom/components/form
 */
 
+import z from "zod";
 import { useAuth } from "./AuthContext";
+
+const schema = z.object({
+  email: z.email("Email invalide"),
+  name: z.string().min(1, "Nom requis"),
+});
 
 function AccountDetailsForm() {
   const { me, updateMe } = useAuth();
 
   return (
     <form
+      aria-label="account details form"
       action={(formData: FormData) => {
         const email = formData.get("email")?.toString();
         const name = formData.get("name")?.toString();
 
-        if (email == null || name == null) {
+        const parsed = schema.safeParse({ email, name });
+        if (!parsed.success) {
+          alert(z.prettifyError(parsed.error));
           return;
         }
 
-        updateMe({ email, name });
+        updateMe(parsed.data);
       }}
     >
       <fieldset>

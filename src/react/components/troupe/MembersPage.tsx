@@ -5,8 +5,14 @@
 */
 
 import { useOutletContext, useParams } from "react-router";
+import z from "zod";
 import { useMutate } from "../../helpers/mutate";
 import MemberRow from "./MemberRow";
+
+const inviteSchema = z.object({
+  email: z.email("L'email doit être une adresse email valide."),
+  role: z.enum(["ACTOR", "ADMIN"], "Le rôle doit être acteur ou admin"),
+});
 
 export default function MembersPage() {
   const { troupeId } = useParams();
@@ -20,9 +26,14 @@ export default function MembersPage() {
     const email = formData.get("email")?.toString();
     const role = formData.get("role")?.toString();
 
-    if (!email || !role) throw new Error("Invalid form submission");
+    const parsed = inviteSchema.safeParse({ email, role });
 
-    await mutate(`/api/troupes/${troupeId}/members`, "post", { email, role }, [
+    if (!parsed.success) {
+      alert(z.prettifyError(parsed.error));
+      return;
+    }
+
+    await mutate(`/api/troupes/${troupeId}/members`, "post", parsed.data, [
       `/api/troupes/${troupeId}/members`,
     ]);
   };
@@ -50,7 +61,7 @@ export default function MembersPage() {
       {isAdmin && (
         <details>
           <summary>Inviter un nouveau membre</summary>
-          <form action={handleInvite}>
+          <form aria-label="invite form" action={handleInvite}>
             <input
               name="email"
               type="email"

@@ -62,12 +62,12 @@ export default function MemberRow({ member }: MemberRowProps) {
         <>
           <td>
             <select
+              aria-label={`modifier ${member.id}`}
               style={{
                 fontSize: "smaller",
                 margin: 0,
               }}
               name="role"
-              aria-label="Rôle"
               value={role}
               onChange={handleUpdate}
             >

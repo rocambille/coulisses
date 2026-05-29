@@ -25,8 +25,8 @@ const eventSchema = z.object({
   start_time: z.iso.time(),
   end_date: z.iso.date(),
   end_time: z.iso.time(),
-  location: z.string().nullable(),
-  description: z.string().nullable(),
+  location: z.string(),
+  description: z.string(),
 });
 
 const validate = (data: FormData) => {
