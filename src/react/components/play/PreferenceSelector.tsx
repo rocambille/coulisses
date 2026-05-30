@@ -49,7 +49,7 @@ function PreferenceSelector({
         htmlFor={selectId}
         style={{
           margin: 0,
-          fontSize: "0.8rem",
+          fontSize: "smaller",
           color: "var(--pico-muted-color)",
         }}
       >
@@ -69,10 +69,10 @@ function PreferenceSelector({
         disabled={isPending}
         style={{
           margin: 0,
-          padding: "0.1rem 0.5rem",
+          padding: "0.1rem 2rem 0.1rem 0.3rem",
           height: "auto",
           width: "auto",
-          fontSize: "0.8rem",
+          fontSize: "smaller",
         }}
       >
         <option value="">— Choisis —</option>

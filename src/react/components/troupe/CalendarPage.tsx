@@ -203,23 +203,13 @@ function CalendarPage() {
           marginBottom: "1rem",
         }}
       >
-        <button
-          type="button"
-          className="secondary outline"
-          onClick={prevMonth}
-          style={{ width: "auto" }}
-        >
+        <button type="button" className="secondary outline" onClick={prevMonth}>
           &lt;
         </button>
         <h3 style={{ margin: 0 }}>
           {MONTHS[currentMonth]} {currentYear}
         </h3>
-        <button
-          type="button"
-          className="secondary outline"
-          onClick={nextMonth}
-          style={{ width: "auto" }}
-        >
+        <button type="button" className="secondary outline" onClick={nextMonth}>
           &gt;
         </button>
       </div>
@@ -244,25 +234,6 @@ function CalendarPage() {
           </div>
         ))}
 
-        {Array.from({ length: firstDay }).map((_, i) => {
-          const emptyDate = new Date(
-            currentYear,
-            currentMonth,
-            -firstDay + i + 1,
-          );
-          return (
-            <div
-              key={emptyDate.toISOString()}
-              style={{
-                padding: "0.5rem",
-                minHeight: "100px",
-                backgroundColor: "var(--pico-secondary-background-color)",
-                opacity: 0.5,
-              }}
-            ></div>
-          );
-        })}
-
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
           // Create a local date for the current day (noon to avoid DST edge cases)
@@ -283,6 +254,7 @@ function CalendarPage() {
                 backgroundColor: "var(--pico-background-color)",
                 display: "flex",
                 flexDirection: "column",
+                gridColumnStart: i === 0 ? firstDay + 1 : "initial",
               }}
             >
               <button

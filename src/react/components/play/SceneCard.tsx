@@ -49,15 +49,13 @@ export default function SceneCard({
         />
       </header>
 
-      {scene.description && (
-        <p>
-          <em>{scene.description}</em>
-        </p>
-      )}
+      <p>
+        <em>{scene.description || "Aucune description"}</em>
+      </p>
 
       <div
         style={{
-          fontSize: "0.85rem",
+          fontSize: "smaller",
           color: "var(--pico-muted-color)",
           marginBottom: "1rem",
         }}
@@ -93,7 +91,7 @@ export default function SceneCard({
                     alignItems: "center",
                     gap: "0.5rem",
                     border: "1px solid var(--pico-muted-border-color)",
-                    padding: "0.25rem 0.5rem",
+                    padding: "0.5rem",
                     borderRadius: "0.25rem",
                   }}
                 >

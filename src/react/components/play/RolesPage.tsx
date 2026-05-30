@@ -66,29 +66,26 @@ export default function RolesPage() {
         <div className="grid">
           {roles.map((role) => (
             <article key={role.id}>
-              <header
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
+              <header>
                 <strong>
                   <RoleBadge name={role.name} />
                 </strong>
               </header>
-              {role.description && (
-                <p>
-                  <em>{role.description}</em>
-                </p>
-              )}
+              <p>
+                <em>{role.description || "Aucune description"}</em>
+              </p>
               {isAdmin && (
-                <footer style={{ marginTop: "1rem" }}>
+                <footer
+                  style={{
+                    textAlign: "right",
+                  }}
+                >
                   <button
                     aria-label={`Supprimer le rôle ${role.id}`}
                     type="button"
                     className="contrast outline"
                     onClick={() => handleDelete(role.id)}
+                    style={{ padding: "0.5rem 1rem", fontSize: "smaller" }}
                   >
                     Supprimer
                   </button>
@@ -110,35 +107,25 @@ export default function RolesPage() {
 
             <fieldset>
               <legend>Présent dans quelles scènes ?</legend>
-              <div
-                style={{
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                  border: "1px solid var(--pico-muted-border-color)",
-                  padding: "0.5rem",
-                  borderRadius: "0.25rem",
-                }}
-              >
-                {scenes.map((scene) => (
-                  <label
-                    key={scene.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      name="sceneIds"
-                      value={Number(scene.id)}
-                    />
-                    <span>
-                      {scene.order_in_play}. {scene.title}
-                    </span>
-                  </label>
-                ))}
-              </div>
+              {scenes.map((scene) => (
+                <label
+                  key={scene.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    name="sceneIds"
+                    value={Number(scene.id)}
+                  />
+                  <span>
+                    {scene.order_in_play}. {scene.title}
+                  </span>
+                </label>
+              ))}
             </fieldset>
 
             <button type="submit" style={{ marginTop: "1rem" }}>

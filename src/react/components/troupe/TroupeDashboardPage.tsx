@@ -79,7 +79,7 @@ export default function TroupeDashboardPage() {
                   }
                 />
               </header>
-              {play.description && <p>{play.description}</p>}
+              <p>{play.description || "Aucune description"}</p>
             </article>
           ))}
         </div>

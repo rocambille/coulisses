@@ -60,8 +60,7 @@ export default function PresenceToggle({
       className={status === "PENDING" ? "secondary" : "outline"}
       style={{
         padding: "0.2rem 0.5rem",
-        fontSize: "0.8rem",
-        width: "auto",
+        fontSize: "smaller",
         marginBottom: 0,
         borderColor: colors[status],
         color: status !== "PENDING" ? colors[status] : undefined,

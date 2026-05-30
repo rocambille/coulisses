@@ -8,7 +8,7 @@ export default function RoleBadge({ name, className }: RoleBadgeProps) {
   return (
     <kbd
       className={className}
-      style={{ margin: "0 0.2rem", fontWeight: "bold" }}
+      style={{ padding: "0.5rem 1rem", fontWeight: "bold" }}
     >
       {name}
     </kbd>
