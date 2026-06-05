@@ -1,6 +1,8 @@
 import { screen } from "@testing-library/react";
 import Layout from "../../../src/react/components/Layout";
-import { renderWithStub, setupMocks, teacherUser } from "../test-utils";
+
+import { teacherUser } from "../../fixtures/users";
+import { renderWithStub, setupMocks } from "../test-utils";
 
 describe("<Layout />", () => {
   beforeEach(() => {
@@ -34,7 +36,7 @@ describe("<Layout />", () => {
     await screen.findByLabelText(/email/i);
   });
 
-  it("should render account page when authenticated", async () => {
+  it("should render account link when authenticated", async () => {
     await renderWithStub({
       path: "/",
       Component: () => <Layout />,

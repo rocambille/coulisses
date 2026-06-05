@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { cache, invalidateCache } from "../../../src/react/helpers/cache";
-import { responseValue, setupMocks } from "../test-utils";
+import { setupMocks } from "../test-utils";
 
 describe("React Helpers: cache", () => {
   beforeEach(() => {
@@ -15,84 +15,67 @@ describe("React Helpers: cache", () => {
 
   describe("cache()", () => {
     it("should return cached data", async () => {
-      const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
+      const data = await cache("/api/health");
+      expect(data).toEqual({ hello: "world" });
+
       expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
+      expect(global.fetch).toHaveBeenNthCalledWith(1, `/api/health`);
     });
 
     it("should not fetch again when data is cached", async () => {
-      invalidateCache("/api/users/me");
-
-      const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
-
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
-
-      const data2 = await cache("/api/users/me");
-      expect(data2).toEqual(responseValue("users", "read_me", "as_me"));
+      const data = await cache(`/api/health`);
+      const data2 = await cache(`/api/health`);
+      expect(data2).toEqual(data);
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
-    it("should return null when data is not available", async () => {
-      const data = await cache("/api/404");
-      expect(data).toBeNull();
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+    it("should throw error when data is not available", async () => {
+      await expect(() => cache("/api/404")).rejects.toThrow(/404/i);
     });
   });
 
   describe("invalidateCache()", () => {
     it("should invalidate cache", async () => {
-      invalidateCache("/api/users/me");
+      const data = await cache("/api/health");
 
-      const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
+      invalidateCache("/api/health");
 
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
-
-      invalidateCache("/api/users/me");
-
-      const data2 = await cache("/api/users/me");
-      expect(data2).toEqual(responseValue("users", "read_me", "as_me"));
+      const data2 = await cache(`/api/health`);
+      expect(data2).toEqual(data);
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
-      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/users/me");
+      expect(global.fetch).toHaveBeenNthCalledWith(2, `/api/health`);
     });
 
     it("should invalidate all cache when '*' is provided", async () => {
-      const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
+      const data = await cache("/api/health");
       const data2 = await cache("/api/users/me");
-      expect(data2).toEqual(responseValue("users", "read_me", "as_me"));
-
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
 
       invalidateCache("*");
 
-      const data3 = await cache("/api/users/me");
-      expect(data3).toEqual(responseValue("users", "read_me", "as_me"));
+      const data3 = await cache(`/api/health`);
+      expect(data3).toEqual(data);
+      const data4 = await cache(`/api/users/me`);
+      expect(data4).toEqual(data2);
 
-      expect(global.fetch).toHaveBeenCalledTimes(2);
-      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/users/me");
+      expect(global.fetch).toHaveBeenCalledTimes(4);
+      expect(global.fetch).toHaveBeenNthCalledWith(1, `/api/health`);
+      expect(global.fetch).toHaveBeenNthCalledWith(2, `/api/users/me`);
+      expect(global.fetch).toHaveBeenNthCalledWith(3, `/api/health`);
+      expect(global.fetch).toHaveBeenNthCalledWith(4, `/api/users/me`);
     });
 
     it("should not invalidate cache for paths that do not match", async () => {
-      const data = await cache("/api/users/me");
-      expect(data).toEqual(responseValue("users", "read_me", "as_me"));
+      await cache("/api/health");
+      await cache("/api/users/me");
 
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/users/me");
+      invalidateCache("/api/users/me");
 
-      invalidateCache("/api/foo");
+      const data = await cache(`/api/health`);
+      expect(data).toEqual({ hello: "world" });
 
-      const data2 = await cache("/api/users/me");
-      expect(data2).toEqual(responseValue("users", "read_me", "as_me"));
-
-      expect(global.fetch).not.toHaveBeenCalledTimes(2);
+      expect(global.fetch).not.toHaveBeenCalledTimes(3);
     });
   });
 });

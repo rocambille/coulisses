@@ -1,22 +1,23 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import TroupeDashboardPage from "../../../../src/react/components/troupe/TroupeDashboardPage";
+import { emptyPlay, mainPlay } from "../../../fixtures/plays";
 import {
-  actorUser,
-  emptyPlay,
-  emptyTroupe,
-  emptyTroupeMembers,
-  expectContractCall,
-  mainPlay,
   mainPlayPreferences,
   mainRolePreferences,
   mainScenePreferences,
-  mainTroupe,
+} from "../../../fixtures/preferences";
+import {
+  emptyTroupeMembers,
   mainTroupeMembers,
+} from "../../../fixtures/troupeMembers";
+import { emptyTroupe, mainTroupe } from "../../../fixtures/troupes";
+import { actorUser, teacherUser } from "../../../fixtures/users";
+import {
+  expectContractCall,
   renderWithStub,
   requestValue,
   setupMocks,
   setupTroupeLayoutMocks,
-  teacherUser,
 } from "../../test-utils";
 
 describe("React: TroupeDashboardPage", () => {

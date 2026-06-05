@@ -7,29 +7,33 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import supertest from "supertest";
 
 import database from "../../src/database";
-import {
-  actorUser,
-  allEvents,
-  allPlays,
-  allTroupes,
-  allUsers,
-  deletedUser,
-  emptyTroupeMembers,
-  mainCastings,
-  mainEventPresences,
-  mainPlayPreferences,
-  mainRolePreferences,
-  mainRoles,
-  mainScenePreferences,
-  mainScenes,
-  mainTroupeMembers,
-  teacherUser,
-  thirdUser,
-} from "../data";
 
 // -------------------------
 // DB mock
 // -------------------------
+
+import { mainCastings } from "../fixtures/castings";
+import { allEvents, mainEventPresences } from "../fixtures/events";
+import { allPlays } from "../fixtures/plays";
+import {
+  mainPlayPreferences,
+  mainRolePreferences,
+  mainScenePreferences,
+} from "../fixtures/preferences";
+import { mainRoles } from "../fixtures/roles";
+import { mainScenes } from "../fixtures/scenes";
+import {
+  emptyTroupeMembers,
+  mainTroupeMembers,
+} from "../fixtures/troupeMembers";
+import { allTroupes } from "../fixtures/troupes";
+import {
+  actorUser,
+  allUsers,
+  deletedUser,
+  teacherUser,
+  thirdUser,
+} from "../fixtures/users";
 
 vi.mock("../../src/database", () => ({
   default: new DatabaseSync(":memory:"),

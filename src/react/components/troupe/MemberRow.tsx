@@ -26,32 +26,25 @@ export default function MemberRow({ member }: MemberRowProps) {
 
     const newRole = event.target.value;
 
-    const response = await mutate(
+    await mutate(
       `/api/troupes/${troupeId}/members/${member.id}`,
       "put",
       { email: member.email, name: member.name, role: newRole },
       [`/api/troupes/${troupeId}/members`],
     );
 
-    if (response.ok) {
-      setRole(newRole as TroupeMember["role"]);
-    } else {
-      response.json().then((data) => alert(data.error));
-    }
+    setRole(newRole as TroupeMember["role"]);
   };
 
   const handleRemove = async () => {
     if (!confirm("Retirer ce membre de la troupe ?")) return;
-    const response = await mutate(
+
+    await mutate(
       `/api/troupes/${troupeId}/members/${member.id}`,
       "delete",
       null,
       [`/api/troupes/${troupeId}/members`],
     );
-
-    if (!response.ok) {
-      response.json().then((data) => alert(data.error));
-    }
   };
 
   return (

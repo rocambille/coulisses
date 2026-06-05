@@ -1,21 +1,21 @@
 import { act, fireEvent, screen } from "@testing-library/react";
 import RolesPage from "../../../../src/react/components/play/RolesPage";
+import { emptyPlay, mainPlay } from "../../../fixtures/plays";
 import {
-  actorUser,
-  emptyPlay,
-  expectContractCall,
-  mainPlay,
   mainPlayPreferences,
   mainRolePreferences,
-  mainRoles,
   mainScenePreferences,
-  mainTroupe,
-  mainTroupeMembers,
+} from "../../../fixtures/preferences";
+import { mainRoles } from "../../../fixtures/roles";
+import { mainTroupeMembers } from "../../../fixtures/troupeMembers";
+import { mainTroupe } from "../../../fixtures/troupes";
+import { actorUser, teacherUser } from "../../../fixtures/users";
+import {
+  expectContractCall,
   renderWithStub,
   requestValue,
   setupMocks,
   setupTroupeLayoutMocks,
-  teacherUser,
 } from "../../test-utils";
 
 describe("React: RolesPage", () => {

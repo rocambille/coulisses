@@ -1,10 +1,7 @@
-import {
-  emptyPlay,
-  mainPlay,
-  mainRoles,
-  mainScenes,
-  teacherUser,
-} from "../data";
+import { emptyPlay, mainPlay } from "../fixtures/plays";
+import { mainRoles } from "../fixtures/roles";
+import { mainScenes } from "../fixtures/scenes";
+import { teacherUser } from "../fixtures/users";
 
 export default (<Contract>{
   browse: {

@@ -1,20 +1,20 @@
 import { act, fireEvent, screen } from "@testing-library/react";
 import MembersPage from "../../../../src/react/components/troupe/MembersPage";
+import { mainPlay } from "../../../fixtures/plays";
 import {
-  actorUser,
-  emptyTroupe,
-  expectContractCall,
-  mainPlay,
   mainPlayPreferences,
   mainRolePreferences,
   mainScenePreferences,
-  mainTroupe,
-  mainTroupeMembers,
+} from "../../../fixtures/preferences";
+import { mainTroupeMembers } from "../../../fixtures/troupeMembers";
+import { mainTroupe } from "../../../fixtures/troupes";
+import { actorUser, teacherUser } from "../../../fixtures/users";
+import {
+  expectContractCall,
   renderWithStub,
   requestValue,
   setupMocks,
   setupTroupeLayoutMocks,
-  teacherUser,
 } from "../../test-utils";
 
 describe("React: MembersPage", () => {
@@ -140,28 +140,6 @@ describe("React: MembersPage", () => {
       expect(fetchSpy).not.toHaveBeenCalled();
     });
 
-    it("should alert when updating last admin into an actor", async () => {
-      vi.spyOn(window, "confirm").mockReturnValueOnce(true);
-      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
-
-      const { user } = await renderWithStub({
-        path: "/troupes/:troupeId/members",
-        Component: MembersPage,
-        initialEntries: [`/troupes/${emptyTroupe.id}/members`],
-        me: teacherUser,
-      });
-
-      await user.selectOptions(
-        screen.getByRole("combobox", {
-          name: new RegExp(`modifier.*${teacherUser.id}`, "i"),
-        }),
-        "ACTOR",
-      );
-
-      expectContractCall("members", "edit", "conflict");
-      expect(alert).toHaveBeenCalled();
-    });
-
     it("should remove a member successfully", async () => {
       vi.spyOn(window, "confirm").mockReturnValueOnce(true);
 
@@ -200,27 +178,6 @@ describe("React: MembersPage", () => {
       );
 
       expect(fetchSpy).not.toHaveBeenCalled();
-    });
-
-    it("should alert when removing last admin", async () => {
-      vi.spyOn(window, "confirm").mockReturnValueOnce(true);
-      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
-
-      const { user } = await renderWithStub({
-        path: "/troupes/:troupeId/members",
-        Component: MembersPage,
-        initialEntries: [`/troupes/${emptyTroupe.id}/members`],
-        me: teacherUser,
-      });
-
-      await user.click(
-        screen.getByRole("button", {
-          name: new RegExp(`retirer.*${teacherUser.id}`, "i"),
-        }),
-      );
-
-      expectContractCall("members", "delete", "conflict");
-      expect(alert).toHaveBeenCalled();
     });
   });
 });

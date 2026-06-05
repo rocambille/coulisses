@@ -1,5 +1,5 @@
 import { cookies } from "supertest";
-import { teacherUser } from "../data";
+import { teacherUser } from "../fixtures/users";
 
 export default (<Contract>{
   magic_link: {

@@ -19,7 +19,6 @@ import {
   useContext,
   useState,
 } from "react";
-import { HttpError } from "../../../errors/HttpError";
 import { cache } from "../../helpers/cache";
 import { apiMutate } from "../../helpers/mutate";
 
@@ -69,49 +68,29 @@ export function AuthProvider({
 
   const verifyMagicLink = useCallback(async (token: string) => {
     const response = await apiMutate("/api/auth/verify", "post", { token });
-
-    if (response.ok) {
-      const data: User = await response.json();
-      setUser(data);
-    } else {
-      throw new HttpError(
-        response.status,
-        "Verification of the magic link failed",
-      );
-    }
+    const data: User = await response.json();
+    setUser(data);
   }, []);
 
   const logout = useCallback(async () => {
-    const response = await apiMutate("/api/auth/logout", "post");
+    await apiMutate("/api/auth/logout", "post");
 
-    if (response.ok) {
-      setUser(null);
-    } else {
-      throw new HttpError(response.status, "Logout failed");
-    }
+    setUser(null);
   }, []);
 
   const updateMe = useCallback(
     async (newMe: Omit<User, "id" | "created_at" | "deleted_at">) => {
-      const response = await apiMutate("/api/users/me", "put", newMe);
+      await apiMutate("/api/users/me", "put", newMe);
 
-      if (response.ok) {
-        setUser(await cache("/api/users/me"));
-      } else {
-        throw new HttpError(response.status, "Update of the user failed");
-      }
+      setUser(await cache<User | null>("/api/users/me"));
     },
     [],
   );
 
   const deleteMe = useCallback(async () => {
-    const response = await apiMutate("/api/users/me", "delete");
+    await apiMutate("/api/users/me", "delete");
 
-    if (response.ok) {
-      setUser(null);
-    } else {
-      throw new HttpError(response.status, "Delete of the user failed");
-    }
+    setUser(null);
   }, []);
 
   /* ********************************************************************** */

@@ -14,11 +14,25 @@ export default (<Contract>{
     path: "/api/health",
     cases: {
       success: {
-        request: { body: { foo: "bar" } },
-        response: { status: 200, body: { foo: "bar" } },
+        request: { body: { hello: "world" } },
+        response: { status: 200, body: { hello: "world" } },
+      },
+      unauthtUsorized: {
+        request: { body: { hello: "world" }, withoutCsrfProtection: true },
+        response: { status: 401, body: {} },
+      },
+    },
+  },
+  delete: {
+    method: "delete",
+    path: "/api/health",
+    cases: {
+      success: {
+        request: {},
+        response: { status: 204, body: {} },
       },
       unauthorized: {
-        request: { body: { foo: "bar" }, withoutCsrfProtection: true },
+        request: { withoutCsrfProtection: true },
         response: { status: 401, body: {} },
       },
     },

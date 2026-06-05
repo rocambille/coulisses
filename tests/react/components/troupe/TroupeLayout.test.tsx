@@ -2,12 +2,9 @@ import { screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { useOutletContext } from "react-router";
 import TroupeLayout from "../../../../src/react/components/troupe/TroupeLayout";
-import {
-  mainTroupe,
-  renderWithStub,
-  setupMocks,
-  teacherUser,
-} from "../../test-utils";
+import { mainTroupe } from "../../../fixtures/troupes";
+import { teacherUser } from "../../../fixtures/users";
+import { renderWithStub, setupMocks } from "../../test-utils";
 
 describe("<TroupeLayout />", () => {
   beforeEach(() => {

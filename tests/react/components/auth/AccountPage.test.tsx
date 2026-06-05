@@ -1,12 +1,12 @@
 import { act, fireEvent, screen } from "@testing-library/react";
 
 import AccountPage from "../../../../src/react/components/auth/AccountPage";
+import { teacherUser } from "../../../fixtures/users";
 import {
   expectContractCall,
   renderWithStub,
   requestValue,
   setupMocks,
-  teacherUser,
 } from "../../test-utils";
 
 describe("<AccountPage />", () => {

@@ -1,12 +1,11 @@
 import { act, fireEvent, screen } from "@testing-library/react";
 import Home from "../../../src/react/components/Home";
+import { teacherUser, thirdUser } from "../../fixtures/users";
 import {
   expectContractCall,
   renderWithStub,
   requestValue,
   setupMocks,
-  teacherUser,
-  thirdUser,
 } from "../test-utils";
 
 describe("<DashboardPage />", () => {

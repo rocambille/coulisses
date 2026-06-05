@@ -1,12 +1,6 @@
-import {
-  actorUser,
-  allPlays,
-  emptyTroupe,
-  mainPlay,
-  mainTroupe,
-  teacherUser,
-  thirdUser,
-} from "../data";
+import { allPlays, mainPlay } from "../fixtures/plays";
+import { emptyTroupe, mainTroupe } from "../fixtures/troupes";
+import { actorUser, teacherUser, thirdUser } from "../fixtures/users";
 
 export default (<Contract>{
   browse: {

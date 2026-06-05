@@ -1,12 +1,12 @@
+import { mainPlay } from "../fixtures/plays";
 import {
-  mainPlay,
   mainPlayPreferences,
   mainRolePreferences,
-  mainRoles,
   mainScenePreferences,
-  mainScenes,
-  teacherUser,
-} from "../data";
+} from "../fixtures/preferences";
+import { mainRoles } from "../fixtures/roles";
+import { mainScenes } from "../fixtures/scenes";
+import { teacherUser } from "../fixtures/users";
 
 export default (<Contract>{
   get_me: {

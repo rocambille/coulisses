@@ -1,19 +1,20 @@
 import { screen } from "@testing-library/react";
 import CastingPage from "../../../../src/react/components/play/CastingPage";
+import { mainPlay } from "../../../fixtures/plays";
 import {
-  actorUser,
-  expectContractCall,
-  mainPlay,
   mainPlayPreferences,
   mainRolePreferences,
   mainScenePreferences,
-  mainTroupe,
-  mainTroupeMembers,
+} from "../../../fixtures/preferences";
+import { mainTroupeMembers } from "../../../fixtures/troupeMembers";
+import { mainTroupe } from "../../../fixtures/troupes";
+import { actorUser, teacherUser } from "../../../fixtures/users";
+import {
+  expectContractCall,
   renderWithStub,
   requestValue,
   setupMocks,
   setupTroupeLayoutMocks,
-  teacherUser,
 } from "../../test-utils";
 
 describe("React: CastingPage", () => {

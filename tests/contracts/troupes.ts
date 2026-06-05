@@ -1,4 +1,5 @@
-import { allTroupes, mainTroupe, teacherUser, thirdUser } from "../data";
+import { allTroupes, mainTroupe } from "../fixtures/troupes";
+import { teacherUser, thirdUser } from "../fixtures/users";
 
 export default (<Contract>{
   browse: {

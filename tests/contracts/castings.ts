@@ -1,11 +1,8 @@
-import {
-  actorUser,
-  mainMatrix,
-  mainPlay,
-  mainRoles,
-  mainScenes,
-  teacherUser,
-} from "../data";
+import { mainMatrix } from "../fixtures/castings";
+import { mainPlay } from "../fixtures/plays";
+import { mainRoles } from "../fixtures/roles";
+import { mainScenes } from "../fixtures/scenes";
+import { actorUser, teacherUser } from "../fixtures/users";
 
 /* ************************************************************************ */
 /* Contracts Definitions                                                    */

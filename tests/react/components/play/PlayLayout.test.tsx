@@ -1,16 +1,18 @@
 import { screen, waitFor } from "@testing-library/react";
 import PlayLayout from "../../../../src/react/components/play/PlayLayout";
+import { mainPlay } from "../../../fixtures/plays";
 import {
-  mainPlay,
   mainPlayPreferences,
   mainRolePreferences,
   mainScenePreferences,
-  mainTroupe,
-  mainTroupeMembers,
+} from "../../../fixtures/preferences";
+import { mainTroupeMembers } from "../../../fixtures/troupeMembers";
+import { mainTroupe } from "../../../fixtures/troupes";
+import { teacherUser } from "../../../fixtures/users";
+import {
   renderWithStub,
   setupMocks,
   setupTroupeLayoutMocks,
-  teacherUser,
 } from "../../test-utils";
 
 describe("<PlayLayout />", () => {

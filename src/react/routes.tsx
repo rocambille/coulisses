@@ -4,6 +4,7 @@
 */
 
 import { type RouteObject, useLoaderData } from "react-router";
+
 import AccountPage from "./components/auth/AccountPage";
 import { AuthProvider } from "./components/auth/AuthContext";
 import VerifyPage from "./components/auth/VerifyPage";
@@ -34,8 +35,14 @@ const routes: RouteObject[] = [
       );
     },
     errorElement: <ErrorPage />,
+    /*
+      Root loader:
+      - Fetches the current user from the /api/users/me endpoint
+      - Returns the user to the root component
+    */
     loader: async () => {
       const response = await fetch("/api/users/me");
+
       const me: User | null = response.ok ? await response.json() : null;
 
       return { me };
@@ -46,7 +53,7 @@ const routes: RouteObject[] = [
         element: <Home />, // Liste des troupes
       },
       {
-        path: "me",
+        path: "account",
         element: <AccountPage />,
       },
       {

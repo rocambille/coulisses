@@ -1,19 +1,20 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import CalendarPage from "../../../../src/react/components/troupe/CalendarPage";
+import { openingNightEvent } from "../../../fixtures/events";
 import {
-  actorUser,
-  expectContractCall,
   mainPlayPreferences,
   mainRolePreferences,
   mainScenePreferences,
-  mainTroupe,
-  mainTroupeMembers,
-  openingNightEvent,
+} from "../../../fixtures/preferences";
+import { mainTroupeMembers } from "../../../fixtures/troupeMembers";
+import { mainTroupe } from "../../../fixtures/troupes";
+import { actorUser, teacherUser } from "../../../fixtures/users";
+import {
+  expectContractCall,
   renderWithStub,
   requestValue,
   setupMocks,
   setupTroupeLayoutMocks,
-  teacherUser,
 } from "../../test-utils";
 
 describe("React: CalendarPage", () => {

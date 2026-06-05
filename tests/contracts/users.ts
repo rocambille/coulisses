@@ -1,4 +1,4 @@
-import { teacherUser } from "../data";
+import { teacherUser } from "../fixtures/users";
 
 export default (<Contract>{
   read_me: {
@@ -9,11 +9,11 @@ export default (<Contract>{
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 200, body: teacherUser },
       },
-      guest: {
+      unauthorized: {
         request: {},
         response: { status: 401, body: {} },
       },
-      unauthorized: {
+      invalid_user_id: {
         request: { jwtPayload: { sub: NaN } },
         response: { status: 401, body: {} },
       },
@@ -39,6 +39,10 @@ export default (<Contract>{
       as_me: {
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 204, body: {} },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
       },
     },
   },
