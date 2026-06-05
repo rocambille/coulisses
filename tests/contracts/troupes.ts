@@ -2,7 +2,7 @@ import { allTroupes, mainTroupe, teacherUser, thirdUser } from "../data";
 
 export default (<Contract>{
   browse: {
-    method: "get" as const,
+    method: "get",
     path: "/api/troupes",
     cases: {
       as_member: {
@@ -20,7 +20,7 @@ export default (<Contract>{
     },
   },
   add: {
-    method: "post" as const,
+    method: "post",
     path: "/api/troupes",
     cases: {
       as_admin: {
@@ -41,7 +41,7 @@ export default (<Contract>{
     },
   },
   read: {
-    method: "get" as const,
+    method: "get",
     path: `/api/troupes/${mainTroupe.id}`,
     cases: {
       as_member: {

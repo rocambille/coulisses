@@ -13,7 +13,7 @@ import {
 
 export default (<Contract>{
   dashboard: {
-    method: "get" as const,
+    method: "get",
     path: `/api/plays/${mainPlay.id}/castings`,
     cases: {
       as_member: {
@@ -23,7 +23,7 @@ export default (<Contract>{
     },
   },
   assign: {
-    method: "post" as const,
+    method: "post",
     path: `/api/castings`,
     cases: {
       as_admin: {
@@ -40,7 +40,7 @@ export default (<Contract>{
     },
   },
   unassign: {
-    method: "delete" as const,
+    method: "delete",
     path: `/api/castings`,
     cases: {
       as_admin: {

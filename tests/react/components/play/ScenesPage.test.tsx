@@ -7,6 +7,7 @@ import {
   mainPlay,
   mainPlayPreferences,
   mainRolePreferences,
+  mainRoles,
   mainScenePreferences,
   mainScenes,
   mainTroupe,
@@ -59,7 +60,7 @@ describe("React: ScenesPage", () => {
       await screen.findByText(/aucune scène/i);
     });
 
-    it("should update preference successfully", async () => {
+    it("should update scene preference successfully", async () => {
       const { user } = await renderWithStub({
         path: "/plays/:playId/scenes",
         Component: ScenesPage,
@@ -69,7 +70,10 @@ describe("React: ScenesPage", () => {
 
       await user.selectOptions(
         screen.getByLabelText(
-          new RegExp(`envie.*scène.*${mainScenes[0].id}`, "i"),
+          new RegExp(
+            `envie(?!.*rôle).*scène.*${mainScenePreferences[1].scene_id}`,
+            "i",
+          ),
         ),
         "HIGH",
       );
@@ -77,7 +81,7 @@ describe("React: ScenesPage", () => {
       expectContractCall("preferences", "set_scene", "as_member");
     });
 
-    it("should select no preference when user has no preference", async () => {
+    it("should select no preference when user has no scene preference", async () => {
       await renderWithStub({
         path: "/plays/:playId/scenes",
         Component: ScenesPage,
@@ -85,10 +89,50 @@ describe("React: ScenesPage", () => {
         me: actorUser,
       });
 
-      const label = new RegExp(`envie.*scène.*${mainScenes[2].id}`, "i");
-      await screen.findByLabelText(label);
+      expect(
+        screen.getByLabelText<HTMLSelectElement>(
+          new RegExp(`envie.*scène.*${mainScenes[2].id}`, "i"),
+        ).value,
+      ).toBe("");
+    });
 
-      expect(screen.getByLabelText<HTMLSelectElement>(label).value).toBe("");
+    it("should update role preference successfully", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: actorUser,
+      });
+
+      await user.selectOptions(
+        screen.getByLabelText(
+          new RegExp(
+            `envie.*rôle.*${mainRolePreferences[0].role_id}.*${mainRolePreferences[0].scene_id}`,
+            "i",
+          ),
+        ),
+        "HIGH",
+      );
+
+      expectContractCall("preferences", "set_role", "as_member");
+    });
+
+    it("should select no preference when user has no role preference", async () => {
+      await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: actorUser,
+      });
+
+      expect(
+        screen.getByLabelText<HTMLSelectElement>(
+          new RegExp(
+            `envie.*rôle.*${mainRoles[1].id}.*${mainScenes[1].id}`,
+            "i",
+          ),
+        ).value,
+      ).toBe("");
     });
   });
 

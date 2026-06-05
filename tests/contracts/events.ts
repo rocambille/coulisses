@@ -8,7 +8,7 @@ import {
 
 export default (<Contract>{
   browse: {
-    method: "get" as const,
+    method: "get",
     path: `/api/troupes/${mainTroupe.id}/events`,
     cases: {
       as_member: {
@@ -25,7 +25,7 @@ export default (<Contract>{
     },
   },
   add: {
-    method: "post" as const,
+    method: "post",
     path: `/api/troupes/${mainTroupe.id}/events`,
     cases: {
       as_member: {
@@ -45,7 +45,7 @@ export default (<Contract>{
     },
   },
   edit: {
-    method: "put" as const,
+    method: "put",
     path: `/api/events/${openingNightEvent.id}`,
     cases: {
       owner: {
@@ -65,7 +65,7 @@ export default (<Contract>{
     },
   },
   delete: {
-    method: "delete" as const,
+    method: "delete",
     path: `/api/events/${openingNightEvent.id}`,
     cases: {
       owner: {
@@ -75,7 +75,7 @@ export default (<Contract>{
     },
   },
   presence: {
-    method: "post" as const,
+    method: "post",
     path: `/api/events/${openingNightEvent.id}/presence`,
     cases: {
       as_member: {

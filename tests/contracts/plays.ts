@@ -10,7 +10,7 @@ import {
 
 export default (<Contract>{
   browse: {
-    method: "get" as const,
+    method: "get",
     path: `/api/troupes/${mainTroupe.id}/plays`,
     cases: {
       as_member: {
@@ -25,7 +25,7 @@ export default (<Contract>{
     },
   },
   read: {
-    method: "get" as const,
+    method: "get",
     path: `/api/plays/${mainPlay.id}`,
     cases: {
       as_member: {
@@ -39,7 +39,7 @@ export default (<Contract>{
     },
   },
   add: {
-    method: "post" as const,
+    method: "post",
     path: `/api/troupes/${mainTroupe.id}/plays`,
     cases: {
       as_admin: {

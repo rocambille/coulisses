@@ -2,7 +2,7 @@ import { teacherUser } from "../data";
 
 export default (<Contract>{
   read_me: {
-    method: "get" as const,
+    method: "get",
     path: "/api/users/me",
     cases: {
       as_me: {
@@ -20,7 +20,7 @@ export default (<Contract>{
     },
   },
   edit_me: {
-    method: "put" as const,
+    method: "put",
     path: "/api/users/me",
     cases: {
       as_me: {
@@ -33,7 +33,7 @@ export default (<Contract>{
     },
   },
   delete_me: {
-    method: "delete" as const,
+    method: "delete",
     path: "/api/users/me",
     cases: {
       as_me: {

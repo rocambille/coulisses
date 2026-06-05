@@ -1,7 +1,7 @@
 import { useOutletContext, useParams } from "react-router";
 import { useAuth } from "../auth/AuthContext";
+import PreferenceSelector from "../ui/PreferenceSelector";
 import RoleBadge from "../ui/RoleBadge";
-import PreferenceSelector from "./PreferenceSelector";
 
 interface SceneCardProps {
   scene: Scene;

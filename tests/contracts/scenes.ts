@@ -2,7 +2,7 @@ import { emptyPlay, mainPlay, mainScenes, teacherUser } from "../data";
 
 export default (<Contract>{
   browse: {
-    method: "get" as const,
+    method: "get",
     path: `/api/plays/${mainPlay.id}/scenes`,
     cases: {
       as_member: {
@@ -17,7 +17,7 @@ export default (<Contract>{
     },
   },
   add: {
-    method: "post" as const,
+    method: "post",
     path: `/api/plays/${mainPlay.id}/scenes`,
     cases: {
       as_admin: {
@@ -37,7 +37,7 @@ export default (<Contract>{
     },
   },
   edit: {
-    method: "put" as const,
+    method: "put",
     path: `/api/scenes/${mainScenes[0].id}`,
     cases: {
       as_admin: {
@@ -58,7 +58,7 @@ export default (<Contract>{
     },
   },
   delete: {
-    method: "delete" as const,
+    method: "delete",
     path: `/api/scenes/${mainScenes[0].id}`,
     cases: {
       as_admin: {

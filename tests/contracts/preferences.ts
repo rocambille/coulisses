@@ -10,7 +10,7 @@ import {
 
 export default (<Contract>{
   get_me: {
-    method: "get" as const,
+    method: "get",
     path: "/api/preferences/me",
     cases: {
       as_member: {
@@ -33,7 +33,7 @@ export default (<Contract>{
     },
   },
   set_play: {
-    method: "post" as const,
+    method: "post",
     path: `/api/plays/${mainPlay.id}/preferences`,
     cases: {
       as_member: {
@@ -46,7 +46,7 @@ export default (<Contract>{
     },
   },
   set_scene: {
-    method: "post" as const,
+    method: "post",
     path: `/api/scenes/${mainScenes[0].id}/preferences`,
     cases: {
       as_member: {
@@ -59,7 +59,7 @@ export default (<Contract>{
     },
   },
   set_role: {
-    method: "post" as const,
+    method: "post",
     path: `/api/scenes/${mainScenes[0].id}/roles/${mainRoles[0].id}/preferences`,
     cases: {
       as_member: {

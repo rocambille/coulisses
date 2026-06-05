@@ -9,7 +9,7 @@ import {
 
 export default (<Contract>{
   browse: {
-    method: "get" as const,
+    method: "get",
     path: `/api/troupes/${mainTroupe.id}/members`,
     cases: {
       as_member: {
@@ -19,7 +19,7 @@ export default (<Contract>{
     },
   },
   add: {
-    method: "post" as const,
+    method: "post",
     path: `/api/troupes/${mainTroupe.id}/members`,
     cases: {
       as_admin: {
@@ -32,7 +32,7 @@ export default (<Contract>{
     },
   },
   edit: {
-    method: "put" as const,
+    method: "put",
     path: `/api/troupes/${mainTroupe.id}/members/${actorUser.id}`,
     cases: {
       as_admin: {
@@ -67,7 +67,7 @@ export default (<Contract>{
     },
   },
   delete: {
-    method: "delete" as const,
+    method: "delete",
     path: `/api/troupes/${mainTroupe.id}/members/${actorUser.id}`,
     cases: {
       as_admin: {

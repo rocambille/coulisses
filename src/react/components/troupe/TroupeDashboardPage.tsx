@@ -3,7 +3,7 @@ import { NavLink, useOutletContext } from "react-router";
 import z from "zod";
 import { cache } from "../../helpers/cache";
 import { useMutate } from "../../helpers/mutate";
-import PreferenceSelector from "../play/PreferenceSelector";
+import PreferenceSelector from "../ui/PreferenceSelector";
 
 const playSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),

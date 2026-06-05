@@ -17,7 +17,6 @@ function PreferenceSelector({
   const [isPending, setIsPending] = useState(false);
 
   const handleChange = async (level: string) => {
-    if (!level) return;
     setIsPending(true);
     try {
       if (roleId && sceneId) {
@@ -59,7 +58,7 @@ function PreferenceSelector({
         id={selectId}
         aria-label={
           roleId
-            ? `Niveau d'envie pour le rôle ${roleId}`
+            ? `Niveau d'envie pour le rôle ${roleId} dans la scène ${sceneId}`
             : sceneId
               ? `Niveau d'envie pour la scène ${sceneId}`
               : `Niveau d'envie pour la pièce ${playId}`

@@ -8,7 +8,7 @@ import {
 
 export default (<Contract>{
   browse: {
-    method: "get" as const,
+    method: "get",
     path: `/api/plays/${mainPlay.id}/roles`,
     cases: {
       as_member: {
@@ -23,7 +23,7 @@ export default (<Contract>{
     },
   },
   add: {
-    method: "post" as const,
+    method: "post",
     path: `/api/plays/${mainPlay.id}/roles`,
     cases: {
       as_admin: {
@@ -36,7 +36,7 @@ export default (<Contract>{
     },
   },
   delete: {
-    method: "delete" as const,
+    method: "delete",
     path: `/api/roles/${mainRoles[0].id}`,
     cases: {
       as_admin: {
@@ -46,7 +46,7 @@ export default (<Contract>{
     },
   },
   link_scene: {
-    method: "post" as const,
+    method: "post",
     path: `/api/roles/${mainRoles[0].id}/scenes`,
     cases: {
       as_admin: {

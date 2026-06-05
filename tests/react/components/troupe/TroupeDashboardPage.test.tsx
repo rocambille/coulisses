@@ -2,9 +2,11 @@ import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import TroupeDashboardPage from "../../../../src/react/components/troupe/TroupeDashboardPage";
 import {
   actorUser,
+  emptyPlay,
   emptyTroupe,
   emptyTroupeMembers,
   expectContractCall,
+  mainPlay,
   mainPlayPreferences,
   mainRolePreferences,
   mainScenePreferences,
@@ -66,6 +68,37 @@ describe("React: TroupeDashboardPage", () => {
       });
 
       await screen.findByText(/aucune pièce/i);
+    });
+
+    it("should update preference successfully", async () => {
+      const { user } = await renderWithStub({
+        path: "/troupes/:troupeId",
+        Component: TroupeDashboardPage,
+        initialEntries: [`/troupes/${mainTroupe.id}`],
+        me: actorUser,
+      });
+
+      await user.selectOptions(
+        screen.getByLabelText(new RegExp(`envie.*pièce.*${mainPlay.id}`, "i")),
+        "HIGH",
+      );
+
+      expectContractCall("preferences", "set_play", "as_member");
+    });
+
+    it("should select no preference when user has no preference", async () => {
+      await renderWithStub({
+        path: "/troupes/:troupeId",
+        Component: TroupeDashboardPage,
+        initialEntries: [`/troupes/${mainTroupe.id}`],
+        me: actorUser,
+      });
+
+      expect(
+        screen.getByLabelText<HTMLSelectElement>(
+          new RegExp(`envie.*pièce.*${emptyPlay.id}`, "i"),
+        ).value,
+      ).toBe("");
     });
   });
 

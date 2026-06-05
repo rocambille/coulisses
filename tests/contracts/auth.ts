@@ -3,7 +3,7 @@ import { teacherUser } from "../data";
 
 export default (<Contract>{
   magic_link: {
-    method: "post" as const,
+    method: "post",
     path: "/api/auth/magic-link",
     cases: {
       success: {
@@ -21,7 +21,7 @@ export default (<Contract>{
     },
   },
   verify: {
-    method: "post" as const,
+    method: "post",
     path: "/api/auth/verify",
     cases: {
       success: {
@@ -120,7 +120,7 @@ export default (<Contract>{
     },
   },
   logout: {
-    method: "post" as const,
+    method: "post",
     path: "/api/auth/logout",
     cases: {
       anyone: {
