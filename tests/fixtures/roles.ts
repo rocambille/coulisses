@@ -22,7 +22,7 @@ export const mainRoles: RoleWithScenes[] = [
     id: 2,
     play_id: mainPlay.id,
     name: "Role 2",
-    description: "Minor role",
+    description: "",
     scenes: [mainScenes[1]],
   },
 ];

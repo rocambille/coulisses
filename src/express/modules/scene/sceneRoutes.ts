@@ -41,16 +41,6 @@ const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
   }
 };
 
-// Helper for scene routes (need to fetch play to check troupe)
-const checkIsSceneTroupeMember: RequestHandler = (req, res, next) => {
-  const play = playRepository.find(req.scene.play_id);
-  if (play && troupeRepository.findMember(play.troupe_id, req.me.id) != null) {
-    next();
-  } else {
-    res.sendStatus(403);
-  }
-};
-
 const checkIsSceneTroupeAdmin: RequestHandler = (req, res, next) => {
   const play = playRepository.find(req.scene.play_id);
   if (
@@ -75,8 +65,12 @@ router.post(
 );
 
 // Flat routes for specific scene
-router.get(SCENE_PATH, checkIsSceneTroupeMember, sceneActions.read);
-router.put(SCENE_PATH, checkIsSceneTroupeAdmin, sceneActions.edit); // Add validator? Validation for update is partial. Let's assume validation is handled or we use a separate updateValidator.
+router.put(
+  SCENE_PATH,
+  checkIsSceneTroupeAdmin,
+  sceneValidator.validate,
+  sceneActions.edit,
+);
 router.delete(SCENE_PATH, checkIsSceneTroupeAdmin, sceneActions.destroy);
 
 export default router;

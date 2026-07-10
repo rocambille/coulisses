@@ -24,6 +24,13 @@ export default (<Contract>{
         },
         response: { status: 204, body: {} },
       },
+      forbidden: {
+        request: {
+          body: { email: thirdUser.email, role: "ACTOR" },
+          jwtPayload: { sub: actorUser.id },
+        },
+        response: { status: 403, body: {} },
+      },
     },
   },
   edit: {
@@ -40,6 +47,17 @@ export default (<Contract>{
           jwtPayload: { sub: teacherUser.id },
         },
         response: { status: 204, body: {} },
+      },
+      forbidden: {
+        request: {
+          body: {
+            email: actorUser.email,
+            name: actorUser.name,
+            role: "ADMIN",
+          },
+          jwtPayload: { sub: actorUser.id },
+        },
+        response: { status: 403, body: {} },
       },
       conflict: {
         specialPath: `/api/troupes/${emptyTroupe.id}/members/${teacherUser.id}`,
@@ -68,6 +86,10 @@ export default (<Contract>{
       as_admin: {
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 204, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: actorUser.id } },
+        response: { status: 403, body: {} },
       },
       conflict: {
         specialPath: `/api/troupes/${emptyTroupe.id}/members/${teacherUser.id}`,

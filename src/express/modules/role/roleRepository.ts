@@ -2,8 +2,30 @@
   Purpose:
   Centralize all persistence logic related to Role entities.
 */
+import { z } from "zod";
 
 import database from "../../../database";
+import { sceneShape } from "../scene/sceneRepository";
+
+const roleShape = {
+  id: z.number(),
+  name: z.string(),
+  description: z.string(),
+  play_id: z.number(),
+};
+
+const roleSchema: z.ZodType<Role> = z.object(roleShape);
+
+const roleWithScenesSchema: z.ZodType<RoleWithScenes> = z.object({
+  ...roleShape,
+  scenes: z.preprocess(
+    (val: string) => {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    },
+    z.array(z.object(sceneShape)),
+  ),
+});
 
 class RoleRepository {
   create(
@@ -24,7 +46,7 @@ class RoleRepository {
 
       if (sceneIds.length > 0) {
         const insertRoleScene = database.prepare(
-          `insert or ignore into role_scene (role_id, scene_id) values (?, ?)`,
+          `insert into role_scene (role_id, scene_id) values (?, ?)`,
         );
         for (const sceneId of sceneIds) {
           insertRoleScene.run(roleId, sceneId);
@@ -63,45 +85,13 @@ class RoleRepository {
       )
       .all(playId);
 
-    return rows.map<RoleWithScenes>(
-      ({ id, name, description, play_id, scenes }) => {
-        const parsedScenes: Scene[] =
-          typeof scenes === "string" ? JSON.parse(scenes) : [];
-        const validScenes = parsedScenes.filter((s) => s.id !== null); // json_group_array can create an array with a single object full of nulls if no scenes exist
-
-        return {
-          id: Number(id),
-          name: String(name),
-          description: String(description),
-          play_id: Number(play_id),
-          scenes: validScenes.map<Scene>((s) => ({
-            id: Number(s.id),
-            title: String(s.title),
-            description: String(s.description),
-            cut_notes: String(s.cut_notes),
-            duration_estimated_seconds: Number(s.duration_estimated_seconds),
-            play_id: Number(s.play_id),
-            order_in_play: Number(s.order_in_play),
-            is_active: Boolean(s.is_active),
-          })),
-        };
-      },
-    );
+    return rows.map((row) => roleWithScenesSchema.parse(row));
   }
 
   find(byId: RowId): Role | null {
     const row = database.prepare("select * from role where id = ?").get(byId);
 
-    if (row == null) return null;
-
-    const { id, play_id, name, description } = row;
-
-    return {
-      id: Number(id),
-      play_id: Number(play_id),
-      name: String(name),
-      description: String(description),
-    };
+    return row ? roleSchema.parse(row) : null;
   }
 
   linkScene(roleId: RowId, sceneId: RowId): void {

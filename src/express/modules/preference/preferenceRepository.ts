@@ -3,7 +3,37 @@
   Centralize all persistence logic related to Preference entities.
 */
 
+import { z } from "zod";
 import database from "../../../database";
+
+const preferenceShape = {
+  user_id: z.number(),
+  level: z.enum(["NOT_INTERESTED", "LOW", "MEDIUM", "HIGH"]),
+  created_at: z.string(),
+};
+
+const playPreferenceShape = {
+  ...preferenceShape,
+  play_id: z.number(),
+};
+
+const scenePreferenceShape = {
+  ...preferenceShape,
+  scene_id: z.number(),
+};
+
+const rolePreferenceShape = {
+  ...preferenceShape,
+  scene_id: z.number(),
+  role_id: z.number(),
+};
+
+const playPreferenceSchema: z.ZodType<PlayPreference> =
+  z.object(playPreferenceShape);
+const scenePreferenceSchema: z.ZodType<ScenePreference> =
+  z.object(scenePreferenceShape);
+const rolePreferenceSchema: z.ZodType<RolePreference> =
+  z.object(rolePreferenceShape);
 
 class PreferenceRepository {
   findAllForUser(userId: RowId): {
@@ -36,25 +66,11 @@ class PreferenceRepository {
       .all(userId);
 
     return {
-      playPreferences: playRows.map<PlayPreference>((row) => ({
-        user_id: Number(row.user_id),
-        play_id: Number(row.play_id),
-        level: row.level as PreferenceLevel,
-        created_at: String(row.created_at),
-      })),
-      scenePreferences: sceneRows.map<ScenePreference>((row) => ({
-        user_id: Number(row.user_id),
-        scene_id: Number(row.scene_id),
-        level: row.level as PreferenceLevel,
-        created_at: String(row.created_at),
-      })),
-      rolePreferences: roleRows.map<RolePreference>((row) => ({
-        user_id: Number(row.user_id),
-        scene_id: Number(row.scene_id),
-        role_id: Number(row.role_id),
-        level: row.level as PreferenceLevel,
-        created_at: String(row.created_at),
-      })),
+      playPreferences: playRows.map((row) => playPreferenceSchema.parse(row)),
+      scenePreferences: sceneRows.map((row) =>
+        scenePreferenceSchema.parse(row),
+      ),
+      rolePreferences: roleRows.map((row) => rolePreferenceSchema.parse(row)),
     };
   }
 

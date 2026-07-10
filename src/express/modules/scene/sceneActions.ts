@@ -11,10 +11,6 @@ const browse: RequestHandler = (req, res) => {
   res.json(scenes);
 };
 
-const read: RequestHandler = (req, res) => {
-  res.json(req.scene);
-};
-
 const edit: RequestHandler = (req, res) => {
   sceneRepository.update(req.scene.id, req.body);
   res.sendStatus(204);
@@ -32,7 +28,6 @@ const destroy: RequestHandler = (req, res) => {
 
 export default {
   browse,
-  read,
   edit,
   add,
   destroy,

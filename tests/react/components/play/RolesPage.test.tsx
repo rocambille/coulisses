@@ -7,6 +7,7 @@ import {
   mainScenePreferences,
 } from "../../../fixtures/preferences";
 import { mainRoles } from "../../../fixtures/roles";
+import { mainScenes } from "../../../fixtures/scenes";
 import { mainTroupeMembers } from "../../../fixtures/troupeMembers";
 import { mainTroupe } from "../../../fixtures/troupes";
 import { actorUser, teacherUser } from "../../../fixtures/users";
@@ -90,6 +91,28 @@ describe("React: RolesPage", () => {
       await user.click(screen.getByRole("button", { name: /ajouter/i }));
 
       expectContractCall("roles", "add", "as_admin");
+    });
+
+    it("should add a new role with an associated scene", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/roles",
+        Component: RolesPage,
+        initialEntries: [`/plays/${mainPlay.id}/roles`],
+        me: teacherUser,
+      });
+
+      await user.type(
+        screen.getByLabelText(/nom/i),
+        String(requestValue("roles", "add", "as_admin", "name")),
+      );
+      await user.click(
+        screen.getByRole("checkbox", {
+          name: new RegExp(mainScenes[0].title, "i"),
+        }),
+      );
+      await user.click(screen.getByRole("button", { name: /ajouter/i }));
+
+      expectContractCall("roles", "add", "with_scene");
     });
 
     it("should alert when submitted data is invalid", async () => {

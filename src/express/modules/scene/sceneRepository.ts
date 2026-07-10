@@ -2,8 +2,22 @@
   Purpose:
   Centralize all persistence logic related to Scene entities.
 */
+import { z } from "zod";
 
 import database from "../../../database";
+
+export const sceneShape = {
+  id: z.number(),
+  title: z.string(),
+  description: z.string(),
+  cut_notes: z.string(),
+  play_id: z.number(),
+  order_in_play: z.number(),
+  duration_estimated_seconds: z.number(),
+  is_active: z.coerce.boolean(),
+};
+
+const sceneSchema: z.ZodType<Scene> = z.object(sceneShape);
 
 class SceneRepository {
   create(
@@ -30,29 +44,7 @@ class SceneRepository {
   find(byId: RowId): Scene | null {
     const row = database.prepare("select * from scene where id = ?").get(byId);
 
-    if (row == null) return null;
-
-    const {
-      id,
-      title,
-      description,
-      cut_notes,
-      play_id,
-      duration_estimated_seconds,
-      order_in_play,
-      is_active,
-    } = row;
-
-    return {
-      id: Number(id),
-      title: String(title),
-      description: String(description),
-      cut_notes: String(cut_notes),
-      play_id: Number(play_id),
-      order_in_play: Number(order_in_play),
-      duration_estimated_seconds: Number(duration_estimated_seconds),
-      is_active: Boolean(is_active),
-    };
+    return row ? sceneSchema.parse(row) : null;
   }
 
   findByPlay(playId: RowId): Scene[] {
@@ -62,27 +54,7 @@ class SceneRepository {
       )
       .all(playId);
 
-    return rows.map<Scene>(
-      ({
-        id,
-        title,
-        description,
-        cut_notes,
-        play_id,
-        duration_estimated_seconds,
-        order_in_play,
-        is_active,
-      }) => ({
-        id: Number(id),
-        title: String(title),
-        description: String(description),
-        cut_notes: String(cut_notes),
-        play_id: Number(play_id),
-        order_in_play: Number(order_in_play),
-        duration_estimated_seconds: Number(duration_estimated_seconds),
-        is_active: Boolean(is_active),
-      }),
-    );
+    return rows.map((row) => sceneSchema.parse(row));
   }
 
   update(id: RowId, scene: Omit<Scene, "id" | "play_id">): boolean {
@@ -103,14 +75,16 @@ class SceneRepository {
         scene.cut_notes,
         scene.duration_estimated_seconds,
         scene.order_in_play,
-        scene.is_active ? 1 : 0,
+        Number(scene.is_active),
         id,
       );
+
     return result.changes > 0;
   }
 
   hardDelete(id: RowId): boolean {
     const result = database.prepare("delete from scene where id = ?").run(id);
+
     return result.changes > 0;
   }
 }

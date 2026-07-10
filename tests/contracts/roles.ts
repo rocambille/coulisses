@@ -1,7 +1,7 @@
 import { emptyPlay, mainPlay } from "../fixtures/plays";
 import { mainRoles } from "../fixtures/roles";
 import { mainScenes } from "../fixtures/scenes";
-import { teacherUser } from "../fixtures/users";
+import { teacherUser, thirdUser } from "../fixtures/users";
 
 export default (<Contract>{
   browse: {
@@ -17,6 +17,19 @@ export default (<Contract>{
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 200, body: [] },
       },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: thirdUser.id } },
+        response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/plays/${NaN}/roles`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 404, body: {} },
+      },
     },
   },
   add: {
@@ -30,6 +43,35 @@ export default (<Contract>{
         },
         response: { status: 201, body: { insertId: expect.any(Number) } },
       },
+      with_scene: {
+        request: {
+          body: {
+            name: "New Role",
+            description: "",
+            sceneIds: [mainScenes[0].id],
+          },
+          jwtPayload: { sub: teacherUser.id },
+        },
+        response: { status: 201, body: { insertId: expect.any(Number) } },
+      },
+      bad_request: {
+        body: {},
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 400, body: expect.any(Array) },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: thirdUser.id } },
+        response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/plays/${NaN}/roles`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 404, body: {} },
+      },
     },
   },
   delete: {
@@ -37,6 +79,19 @@ export default (<Contract>{
     path: `/api/roles/${mainRoles[0].id}`,
     cases: {
       as_admin: {
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 204, body: {} },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: thirdUser.id } },
+        response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/roles/${NaN}`,
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 204, body: {} },
       },
@@ -52,6 +107,24 @@ export default (<Contract>{
           jwtPayload: { sub: teacherUser.id },
         },
         response: { status: 204, body: {} },
+      },
+      bad_request: {
+        body: {},
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 400, body: expect.any(Array) },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: thirdUser.id } },
+        response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/roles/${NaN}/scenes`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 404, body: {} },
       },
     },
   },

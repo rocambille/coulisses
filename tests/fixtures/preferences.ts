@@ -14,9 +14,15 @@ import { actorUser, teacherUser } from "./users";
 
 export const mainPlayPreferences: PlayPreference[] = [
   {
-    user_id: actorUser.id,
+    user_id: teacherUser.id,
     play_id: mainPlay.id,
     level: "HIGH",
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    user_id: actorUser.id,
+    play_id: mainPlay.id,
+    level: "MEDIUM",
     created_at: "2026-01-01T00:00:00.000Z",
   },
 ];

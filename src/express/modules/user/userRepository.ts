@@ -26,13 +26,15 @@ import database from "../../../database";
 /* Schemas                                                                  */
 /* ************************************************************************ */
 
-const userSchema: z.ZodType<User> = z.object({
+export const userShape = {
   id: z.number(),
   email: z.string(),
   name: z.string(),
   created_at: z.string(),
   deleted_at: z.string().nullable(),
-});
+};
+
+const userSchema: z.ZodType<User> = z.object(userShape);
 
 /* ************************************************************************ */
 /* Repository                                                               */
@@ -116,21 +118,16 @@ class UserRepository {
     Why null instead of throwing:
     - Allows upper layers to decide HTTP semantics (404, 204, etc.)
   */
-  findOrCreateByEmail(email: string): User {
+  findOrCreateByEmail(email: string): RowId {
     const user = this.findByEmail(email);
-    if (user) return user;
+    if (user) return user.id;
 
     const name = email.split("@")[0];
 
-    const id = this.create({
+    return this.create({
       email,
       name,
     });
-
-    const newUser = this.find(id);
-    if (newUser == null) throw new Error("User not found after creation");
-
-    return newUser;
   }
 
   /* ********************************************************************** */

@@ -16,6 +16,19 @@ export default (<Contract>{
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 200, body: [] },
       },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: thirdUser.id } },
+        response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/troupes/${NaN}/plays`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 404, body: {} },
+      },
     },
   },
   read: {
@@ -26,9 +39,18 @@ export default (<Contract>{
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 200, body: mainPlay },
       },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
       forbidden: {
         request: { jwtPayload: { sub: thirdUser.id } },
         response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/plays/${NaN}`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 404, body: {} },
       },
     },
   },
@@ -43,12 +65,28 @@ export default (<Contract>{
         },
         response: { status: 201, body: { insertId: expect.any(Number) } },
       },
+      bad_request: {
+        request: {
+          body: {},
+          jwtPayload: { sub: teacherUser.id },
+        },
+        response: { status: 400, body: expect.any(Array) },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
       forbidden: {
         request: {
           body: { title: "New Play" },
           jwtPayload: { sub: actorUser.id },
         },
         response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/troupes/${NaN}/plays`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 404, body: {} },
       },
     },
   },

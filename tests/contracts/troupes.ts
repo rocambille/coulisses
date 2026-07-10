@@ -37,7 +37,11 @@ export default (<Contract>{
       },
       bad_request: {
         request: { body: {}, jwtPayload: { sub: teacherUser.id } },
-        response: { status: 400, body: expect.any(Object) },
+        response: { status: 400, body: expect.any(Array) },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
       },
     },
   },
@@ -49,9 +53,18 @@ export default (<Contract>{
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 200, body: mainTroupe },
       },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
       forbidden: {
         request: { jwtPayload: { sub: thirdUser.id } },
         response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/troupes/${NaN}`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 404, body: {} },
       },
     },
   },

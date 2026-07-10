@@ -75,7 +75,7 @@ describe("React Helpers: cache", () => {
       const data = await cache(`/api/health`);
       expect(data).toEqual({ hello: "world" });
 
-      expect(global.fetch).not.toHaveBeenCalledTimes(3);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
     });
   });
 });

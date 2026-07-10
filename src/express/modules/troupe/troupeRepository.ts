@@ -2,8 +2,25 @@
   Purpose:
   Centralize all persistence logic related to Troupe entities.
 */
+import { z } from "zod";
 
 import database from "../../../database";
+import { userShape } from "../user/userRepository";
+
+const troupeSchema: z.ZodType<Troupe> = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string(),
+  external_discussion_link: z.string(),
+  created_at: z.string(),
+});
+
+const troupeMemberSchema: z.ZodType<TroupeMember> = z.object({
+  troupe_id: z.number(),
+  role: z.enum(["ADMIN", "ACTOR"]),
+  joined_at: z.string(),
+  ...userShape,
+});
 
 class TroupeRepository {
   create(troupe: Omit<Troupe, "id" | "created_at">, creatorId: RowId): RowId {
@@ -31,19 +48,7 @@ class TroupeRepository {
   find(byId: RowId): Troupe | null {
     const row = database.prepare(`select * from troupe where id = ?`).get(byId);
 
-    if (row == null) {
-      return null;
-    }
-
-    const { id, name, description, external_discussion_link, created_at } = row;
-
-    return {
-      id: Number(id),
-      name: String(name),
-      description: String(description),
-      external_discussion_link: String(external_discussion_link),
-      created_at: String(created_at),
-    };
+    return row ? troupeSchema.parse(row) : null;
   }
 
   findByUser(user: User): Troupe[] {
@@ -55,15 +60,7 @@ class TroupeRepository {
       )
       .all(user.id);
 
-    return rows.map<Troupe>(
-      ({ id, name, description, external_discussion_link, created_at }) => ({
-        id: Number(id),
-        name: String(name),
-        description: String(description),
-        external_discussion_link: String(external_discussion_link),
-        created_at: String(created_at),
-      }),
-    );
+    return rows.map((row) => troupeSchema.parse(row));
   }
 
   // --- Members ---
@@ -109,27 +106,7 @@ class TroupeRepository {
       )
       .all(troupeId);
 
-    return rows.map<TroupeMember>(
-      ({
-        troupe_id,
-        role,
-        joined_at,
-        id,
-        email,
-        name,
-        created_at,
-        deleted_at,
-      }) => ({
-        troupe_id: Number(troupe_id),
-        role: role === "ADMIN" ? "ADMIN" : "ACTOR",
-        joined_at: String(joined_at),
-        id: Number(id),
-        email: String(email),
-        name: String(name),
-        created_at: String(created_at),
-        deleted_at: deleted_at != null ? String(deleted_at) : null,
-      }),
-    );
+    return rows.map((row) => troupeMemberSchema.parse(row));
   }
 
   findMember(

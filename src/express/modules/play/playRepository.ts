@@ -3,7 +3,17 @@
   Centralize all persistence logic related to Play entities.
 */
 
+import { z } from "zod";
 import database from "../../../database";
+
+const playShape = {
+  id: z.number(),
+  troupe_id: z.number(),
+  title: z.string(),
+  description: z.string(),
+};
+
+const playSchema: z.ZodType<Play> = z.object(playShape);
 
 class PlayRepository {
   create(play: Omit<Play, "id">): RowId {
@@ -20,18 +30,7 @@ class PlayRepository {
   find(byId: RowId): Play | null {
     const row = database.prepare(`select * from play where id = ?`).get(byId);
 
-    if (row == null) {
-      return null;
-    }
-
-    const { id, troupe_id, title, description } = row;
-
-    return {
-      id: Number(id),
-      troupe_id: Number(troupe_id),
-      title: String(title),
-      description: String(description),
-    };
+    return row ? playSchema.parse(row) : null;
   }
 
   findByScene(sceneId: RowId): Play | null {
@@ -41,18 +40,7 @@ class PlayRepository {
       )
       .get(sceneId);
 
-    if (row == null) {
-      return null;
-    }
-
-    const { id, troupe_id, title, description } = row;
-
-    return {
-      id: Number(id),
-      troupe_id: Number(troupe_id),
-      title: String(title),
-      description: String(description),
-    };
+    return row ? playSchema.parse(row) : null;
   }
 
   findByTroupe(troupeId: RowId): Play[] {
@@ -60,12 +48,7 @@ class PlayRepository {
       .prepare(`select * from play where troupe_id = ?`)
       .all(troupeId);
 
-    return rows.map<Play>(({ id, troupe_id, title, description }) => ({
-      id: Number(id),
-      troupe_id: Number(troupe_id),
-      title: String(title),
-      description: String(description),
-    }));
+    return rows.map((row) => playSchema.parse(row));
   }
 
   update(id: RowId, play: Omit<Play, "id" | "troupe_id">): boolean {

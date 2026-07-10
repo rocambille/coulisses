@@ -53,7 +53,7 @@ export default function SceneForm({
       return;
     }
 
-    const response = await mutate(
+    await mutate(
       `/api/scenes/${sceneId}`,
       "put",
       {
@@ -62,9 +62,7 @@ export default function SceneForm({
       [`/api/plays/${playId}/scenes`],
     );
 
-    if (response.ok) {
-      onSave();
-    }
+    onSave();
   };
 
   return (

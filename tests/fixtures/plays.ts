@@ -20,7 +20,7 @@ export const allPlays: Play[] = [
     id: 2,
     troupe_id: mainTroupe.id,
     title: "Play 2",
-    description: "Desc 2",
+    description: "",
   },
 ];
 

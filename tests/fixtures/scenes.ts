@@ -34,7 +34,7 @@ export const mainScenes: Scene[] = [
     id: 3,
     play_id: mainPlay.id,
     title: "Scene 3",
-    description: "Third scene",
+    description: "",
     cut_notes: "",
     duration_estimated_seconds: 900,
     order_in_play: 3,
