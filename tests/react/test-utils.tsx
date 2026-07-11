@@ -27,7 +27,7 @@ const respond = (body: unknown, status: number) => {
   );
 };
 
-const isDeepEqual = (a: Json, b: Json): boolean => {
+const isDeepEqual = (a: Json | undefined, b: Json | undefined): boolean => {
   if (a === b) return true;
   if (
     typeof a !== "object" ||
@@ -86,7 +86,7 @@ const mockFetch = (
 
       const parseBody = (body?: RequestInit["body"]): Json | undefined => {
         if (body == null) {
-          return;
+          return body;
         }
         return JSON.parse(body.toString());
       };
@@ -99,11 +99,10 @@ const mockFetch = (
           for (const [_caseName, c] of Object.entries(test.cases)) {
             if (
               path === (c.specialPath ?? test.path) &&
-              method === test.method
+              method === test.method &&
+              isDeepEqual(parsedBody, c.request.body)
             ) {
-              if (isDeepEqual(parsedBody, c.request.body)) {
-                return respond(c.response.body, c.response.status);
-              }
+              return respond(c.response.body, c.response.status);
             }
           }
         }
@@ -232,8 +231,7 @@ export const setupTroupeLayoutMocks = ({
   scenePreferences: ScenePreference[];
   pushBreadcrumb?: (breadcrumb: NavItem[]) => void;
 }) => {
-  /* mock value returned by useOutletContext */
-  vi.spyOn(ReactRouter, "useOutletContext").mockReturnValue({
+  vi.mocked(ReactRouter.useOutletContext).mockReturnValue({
     troupe,
     members,
     isAdmin,
