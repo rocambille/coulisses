@@ -68,7 +68,6 @@ router.post(
 );
 
 // Flat routes
-router.get(EVENT_PATH, checkIsEventTroupeMember, eventActions.read);
 router.put(
   EVENT_PATH,
   checkIsEventOwnerOrAdmin,

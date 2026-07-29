@@ -3,22 +3,22 @@
   Persistent logic for Events.
 */
 
+import { z } from "zod";
 import database from "../../../database";
 
-const mapRawTypeToEventType = (type: string): EventType => {
-  switch (type) {
-    case "COURSE":
-      return "COURSE";
-    case "REHEARSAL":
-      return "REHEARSAL";
-    case "SHOW":
-      return "SHOW";
-    case "OTHER":
-      return "OTHER";
-    default:
-      throw new Error(`Invalid event type: ${type}`);
-  }
+const eventShape = {
+  id: z.number(),
+  troupe_id: z.number(),
+  owner_id: z.number(),
+  type: z.enum(["COURSE", "REHEARSAL", "SHOW", "OTHER"]),
+  title: z.string(),
+  description: z.string(),
+  location: z.string(),
+  start_time: z.string(),
+  end_time: z.string(),
 };
+
+const eventSchema: z.ZodType<EventData> = z.object(eventShape);
 
 class EventRepository {
   create(
@@ -50,31 +50,7 @@ class EventRepository {
       .prepare(`select * from event where id = ?`)
       .get(eventId);
 
-    if (row == null) return null;
-
-    const {
-      id,
-      troupe_id,
-      owner_id,
-      type,
-      title,
-      description,
-      location,
-      start_time,
-      end_time,
-    } = row;
-
-    return {
-      id: Number(id),
-      troupe_id: Number(troupe_id),
-      owner_id: Number(owner_id),
-      type: mapRawTypeToEventType(String(type)),
-      title: String(title),
-      description: String(description),
-      location: String(location),
-      start_time: String(start_time),
-      end_time: String(end_time),
-    };
+    return row ? eventSchema.parse(row) : null;
   }
 
   findByTroupe(troupeId: RowId): EventData[] {
@@ -84,29 +60,7 @@ class EventRepository {
       )
       .all(troupeId);
 
-    return rows.map<EventData>(
-      ({
-        id,
-        troupe_id,
-        owner_id,
-        type,
-        title,
-        description,
-        location,
-        start_time,
-        end_time,
-      }) => ({
-        id: Number(id),
-        troupe_id: Number(troupe_id),
-        owner_id: Number(owner_id),
-        type: mapRawTypeToEventType(String(type)),
-        title: String(title),
-        description: String(description),
-        location: String(location),
-        start_time: String(start_time),
-        end_time: String(end_time),
-      }),
-    );
+    return rows.map((row) => eventSchema.parse(row));
   }
 
   update(

@@ -22,7 +22,7 @@ const scenePreferenceShape = {
   scene_id: z.number(),
 };
 
-const rolePreferenceShape = {
+export const rolePreferenceShape = {
   ...preferenceShape,
   scene_id: z.number(),
   role_id: z.number(),

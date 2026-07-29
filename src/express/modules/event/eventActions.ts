@@ -11,10 +11,6 @@ const browse: RequestHandler = (req, res) => {
   res.json(events);
 };
 
-const read: RequestHandler = (req, res) => {
-  res.json(req.event);
-};
-
 const add: RequestHandler = (req, res) => {
   const insertId = eventRepository.create(req.troupe.id, req.me.id, req.body);
   res.status(201).json({ insertId });
@@ -38,7 +34,6 @@ const setPresence: RequestHandler = (req, res) => {
 
 export default {
   browse,
-  read,
   add,
   edit,
   destroy,

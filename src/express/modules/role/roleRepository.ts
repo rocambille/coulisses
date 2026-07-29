@@ -7,7 +7,7 @@ import { z } from "zod";
 import database from "../../../database";
 import { sceneShape } from "../scene/sceneRepository";
 
-const roleShape = {
+export const roleShape = {
   id: z.number(),
   name: z.string(),
   description: z.string(),

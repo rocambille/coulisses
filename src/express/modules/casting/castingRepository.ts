@@ -3,7 +3,31 @@
   Centralize persistent logic for Casting and the Dashboard Matrix.
 */
 
+import { z } from "zod";
 import database from "../../../database";
+
+import { rolePreferenceShape } from "../preference/preferenceRepository";
+import { roleShape } from "../role/roleRepository";
+import { sceneShape } from "../scene/sceneRepository";
+import { userShape } from "../user/userRepository";
+
+const castingMatrixShape = {
+  actors: z.array(z.object(userShape)),
+  scenes: z.array(
+    z.object({
+      ...sceneShape,
+      roles: z.array(
+        z.object(roleShape).extend({
+          assigned_user: z.object(userShape).nullable(),
+          preferences: z.array(z.object(rolePreferenceShape)),
+        }),
+      ),
+    }),
+  ),
+};
+
+const castingMatrixSchema: z.ZodType<CastingMatrix> =
+  z.object(castingMatrixShape);
 
 class CastingRepository {
   assignRole(sceneId: RowId, roleId: RowId, userId: RowId): boolean {
@@ -99,36 +123,13 @@ class CastingRepository {
       )
       .all(playId);
 
-    const matrix: CastingMatrix = {
-      actors: actors.map<User>((u) => ({
-        id: Number(u.id),
-        name: String(u.name),
-        email: String(u.email),
-        created_at: String(u.created_at),
-        deleted_at: u.deleted_at ? String(u.deleted_at) : null,
+    return castingMatrixSchema.parse({
+      actors,
+      scenes: scenesWithRolesAndCastings.map((s) => ({
+        ...s,
+        roles: JSON.parse(String(s.roles)),
       })),
-      scenes: scenesWithRolesAndCastings.map<CastingMatrix["scenes"]["0"]>(
-        (scene) => {
-          const roles: CastingMatrix["scenes"]["0"]["roles"] =
-            typeof scene.roles === "string" ? JSON.parse(scene.roles) : [];
-          return {
-            id: Number(scene.id),
-            title: String(scene.title),
-            description: String(scene.description),
-            cut_notes: String(scene.cut_notes),
-            order_in_play: Number(scene.order_in_play),
-            play_id: Number(scene.play_id),
-            duration_estimated_seconds: Number(
-              scene.duration_estimated_seconds,
-            ),
-            is_active: Boolean(scene.is_active),
-            roles,
-          };
-        },
-      ),
-    };
-
-    return matrix;
+    });
   }
 }
 
