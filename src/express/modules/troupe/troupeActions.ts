@@ -30,7 +30,7 @@ const addMember: RequestHandler = (req, res) => {
   const { email, role } = req.body;
   const { troupe } = req;
 
-  const userId = userRepository.findOrCreateByEmail(email);
+  const userId = userRepository.findByEmailOrCreate(email);
   troupeRepository.addMember(troupe.id, userId, role);
 
   res.sendStatus(204);
