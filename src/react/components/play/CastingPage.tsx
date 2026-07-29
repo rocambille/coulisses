@@ -6,7 +6,7 @@
 
 import React, { use } from "react";
 import { useOutletContext, useParams } from "react-router";
-import { cache } from "../../helpers/cache";
+import { getOrFetch } from "../../helpers/cache";
 import { useMutate } from "../../helpers/mutate";
 import PreferenceBadge from "../ui/PreferenceBadge";
 
@@ -16,7 +16,9 @@ export default function CastingPage() {
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
 
   // The matrix directly provides actors and scenes with roles and preferences
-  const dashboard = use<CastingMatrix>(cache(`/api/plays/${playId}/castings`));
+  const dashboard = use<CastingMatrix>(
+    getOrFetch(`/api/plays/${playId}/castings`),
+  );
   // dashboard object is: { actors: User[], scenes: Array<{ id, title, order_in_play, roles: Array<{ id, name, is_assigned, assigned_user_id, assigned_user_name, preferences: Array<{ user_id, level }> }> }> }
 
   const actors = dashboard.actors;

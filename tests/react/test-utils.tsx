@@ -5,7 +5,7 @@ import { createRoutesStub } from "react-router";
 
 import { AuthProvider } from "../../src/react/components/auth/AuthContext";
 import { DataRefreshProvider } from "../../src/react/components/DataRefreshContext";
-import { invalidateCache } from "../../src/react/helpers/cache";
+import { forget } from "../../src/react/helpers/cache";
 import contracts from "../contracts";
 
 // -------------------------
@@ -28,17 +28,34 @@ const respond = (body: unknown, status: number) => {
 };
 
 const isDeepEqual = (a: Json | undefined, b: Json | undefined): boolean => {
+  // a and b may be string | number | boolean | null | undefined
+  // or reference the same object or array
+
+  // check strict equality first (covers primitives and same object/array)
   if (a === b) return true;
-  if (
-    typeof a !== "object" ||
-    typeof b !== "object" ||
-    a === null ||
-    b === null
-  )
+
+  // not strictly equal, so they must both be objects to be equal
+  if (typeof a !== "object" || typeof b !== "object") {
     return false;
+  }
+
+  // at this point, a and b are both objects, they can be:
+  // - null (which is of type object in javascript)
+  // - arrays
+  // - plain objects
+
+  if (a === null || b === null) {
+    // one of them is null, so they are unequal
+    // (strict equality check failed)
+
+    return false;
+  }
 
   if (Array.isArray(a) && Array.isArray(b)) {
+    // both are arrays, their values must be deeply equal
+
     if (a.length !== b.length) return false;
+
     for (let i = 0; i < a.length; i++) {
       if (!isDeepEqual(a[i], b[i])) return false;
     }
@@ -46,15 +63,31 @@ const isDeepEqual = (a: Json | undefined, b: Json | undefined): boolean => {
   }
 
   if (!Array.isArray(a) && !Array.isArray(b)) {
+    // both are plain objects, their values must be deeply equal
+
     const keysA = Object.keys(a);
     const keysB = Object.keys(b);
+
     if (keysA.length !== keysB.length) return false;
 
     for (const key of keysA) {
-      if (!keysB.includes(key) || !isDeepEqual(a[key], b[key])) return false;
+      // check key exists in b to cover edge cases like
+      // a = { x: undefined }
+      // b = { y: undefined }
+      // a["x"] is undefined because it was explicitly set to undefined
+      // b["x"] is undefined because it was never set
+      // a["x"] === b["x"] is true
+      // but ("x" in b) is false
+      // so we must check ("x" in b) to return false
+
+      if (!(key in b) || !isDeepEqual(a[key], b[key])) {
+        return false;
+      }
     }
     return true;
   }
+
+  // one is an array, the other is a plain object, so they are unequal
 
   return false;
 };
@@ -211,7 +244,7 @@ export const setupMocks = ({
 
   mockFetch(customFetch);
 
-  invalidateCache("*");
+  forget("*");
 };
 
 export const setupTroupeLayoutMocks = ({

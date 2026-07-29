@@ -7,7 +7,7 @@
 import { use } from "react";
 import z from "zod";
 
-import { cache } from "../helpers/cache";
+import { getOrFetch } from "../helpers/cache";
 import { useMutate } from "../helpers/mutate";
 import { useAuth } from "./auth/AuthContext";
 import TroupeCard from "./troupe/TroupeCard";
@@ -22,7 +22,7 @@ function DashboardPage() {
   const { me } = useAuth();
   const mutate = useMutate();
 
-  const troupes: Troupe[] = use(cache("/api/troupes"));
+  const troupes: Troupe[] = use(getOrFetch<Troupe[]>("/api/troupes"));
 
   const handleAdd = async (formData: FormData) => {
     const name = formData.get("name")?.toString();

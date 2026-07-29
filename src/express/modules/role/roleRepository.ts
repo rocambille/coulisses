@@ -54,7 +54,7 @@ class RoleRepository {
       }
 
       database.exec("COMMIT");
-      return roleId;
+      return Number(roleId);
     } catch (error) {
       database.exec("ROLLBACK");
       throw error;

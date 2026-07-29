@@ -24,7 +24,7 @@ class PlayRepository {
       )
       .run(play.troupe_id, play.title, play.description ?? null);
 
-    return result.lastInsertRowid;
+    return Number(result.lastInsertRowid);
   }
 
   find(byId: RowId): Play | null {

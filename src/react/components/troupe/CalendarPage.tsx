@@ -7,7 +7,7 @@
 import { use, useState } from "react";
 import { useParams } from "react-router";
 import z, { ZodError } from "zod";
-import { cache } from "../../helpers/cache";
+import { getOrFetch } from "../../helpers/cache";
 import {
   fromInputParts,
   toDisplayString,
@@ -99,7 +99,9 @@ function CalendarPage() {
   const { me } = useAuth();
   const mutate = useMutate();
 
-  const events: EventData[] = use(cache(`/api/troupes/${troupeId}/events`));
+  const events: EventData[] = use(
+    getOrFetch<EventData[]>(`/api/troupes/${troupeId}/events`),
+  );
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);

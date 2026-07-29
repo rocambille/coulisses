@@ -1,6 +1,6 @@
 import { use, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
-import { cache } from "../../helpers/cache";
+import { getOrFetch } from "../../helpers/cache";
 import { useAuth } from "../auth/AuthContext";
 import { useRefresh } from "../DataRefreshContext";
 
@@ -11,15 +11,15 @@ export default function TroupeLayout() {
 
   const [moreBreadcrumb, pushBreadcrumb] = useState<NavItem[]>([]);
 
-  const troupe: Troupe = use(cache(`/api/troupes/${troupeId}`));
+  const troupe: Troupe = use(getOrFetch<Troupe>(`/api/troupes/${troupeId}`));
   const members: TroupeMember[] = use(
-    cache(`/api/troupes/${troupeId}/members`),
+    getOrFetch<TroupeMember[]>(`/api/troupes/${troupeId}/members`),
   );
   const preferences = use<{
     playPreferences: PlayPreference[];
     scenePreferences: ScenePreference[];
     rolePreferences: RolePreference[];
-  }>(cache("/api/preferences/me"));
+  }>(getOrFetch("/api/preferences/me"));
 
   const myMemberInfo = members.find((m) => m.id === me?.id);
   const isAdmin = myMemberInfo?.role === "ADMIN";

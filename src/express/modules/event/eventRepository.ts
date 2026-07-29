@@ -42,7 +42,7 @@ class EventRepository {
         event.end_time,
       );
 
-    return result.lastInsertRowid;
+    return Number(result.lastInsertRowid);
   }
 
   find(eventId: RowId): EventData | null {

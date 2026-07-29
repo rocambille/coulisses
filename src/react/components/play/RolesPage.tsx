@@ -7,7 +7,7 @@
 import { use } from "react";
 import { useOutletContext, useParams } from "react-router";
 import z from "zod";
-import { cache } from "../../helpers/cache";
+import { getOrFetch } from "../../helpers/cache";
 import { useMutate } from "../../helpers/mutate";
 import RoleBadge from "../ui/RoleBadge";
 
@@ -22,8 +22,10 @@ export default function RolesPage() {
   const mutate = useMutate();
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
 
-  const roles = use<Role[]>(cache(`/api/plays/${playId}/roles`));
-  const scenes = use<Scene[]>(cache(`/api/plays/${playId}/scenes`));
+  const roles = use<Role[]>(getOrFetch<Role[]>(`/api/plays/${playId}/roles`));
+  const scenes = use<Scene[]>(
+    getOrFetch<Scene[]>(`/api/plays/${playId}/scenes`),
+  );
 
   const handleAdd = async (formData: FormData) => {
     const name = formData.get("name")?.toString();

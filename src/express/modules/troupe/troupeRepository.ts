@@ -35,10 +35,11 @@ class TroupeRepository {
         )
         .run(troupe.name, troupe.description, troupe.external_discussion_link);
 
-      this.addMember(result.lastInsertRowid, creatorId, "ADMIN");
+      this.addMember(Number(result.lastInsertRowid), creatorId, "ADMIN");
 
       database.exec("COMMIT");
-      return result.lastInsertRowid;
+
+      return Number(result.lastInsertRowid);
     } catch (error) {
       database.exec("ROLLBACK");
       throw error;
@@ -72,7 +73,8 @@ class TroupeRepository {
         "insert or ignore into troupe_member (troupe_id, user_id, role) values (?, ?, ?)",
       )
       .run(troupeId, userId, role);
-    return result.lastInsertRowid;
+
+    return Number(result.lastInsertRowid);
   }
 
   updateMember(

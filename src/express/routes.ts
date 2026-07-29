@@ -83,33 +83,48 @@ router.delete("/api/health", (_req, res) => {
 });
 
 /* ************************************************************************ */
-/* Module composition                                                       */
+/* API modules                                                       */
 /* ************************************************************************ */
 
 /*
-  Feature modules are imported dynamically to:
-  - Keep the root router lightweight
-  - Allow easy cloning / replacement of modules
-  - Avoid a monolithic routes file
-
-  Each module exports a Router instance as default.
-*/
-const importAndUse = async (path: string) =>
-  router.use((await import(path)).default);
-
-/*
-  Registered API modules.
   The order does not matter as long as routes do not conflict.
 */
-await importAndUse("./modules/auth/authRoutes");
-await importAndUse("./modules/casting/castingRoutes");
-await importAndUse("./modules/event/eventRoutes");
-await importAndUse("./modules/play/playRoutes");
-await importAndUse("./modules/preference/preferenceRoutes");
-await importAndUse("./modules/role/roleRoutes");
-await importAndUse("./modules/scene/sceneRoutes");
-await importAndUse("./modules/troupe/troupeRoutes");
-await importAndUse("./modules/user/userRoutes");
+
+import authRoutes from "./modules/auth/authRoutes";
+
+router.use(authRoutes);
+
+import castingRoutes from "./modules/casting/castingRoutes";
+
+router.use(castingRoutes);
+
+import eventRoutes from "./modules/event/eventRoutes";
+
+router.use(eventRoutes);
+
+import playRoutes from "./modules/play/playRoutes";
+
+router.use(playRoutes);
+
+import preferenceRoutes from "./modules/preference/preferenceRoutes";
+
+router.use(preferenceRoutes);
+
+import roleRoutes from "./modules/role/roleRoutes";
+
+router.use(roleRoutes);
+
+import sceneRoutes from "./modules/scene/sceneRoutes";
+
+router.use(sceneRoutes);
+
+import troupeRoutes from "./modules/troupe/troupeRoutes";
+
+router.use(troupeRoutes);
+
+import userRoutes from "./modules/user/userRoutes";
+
+router.use(userRoutes);
 
 /* ************************************************************************ */
 /* Export                                                                   */

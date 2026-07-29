@@ -20,34 +20,10 @@ import crypto from "node:crypto";
 import type { CookieOptions, RequestHandler } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import { z } from "zod";
 
+import { env } from "../../../env";
 import userRepository from "../user/userRepository";
 import authRepository from "./authRepository";
-
-/* ************************************************************************ */
-/* Configuration & primitives                                               */
-/* ************************************************************************ */
-
-/*
-  Environment variables.
-  Must be defined at startup; failing fast is intentional.
-*/
-const envSchema = z.object({
-  APP_BASE_URL: z.url(),
-  APP_SECRET: z.string(),
-  SMTP_URL: z
-    .url()
-    .optional()
-    .refine(
-      (smtpUrl) => smtpUrl != null || process.env.NODE_ENV !== "production",
-      {
-        message: "SMTP_URL must be defined in production environment",
-      },
-    ),
-});
-
-const env = envSchema.parse(process.env);
 
 /*
   Extend Express Request to carry authenticated user data.
@@ -123,6 +99,7 @@ const trustedBaseUrl = env.APP_BASE_URL.replace(/\/+$/, "");
 */
 const sendMagicLink: RequestHandler = async (req, res) => {
   const { email } = req.body;
+
   if (!email || typeof email !== "string") {
     res.sendStatus(400);
     return;

@@ -1,7 +1,7 @@
 import { use } from "react";
 import { NavLink, useOutletContext } from "react-router";
 import z from "zod";
-import { cache } from "../../helpers/cache";
+import { getOrFetch } from "../../helpers/cache";
 import { useMutate } from "../../helpers/mutate";
 import PreferenceSelector from "../ui/PreferenceSelector";
 
@@ -18,7 +18,7 @@ export default function TroupeDashboardPage() {
   }>();
   const mutate = useMutate();
 
-  const plays: Play[] = use(cache(`/api/troupes/${troupe.id}/plays`));
+  const plays: Play[] = use(getOrFetch(`/api/troupes/${troupe.id}/plays`));
 
   const handleAddPlay = async (formData: FormData) => {
     const title = formData.get("title")?.toString();

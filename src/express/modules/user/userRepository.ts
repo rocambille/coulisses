@@ -62,7 +62,7 @@ class UserRepository {
     );
     const result = query.run(user.email, user.name);
 
-    return result.lastInsertRowid;
+    return Number(result.lastInsertRowid);
   }
 
   /* ********************************************************************** */

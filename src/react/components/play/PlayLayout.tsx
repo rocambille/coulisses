@@ -7,7 +7,7 @@
 
 import { use, useEffect } from "react";
 import { Link, Outlet, useOutletContext, useParams } from "react-router";
-import { cache } from "../../helpers/cache";
+import { getOrFetch } from "../../helpers/cache";
 
 export default function PlayLayout() {
   const { troupeId, playId } = useParams();
@@ -28,7 +28,7 @@ export default function PlayLayout() {
   }>();
 
   // Use the cached play fetched at the Troupe level if possible, or fetch it directly.
-  const play = use<Play>(cache(`/api/plays/${playId}`));
+  const play = use<Play>(getOrFetch(`/api/plays/${playId}`));
 
   useEffect(() => {
     pushBreadcrumb([

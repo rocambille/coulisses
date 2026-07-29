@@ -38,7 +38,7 @@ class SceneRepository {
         scene.duration_estimated_seconds,
       );
 
-    return result.lastInsertRowid;
+    return Number(result.lastInsertRowid);
   }
 
   find(byId: RowId): Scene | null {

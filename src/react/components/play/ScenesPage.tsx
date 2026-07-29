@@ -7,7 +7,7 @@
 import React, { use, useState } from "react";
 import { useOutletContext, useParams } from "react-router";
 import z from "zod";
-import { cache } from "../../helpers/cache";
+import { getOrFetch } from "../../helpers/cache";
 import { useMutate } from "../../helpers/mutate";
 import SceneCard from "./SceneCard";
 import SceneForm from "./SceneForm";
@@ -27,8 +27,8 @@ export default function ScenesPage() {
 
   const [editing, setEditing] = useState<Scene["id"] | null>(null);
 
-  const scenes = use<Scene[]>(cache(`/api/plays/${playId}/scenes`));
-  const roles = use<RoleWithScenes[]>(cache(`/api/plays/${playId}/roles`));
+  const scenes = use<Scene[]>(getOrFetch(`/api/plays/${playId}/scenes`));
+  const roles = use<RoleWithScenes[]>(getOrFetch(`/api/plays/${playId}/roles`));
 
   const handleAdd = async (formData: FormData) => {
     const parsed = sceneSchema.safeParse({
