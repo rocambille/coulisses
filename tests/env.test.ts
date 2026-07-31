@@ -1,6 +1,6 @@
 import { serverEnvSchema } from "../src/env";
 
-describe("envSchema", () => {
+describe("serverEnvSchema", () => {
   it("should validate valid environment variables", () => {
     const validEnv = {
       APP_PORT: "5173",
