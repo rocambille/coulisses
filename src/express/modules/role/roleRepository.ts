@@ -88,8 +88,8 @@ class RoleRepository {
     return rows.map((row) => roleWithScenesSchema.parse(row));
   }
 
-  find(byId: RowId): Role | null {
-    const row = database.prepare("select * from role where id = ?").get(byId);
+  find(id: RowId): Role | null {
+    const row = database.prepare("select * from role where id = ?").get(id);
 
     return row ? roleSchema.parse(row) : null;
   }

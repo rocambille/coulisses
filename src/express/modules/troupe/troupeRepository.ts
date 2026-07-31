@@ -46,8 +46,8 @@ class TroupeRepository {
     }
   }
 
-  find(byId: RowId): Troupe | null {
-    const row = database.prepare(`select * from troupe where id = ?`).get(byId);
+  find(id: RowId): Troupe | null {
+    const row = database.prepare(`select * from troupe where id = ?`).get(id);
 
     return row ? troupeSchema.parse(row) : null;
   }

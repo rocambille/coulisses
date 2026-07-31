@@ -41,8 +41,8 @@ class SceneRepository {
     return Number(result.lastInsertRowid);
   }
 
-  find(byId: RowId): Scene | null {
-    const row = database.prepare("select * from scene where id = ?").get(byId);
+  find(id: RowId): Scene | null {
+    const row = database.prepare("select * from scene where id = ?").get(id);
 
     return row ? sceneSchema.parse(row) : null;
   }

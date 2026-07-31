@@ -9,23 +9,8 @@ import { forget } from "../../src/react/helpers/cache";
 import contracts from "../contracts";
 
 // -------------------------
-// Fetch mock (contract-based)
+// Deep equal helper
 // -------------------------
-
-const respond = (body: unknown, status: number) => {
-  const json = JSON.stringify(body);
-
-  if (json === "{}") {
-    return Promise.resolve(new Response(null, { status }));
-  }
-
-  return Promise.resolve(
-    new Response(json, {
-      status,
-      headers: { "Content-Type": "application/json" },
-    }),
-  );
-};
 
 const isDeepEqual = (a: Json | undefined, b: Json | undefined): boolean => {
   // a and b may be string | number | boolean | null | undefined
@@ -92,6 +77,25 @@ const isDeepEqual = (a: Json | undefined, b: Json | undefined): boolean => {
   return false;
 };
 
+// -------------------------
+// Fetch mock (contract-based)
+// -------------------------
+
+const mockResponse = (body: unknown, status: number) => {
+  const json = JSON.stringify(body);
+
+  if (json === "{}") {
+    return Promise.resolve(new Response(null, { status }));
+  }
+
+  return Promise.resolve(
+    new Response(json, {
+      status,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+};
+
 const mockFetch = (
   custom?: (
     path: string,
@@ -129,24 +133,28 @@ const mockFetch = (
       // --- From contracts ---
       for (const [_contractName, contract] of Object.entries(contracts)) {
         for (const [_testName, test] of Object.entries(contract)) {
-          for (const [_caseName, c] of Object.entries(test.cases)) {
+          for (const [_caseName, caseDetails] of Object.entries(test.cases)) {
             if (
-              path === (c.specialPath ?? test.path) &&
-              method === test.method &&
-              isDeepEqual(parsedBody, c.request.body)
+              path === (caseDetails.specialPath ?? test.path) &&
+              method === test.method
             ) {
-              return respond(c.response.body, c.response.status);
+              if (isDeepEqual(parsedBody, caseDetails.request.body)) {
+                return mockResponse(
+                  caseDetails.response.body,
+                  caseDetails.response.status,
+                );
+              }
             }
           }
         }
       }
 
       if (path === "/api/404") {
-        return respond(null, 404);
+        return mockResponse(null, 404);
       }
 
       if (path === "/api/500") {
-        return respond(null, 500);
+        return mockResponse(null, 500);
       }
 
       throw new Error(
@@ -229,13 +237,16 @@ export const setupMocks = ({
         const [contractName, testName] = key.split(".");
         if (contractName in contracts && testName in contracts[contractName]) {
           const test = contracts[contractName][testName];
-          const c = test.cases[caseName];
+          const caseDetails = test.cases[caseName];
           if (
-            c &&
-            path === (c.specialPath ?? test.path) &&
+            caseDetails &&
+            path === (caseDetails.specialPath ?? test.path) &&
             method === test.method
           ) {
-            return respond(c.response.body, c.response.status);
+            return mockResponse(
+              caseDetails.response.body,
+              caseDetails.response.status,
+            );
           }
         }
       }
@@ -310,7 +321,7 @@ export const expectContractCall = (
   caseName: keyof Test["cases"],
 ) => {
   const test = contracts[contractName][testName];
-  const c = test.cases[caseName];
+  const caseDetails = test.cases[caseName];
 
   const headers: Record<string, string> = {};
 
@@ -325,18 +336,20 @@ export const expectContractCall = (
 
     headers["X-CSRF-Token"] = mockedRandomUUID;
   }
-  if (c.request.body) {
+  if (caseDetails.request.body) {
     headers["Content-Type"] = "application/json";
   }
 
   const init = {
     ...(test.method !== "get" ? { method: test.method } : {}),
     ...(Object.keys(headers).length > 0 ? { headers } : {}),
-    ...(c.request.body ? { body: JSON.stringify(c.request.body) } : {}),
+    ...(caseDetails.request.body
+      ? { body: JSON.stringify(caseDetails.request.body) }
+      : {}),
   };
 
   const fetchArgs: Parameters<typeof globalThis.fetch> = [
-    c.specialPath ?? test.path,
+    caseDetails.specialPath ?? test.path,
   ];
 
   if (Object.keys(init).length > 0) {

@@ -27,8 +27,8 @@ class PlayRepository {
     return Number(result.lastInsertRowid);
   }
 
-  find(byId: RowId): Play | null {
-    const row = database.prepare(`select * from play where id = ?`).get(byId);
+  find(id: RowId): Play | null {
+    const row = database.prepare(`select * from play where id = ?`).get(id);
 
     return row ? playSchema.parse(row) : null;
   }
