@@ -15,7 +15,7 @@ import roleParamConverter from "../role/roleParamConverter";
 import sceneParamConverter from "../scene/sceneParamConverter";
 import troupeRepository from "../troupe/troupeRepository";
 import preferenceActions from "./preferenceActions";
-import preferenceValidators from "./preferenceValidatorq";
+import preferenceValidators from "./preferenceValidators";
 
 const ME_PREFERENCES_PATH = "/api/preferences/me";
 const PLAY_PREFERENCES_PATH = "/api/plays/:playId/preferences";
