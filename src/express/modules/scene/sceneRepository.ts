@@ -2,35 +2,19 @@
   Purpose:
   Centralize all persistence logic related to Scene entities.
 */
-import { z } from "zod";
 
 import database from "../../../database";
-
-export const sceneShape = {
-  id: z.number(),
-  title: z.string(),
-  description: z.string(),
-  cut_notes: z.string(),
-  play_id: z.number(),
-  order_in_play: z.number(),
-  duration_estimated_seconds: z.number(),
-  is_active: z.coerce.boolean(),
-};
-
-const sceneSchema: z.ZodType<Scene> = z.object(sceneShape);
+import { type SceneDTOWithPlayId, SceneSchema } from "./sceneSchemas";
 
 class SceneRepository {
-  create(
-    playId: RowId,
-    scene: Omit<Scene, "id" | "play_id" | "is_active">,
-  ): RowId {
+  create(scene: SceneDTOWithPlayId): Scene["id"] {
     const result = database
       .prepare(
         `insert into scene (play_id, title, description, cut_notes, order_in_play, duration_estimated_seconds) 
          values (?, ?, ?, ?, ?, ?)`,
       )
       .run(
-        playId,
+        scene.play_id,
         scene.title,
         scene.description,
         scene.cut_notes,
@@ -41,23 +25,23 @@ class SceneRepository {
     return Number(result.lastInsertRowid);
   }
 
-  find(id: RowId): Scene | null {
+  find(id: Scene["id"]): Scene | null {
     const row = database.prepare("select * from scene where id = ?").get(id);
 
-    return row ? sceneSchema.parse(row) : null;
+    return row ? SceneSchema.parse(row) : null;
   }
 
-  findByPlay(playId: RowId): Scene[] {
+  findByPlay(playId: Play["id"]): Scene[] {
     const rows = database
       .prepare(
         "select * from scene where play_id = ? order by order_in_play asc",
       )
       .all(playId);
 
-    return rows.map((row) => sceneSchema.parse(row));
+    return rows.map((row) => SceneSchema.parse(row));
   }
 
-  update(id: RowId, scene: Omit<Scene, "id" | "play_id">): boolean {
+  update(scene: Scene): boolean {
     const query = `update scene 
                    set title = ?,
                        description = ?,
@@ -76,13 +60,13 @@ class SceneRepository {
         scene.duration_estimated_seconds,
         scene.order_in_play,
         Number(scene.is_active),
-        id,
+        scene.id,
       );
 
     return result.changes > 0;
   }
 
-  hardDelete(id: RowId): boolean {
+  hardDelete(id: Scene["id"]): boolean {
     const result = database.prepare("delete from scene where id = ?").run(id);
 
     return result.changes > 0;

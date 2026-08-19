@@ -12,8 +12,7 @@ const browse: RequestHandler = (req, res) => {
 };
 
 const add: RequestHandler = (req, res) => {
-  const { sceneIds, ...roleData } = req.body;
-  const insertId = roleRepository.create(req.play.id, roleData, sceneIds);
+  const insertId = roleRepository.create(req.body);
   res.status(201).json({ insertId });
 };
 

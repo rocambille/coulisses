@@ -2,7 +2,8 @@ create table user (
   id integer primary key,
   email varchar(255) not null unique,
   name varchar(255) not null,
-  created_at datetime default current_timestamp,
+  avatar_url text default null,
+  created_at datetime default (strftime('%Y-%m-%dT%H:%M:%SZ')),
   deleted_at datetime default null
 );
 
@@ -19,14 +20,14 @@ create table troupe (
   name varchar(255) not null,
   description text not null,
   external_discussion_link varchar(255) not null,
-  created_at datetime default current_timestamp
+  created_at datetime default (strftime('%Y-%m-%dT%H:%M:%SZ'))
 );
 
 create table troupe_member (
   user_id integer not null,
   troupe_id integer not null,
   role varchar(16) check(role in ('ADMIN', 'ACTOR')) not null,
-  joined_at datetime default current_timestamp,
+  joined_at datetime default (strftime('%Y-%m-%dT%H:%M:%SZ')),
   primary key(user_id, troupe_id),
   foreign key(user_id) references user(id) on delete cascade,
   foreign key(troupe_id) references troupe(id) on delete cascade
@@ -62,7 +63,7 @@ create table play_preference (
   user_id integer not null,
   play_id integer not null,
   level varchar(16) check(level in ('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED')) not null,
-  created_at datetime default current_timestamp,
+  created_at datetime default (strftime('%Y-%m-%dT%H:%M:%SZ')),
   primary key(user_id, play_id),
   foreign key(user_id) references user(id) on delete cascade,
   foreign key(play_id) references play(id) on delete cascade
@@ -100,7 +101,7 @@ create table scene_preference (
   user_id integer not null,
   scene_id integer not null,
   level varchar(16) check(level in ('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED')) not null,
-  created_at datetime default current_timestamp,
+  created_at datetime default (strftime('%Y-%m-%dT%H:%M:%SZ')),
   primary key(user_id, scene_id),
   foreign key(user_id) references user(id) on delete cascade,
   foreign key(scene_id) references scene(id) on delete cascade
@@ -111,7 +112,7 @@ create table role_preference (
   scene_id integer not null,
   role_id integer not null,
   level varchar(16) check(level in ('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED')) not null,
-  created_at datetime default current_timestamp,
+  created_at datetime default (strftime('%Y-%m-%dT%H:%M:%SZ')),
   primary key(user_id, scene_id, role_id),
   foreign key(user_id) references user(id) on delete cascade,
   foreign key(scene_id) references scene(id) on delete cascade,
@@ -122,7 +123,7 @@ create table casting (
   user_id integer not null,
   scene_id integer not null,
   role_id integer not null,
-  assigned_at datetime default current_timestamp,
+  assigned_at datetime default (strftime('%Y-%m-%dT%H:%M:%SZ')),
   primary key(scene_id, role_id),
   foreign key(user_id) references user(id) on delete cascade,
   foreign key(scene_id) references scene(id) on delete cascade,
@@ -147,7 +148,7 @@ create table event_presence (
   event_id integer not null,
   user_id integer not null,
   status varchar(16) check(status in ('PENDING', 'PRESENT', 'ABSENT')) not null default 'PENDING',
-  updated_at datetime default current_timestamp,
+  updated_at datetime default (strftime('%Y-%m-%dT%H:%M:%SZ')),
   primary key(event_id, user_id),
   foreign key(event_id) references event(id) on delete cascade,
   foreign key(user_id) references user(id) on delete cascade

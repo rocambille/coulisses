@@ -13,7 +13,7 @@ import troupeParamConverter from "../troupe/troupeParamConverter";
 import troupeRepository from "../troupe/troupeRepository";
 import playActions from "./playActions";
 import playParamConverter from "./playParamConverter";
-import playValidator from "./playValidator";
+import playValidators from "./playValidators";
 
 const TROUPE_PLAYS_PATH = "/api/troupes/:troupeId/plays";
 const PLAY_PATH = "/api/plays/:playId";
@@ -23,7 +23,7 @@ router.param("playId", playParamConverter.convert);
 
 // Authorization check for Troupe routes (browse/create plays)
 const checkIsTroupeMember: RequestHandler = (req, res, next) => {
-  if (troupeRepository.findMember(req.troupe.id, req.me.id) !== null) {
+  if (troupeRepository.findMemberRole(req.troupe.id, req.me.id) != null) {
     next();
   } else {
     res.sendStatus(403);
@@ -31,7 +31,7 @@ const checkIsTroupeMember: RequestHandler = (req, res, next) => {
 };
 
 const checkIsTroupeAdmin: RequestHandler = (req, res, next) => {
-  if (troupeRepository.findMember(req.troupe.id, req.me.id)?.role === "ADMIN") {
+  if (troupeRepository.findMemberRole(req.troupe.id, req.me.id) === "ADMIN") {
     next();
   } else {
     res.sendStatus(403);
@@ -40,7 +40,7 @@ const checkIsTroupeAdmin: RequestHandler = (req, res, next) => {
 
 // Authorization check for Play routes (read specific play)
 const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
-  if (troupeRepository.findMember(req.play.troupe_id, req.me.id) != null) {
+  if (troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) != null) {
     next();
   } else {
     res.sendStatus(403);
@@ -53,7 +53,7 @@ router.get(TROUPE_PLAYS_PATH, checkIsTroupeMember, playActions.browse);
 router.post(
   TROUPE_PLAYS_PATH,
   checkIsTroupeAdmin,
-  playValidator.validate,
+  playValidators.add,
   playActions.add,
 );
 
@@ -61,7 +61,7 @@ router.get(PLAY_PATH, checkIsPlayTroupeMember, playActions.read);
 
 const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
   if (
-    troupeRepository.findMember(req.play.troupe_id, req.me.id)?.role === "ADMIN"
+    troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) === "ADMIN"
   ) {
     next();
   } else {
@@ -72,7 +72,7 @@ const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
 router.put(
   PLAY_PATH,
   checkIsPlayTroupeAdmin,
-  playValidator.validate,
+  playValidators.edit,
   playActions.edit,
 );
 router.delete(PLAY_PATH, checkIsPlayTroupeAdmin, playActions.destroy);

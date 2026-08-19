@@ -3,56 +3,33 @@
   Centralize persistent logic for Casting and the Dashboard Matrix.
 */
 
-import { z } from "zod";
 import database from "../../../database";
-
-import { rolePreferenceShape } from "../preference/preferenceRepository";
-import { roleShape } from "../role/roleRepository";
-import { sceneShape } from "../scene/sceneRepository";
-import { userShape } from "../user/userRepository";
-
-const castingMatrixShape = {
-  actors: z.array(z.object(userShape)),
-  scenes: z.array(
-    z.object({
-      ...sceneShape,
-      roles: z.array(
-        z.object(roleShape).extend({
-          assigned_user: z.object(userShape).nullable(),
-          preferences: z.array(z.object(rolePreferenceShape)),
-        }),
-      ),
-    }),
-  ),
-};
-
-const castingMatrixSchema: z.ZodType<CastingMatrix> =
-  z.object(castingMatrixShape);
+import { type CastingDTO, CastingMatrixSchema } from "./castingSchemas";
 
 class CastingRepository {
-  assignRole(sceneId: RowId, roleId: RowId, userId: RowId): boolean {
+  assignRole(casting: CastingDTO): boolean {
     const result = database
       .prepare(
         `insert into casting (scene_id, role_id, user_id)
          values (?, ?, ?)
          on conflict(scene_id, role_id) do update set user_id = excluded.user_id`,
       )
-      .run(sceneId, roleId, userId);
+      .run(casting.scene_id, casting.role_id, casting.user_id);
 
     return result.changes > 0;
   }
 
-  unassignRole(sceneId: RowId, roleId: RowId, userId: RowId): boolean {
+  unassignRole(casting: CastingDTO): boolean {
     const result = database
       .prepare(
         `delete from casting where scene_id = ? and role_id = ? and user_id = ?`,
       )
-      .run(sceneId, roleId, userId);
+      .run(casting.scene_id, casting.role_id, casting.user_id);
 
     return result.changes > 0;
   }
 
-  getPlayCastingMatrix(playId: RowId): CastingMatrix {
+  getPlayCastingMatrix(playId: Play["id"]): CastingMatrix {
     const actors = database
       .prepare(
         `select u.*
@@ -104,6 +81,8 @@ class CastingRepository {
                  u.name,
                  'email',
                  u.email,
+                 'avatar_url',
+                 u.avatar_url,
                  'created_at',
                  u.created_at,
                  'deleted_at',
@@ -123,7 +102,7 @@ class CastingRepository {
       )
       .all(playId);
 
-    return castingMatrixSchema.parse({
+    return CastingMatrixSchema.parse({
       actors,
       scenes: scenesWithRolesAndCastings.map((s) => ({
         ...s,

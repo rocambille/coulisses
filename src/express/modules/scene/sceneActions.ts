@@ -12,12 +12,12 @@ const browse: RequestHandler = (req, res) => {
 };
 
 const edit: RequestHandler = (req, res) => {
-  sceneRepository.update(req.scene.id, req.body);
+  sceneRepository.update(req.body);
   res.sendStatus(204);
 };
 
 const add: RequestHandler = (req, res) => {
-  const insertId = sceneRepository.create(req.play.id, req.body);
+  const insertId = sceneRepository.create(req.body);
   res.status(201).json({ insertId });
 };
 

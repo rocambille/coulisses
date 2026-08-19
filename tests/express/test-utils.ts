@@ -71,10 +71,16 @@ const mockDatabase = () => {
 
   /* insert all users */
   const insertUser = database.prepare(
-    "insert into user(id, email, name, created_at) values(?, ?, ?, ?)",
+    "insert into user(id, email, name, avatar_url, created_at) values(?, ?, ?, ?, ?)",
   );
   for (const user of allUsers) {
-    insertUser.run(user.id, user.email, user.name, user.created_at);
+    insertUser.run(
+      user.id,
+      user.email,
+      user.name,
+      user.avatar_url ?? null,
+      user.created_at,
+    );
   }
 
   /* soft delete one user for tests */
@@ -333,14 +339,34 @@ import routes from "../../src/express/routes";
 const app = express();
 app.use(routes);
 
-// Log server-side errors for debugging
+/*
+  Error logging middleware:
+  Logs errors for debugging, then passes them to the error response handler.
+*/
 const logErrors: ErrorRequestHandler = (err, req, _res, next) => {
-  console.error("Express error:", err);
-  console.error("Request:", req.method, req.path);
+  if (err.status === 500) {
+    console.error(err);
+    console.error("on req:", req.method, req.path);
+  }
+
   next(err);
 };
 
+/*
+  Final error handler:
+  Sends a structured JSON response instead of Express's default HTML page.
+  Stack traces are hidden in production to avoid leaking implementation details.
+*/
+const sendErrors: ErrorRequestHandler = (err, _req, res, _next) => {
+  const status = err.status ?? err.statusCode ?? 500;
+
+  res.status(status).json({
+    message: err.message ?? "Internal Server Error",
+  });
+};
+
 app.use(logErrors);
+app.use(sendErrors);
 
 // Wrapper for supertest
 const api = supertest(app);
@@ -351,8 +377,19 @@ export const check = async (test: Test, caseName: keyof Test["cases"]) => {
 
   const apiCall = api[test.method](caseDetails.specialPath ?? test.path);
 
+  if (caseDetails.request.headers) {
+    for (const [key, value] of Object.entries(caseDetails.request.headers)) {
+      apiCall.set(key, value);
+    }
+  }
+
   if (caseDetails.request.body != null) {
     apiCall.send(caseDetails.request.body);
+  }
+
+  if (caseDetails.request.attach != null) {
+    const { name, file, options } = caseDetails.request.attach;
+    apiCall.attach(name, file, options);
   }
 
   const cookies = [];
@@ -378,6 +415,12 @@ export const check = async (test: Test, caseName: keyof Test["cases"]) => {
 
   expect(response.status).toBe(caseDetails.response.status);
   expect(response.body).toEqual(caseDetails.response.body);
+
+  if (caseDetails.response.headers) {
+    for (const [key, matcher] of Object.entries(caseDetails.response.headers)) {
+      expect(response.headers[key]).toEqual(matcher);
+    }
+  }
 
   if (caseDetails.response.and) {
     caseDetails.response.and(response);

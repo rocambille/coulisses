@@ -12,25 +12,17 @@ const getMePreferences: RequestHandler = (req, res) => {
 };
 
 const setPlayPreference: RequestHandler = (req, res) => {
-  const { level } = req.body;
-  preferenceRepository.upsertPlayPreference(req.me.id, req.play.id, level);
+  preferenceRepository.upsertPlayPreference(req.body);
   res.sendStatus(204);
 };
 
 const setScenePreference: RequestHandler = (req, res) => {
-  const { level } = req.body;
-  preferenceRepository.upsertScenePreference(req.me.id, req.scene.id, level);
+  preferenceRepository.upsertScenePreference(req.body);
   res.sendStatus(204);
 };
 
 const setRolePreference: RequestHandler = (req, res) => {
-  const { level } = req.body;
-  preferenceRepository.upsertRolePreference(
-    req.me.id,
-    req.scene.id,
-    req.role.id,
-    level,
-  );
+  preferenceRepository.upsertRolePreference(req.body);
   res.sendStatus(204);
 };
 

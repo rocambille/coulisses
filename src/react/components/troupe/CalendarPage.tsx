@@ -15,7 +15,7 @@ import {
   toInputTime,
 } from "../../helpers/datetime";
 import { useMutate } from "../../helpers/mutate";
-import { useAuth } from "../auth/AuthContext";
+import { useMe } from "../auth/MeContext";
 import PresenceToggle from "../ui/PresenceToggle";
 
 const eventSchema = z.object({
@@ -96,7 +96,7 @@ const MONTHS = [
 
 function CalendarPage() {
   const { troupeId } = useParams();
-  const { me } = useAuth();
+  const { user } = useMe();
   const mutate = useMutate();
 
   const events: EventData[] = use(
@@ -440,7 +440,7 @@ function CalendarPage() {
               ></button>
               Détails de l'événement
             </header>
-            {selectedEvent.owner_id === me?.id ? (
+            {selectedEvent.owner_id === user?.id ? (
               <form
                 aria-label={`Formulaire de modification de l'événement ${selectedEvent.id}`}
                 action={handleEdit}

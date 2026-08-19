@@ -9,7 +9,7 @@ import z from "zod";
 
 import { getOrFetch } from "../helpers/cache";
 import { useMutate } from "../helpers/mutate";
-import { useAuth } from "./auth/AuthContext";
+import { useMe } from "./auth/MeContext";
 import TroupeCard from "./troupe/TroupeCard";
 
 const troupeSchema = z.object({
@@ -19,7 +19,7 @@ const troupeSchema = z.object({
 });
 
 function DashboardPage() {
-  const { me } = useAuth();
+  const { user } = useMe();
   const mutate = useMutate();
 
   const troupes: Troupe[] = use(getOrFetch<Troupe[]>("/api/troupes"));
@@ -49,7 +49,7 @@ function DashboardPage() {
     <>
       <hgroup>
         <h1>Mes troupes</h1>
-        <p>Bienvenue, {me?.name}</p>
+        <p>Bienvenue, {user?.name}</p>
       </hgroup>
 
       {troupes.length === 0 ? (

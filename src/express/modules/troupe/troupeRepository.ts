@@ -2,28 +2,15 @@
   Purpose:
   Centralize all persistence logic related to Troupe entities.
 */
-import { z } from "zod";
-
 import database from "../../../database";
-import { userShape } from "../user/userRepository";
-
-const troupeSchema: z.ZodType<Troupe> = z.object({
-  id: z.number(),
-  name: z.string(),
-  description: z.string(),
-  external_discussion_link: z.string(),
-  created_at: z.string(),
-});
-
-const troupeMemberSchema: z.ZodType<TroupeMember> = z.object({
-  troupe_id: z.number(),
-  role: z.enum(["ADMIN", "ACTOR"]),
-  joined_at: z.string(),
-  ...userShape,
-});
+import {
+  type TroupeDTO,
+  TroupeMemberSchema,
+  TroupeSchema,
+} from "./troupeSchemas";
 
 class TroupeRepository {
-  create(troupe: Omit<Troupe, "id" | "created_at">, creatorId: RowId): RowId {
+  create(troupe: TroupeDTO, creatorId: User["id"]): Troupe["id"] {
     /* use transaction to insert troupe and add creator as member */
     database.exec("BEGIN");
 
@@ -35,21 +22,23 @@ class TroupeRepository {
         )
         .run(troupe.name, troupe.description, troupe.external_discussion_link);
 
-      this.addMember(Number(result.lastInsertRowid), creatorId, "ADMIN");
+      const troupeId = Number(result.lastInsertRowid);
+
+      this.addMember(troupeId, creatorId, "ADMIN");
 
       database.exec("COMMIT");
 
-      return Number(result.lastInsertRowid);
+      return troupeId;
     } catch (error) {
       database.exec("ROLLBACK");
       throw error;
     }
   }
 
-  find(id: RowId): Troupe | null {
+  find(id: Troupe["id"]): Troupe | null {
     const row = database.prepare(`select * from troupe where id = ?`).get(id);
 
-    return row ? troupeSchema.parse(row) : null;
+    return row ? TroupeSchema.parse(row) : null;
   }
 
   findByUser(user: User): Troupe[] {
@@ -61,12 +50,16 @@ class TroupeRepository {
       )
       .all(user.id);
 
-    return rows.map((row) => troupeSchema.parse(row));
+    return rows.map((row) => TroupeSchema.parse(row));
   }
 
   // --- Members ---
 
-  addMember(troupeId: RowId, userId: RowId, role: "ADMIN" | "ACTOR"): RowId {
+  addMember(
+    troupeId: Troupe["id"],
+    userId: User["id"],
+    role: "ADMIN" | "ACTOR",
+  ): TroupeMember["id"] {
     // Insert or IGNORE to avoid errors if they are already in the troupe
     const result = database
       .prepare(
@@ -78,9 +71,9 @@ class TroupeRepository {
   }
 
   updateMember(
-    troupeId: RowId,
-    userId: RowId,
-    role: "ADMIN" | "ACTOR",
+    troupeId: Troupe["id"],
+    userId: User["id"],
+    role: TroupeMember["role"],
   ): boolean {
     const result = database
       .prepare(
@@ -91,30 +84,39 @@ class TroupeRepository {
     return result.changes > 0;
   }
 
-  removeMember(troupeId: RowId, userId: RowId): boolean {
+  removeMember(troupeId: Troupe["id"], userId: User["id"]): boolean {
     const result = database
       .prepare("delete from troupe_member where troupe_id = ? and user_id = ?")
       .run(troupeId, userId);
     return result.changes > 0;
   }
 
-  getMembers(troupeId: RowId): TroupeMember[] {
+  getMembers(troupeId: Troupe["id"]): TroupeMember[] {
     const rows = database
       .prepare(
-        `select tm.troupe_id, tm.role, tm.joined_at, u.id, u.email, u.name, u.created_at, u.deleted_at
+        `select
+           tm.troupe_id,
+           tm.role,
+           tm.joined_at,
+           u.id,
+           u.email,
+           u.name,
+           u.avatar_url,
+           u.created_at,
+           u.deleted_at
          from user u
          join troupe_member tm on u.id = tm.user_id
          where tm.troupe_id = ?`,
       )
       .all(troupeId);
 
-    return rows.map((row) => troupeMemberSchema.parse(row));
+    return rows.map((row) => TroupeMemberSchema.parse(row));
   }
 
-  findMember(
-    troupeId: RowId,
-    userId: RowId,
-  ): { role: "ADMIN" | "ACTOR" } | null {
+  findMemberRole(
+    troupeId: Troupe["id"],
+    userId: User["id"],
+  ): TroupeMember["role"] | null {
     const row = database
       .prepare(
         "select role from troupe_member where troupe_id = ? and user_id = ?",
@@ -125,9 +127,7 @@ class TroupeRepository {
       return null;
     }
 
-    return {
-      role: row.role === "ADMIN" ? "ADMIN" : "ACTOR",
-    };
+    return TroupeMemberSchema.pick({ role: true }).parse(row).role;
   }
 }
 

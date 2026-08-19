@@ -3,6 +3,8 @@
   Convert the `:roleId` route parameter into a fully loaded Role.
 */
 
+import type { Role } from "./roleSchemas";
+
 declare global {
   namespace Express {
     interface Request {

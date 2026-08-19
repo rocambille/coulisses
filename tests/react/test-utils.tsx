@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import * as ReactRouter from "react-router";
 import { createRoutesStub } from "react-router";
 
-import { AuthProvider } from "../../src/react/components/auth/AuthContext";
+import { MeProvider } from "../../src/react/components/auth/MeContext";
 import { DataRefreshProvider } from "../../src/react/components/DataRefreshContext";
 import { forget } from "../../src/react/helpers/cache";
 import contracts from "../contracts";
@@ -81,17 +81,21 @@ const isDeepEqual = (a: Json | undefined, b: Json | undefined): boolean => {
 // Fetch mock (contract-based)
 // -------------------------
 
-const mockResponse = (body: unknown, status: number) => {
+const mockResponse = (
+  body: unknown,
+  status: number,
+  headers?: Record<string, string>,
+) => {
   const json = JSON.stringify(body);
-
-  if (json === "{}") {
-    return Promise.resolve(new Response(null, { status }));
-  }
+  const isNull = json === "{}";
 
   return Promise.resolve(
-    new Response(json, {
+    new Response(isNull ? null : json, {
       status,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        ...(isNull ? {} : { "Content-Type": "application/json" }),
+        ...headers,
+      },
     }),
   );
 };
@@ -122,10 +126,12 @@ const mockFetch = (
       }
 
       const parseBody = (body?: RequestInit["body"]): Json | undefined => {
-        if (body == null) {
-          return body;
+        if (body == null || typeof body !== "string") {
+          return;
         }
-        return JSON.parse(body.toString());
+        try {
+          return JSON.parse(body);
+        } catch {}
       };
 
       const parsedBody = parseBody(init?.body);
@@ -142,6 +148,7 @@ const mockFetch = (
                 return mockResponse(
                   caseDetails.response.body,
                   caseDetails.response.status,
+                  caseDetails.response.headers,
                 );
               }
             }
@@ -200,11 +207,11 @@ export const renderWithStub = async ({
       path,
       HydrateFallback: () => null,
       Component: () => (
-        <AuthProvider initialUser={me}>
+        <MeProvider initialUser={me}>
           <DataRefreshProvider>
             <Component />
           </DataRefreshProvider>
-        </AuthProvider>
+        </MeProvider>
       ),
       ErrorBoundary:
         ErrorBoundary ??
@@ -246,6 +253,7 @@ export const setupMocks = ({
             return mockResponse(
               caseDetails.response.body,
               caseDetails.response.status,
+              caseDetails.response.headers,
             );
           }
         }
@@ -323,7 +331,9 @@ export const expectContractCall = (
   const test = contracts[contractName][testName];
   const caseDetails = test.cases[caseName];
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    ...caseDetails.request.headers,
+  };
 
   if (test.method !== "get") {
     expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
@@ -346,6 +356,7 @@ export const expectContractCall = (
     ...(caseDetails.request.body
       ? { body: JSON.stringify(caseDetails.request.body) }
       : {}),
+    ...(caseDetails.request.attach ? { body: expect.any(FormData) } : {}),
   };
 
   const fetchArgs: Parameters<typeof globalThis.fetch> = [

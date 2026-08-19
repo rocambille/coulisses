@@ -28,7 +28,7 @@ export default function PlayLayout() {
   }>();
 
   // Use the cached play fetched at the Troupe level if possible, or fetch it directly.
-  const play = use<Play>(getOrFetch(`/api/plays/${playId}`));
+  const play = use(getOrFetch<Play>(`/api/plays/${playId}`));
 
   useEffect(() => {
     pushBreadcrumb([

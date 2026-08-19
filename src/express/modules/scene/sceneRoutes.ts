@@ -14,7 +14,7 @@ import playRepository from "../play/playRepository";
 import troupeRepository from "../troupe/troupeRepository";
 import sceneActions from "./sceneActions";
 import sceneParamConverter from "./sceneParamConverter";
-import sceneValidator from "./sceneValidator";
+import sceneValidators from "./sceneValidators";
 
 const PLAY_SCENES_PATH = "/api/plays/:playId/scenes";
 const SCENE_PATH = "/api/scenes/:sceneId";
@@ -24,7 +24,7 @@ router.param("sceneId", sceneParamConverter.convert);
 
 // Helper for play routes
 const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
-  if (troupeRepository.findMember(req.play.troupe_id, req.me.id) != null) {
+  if (troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) != null) {
     next();
   } else {
     res.sendStatus(403);
@@ -33,7 +33,7 @@ const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
 
 const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
   if (
-    troupeRepository.findMember(req.play.troupe_id, req.me.id)?.role === "ADMIN"
+    troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) === "ADMIN"
   ) {
     next();
   } else {
@@ -45,7 +45,7 @@ const checkIsSceneTroupeAdmin: RequestHandler = (req, res, next) => {
   const play = playRepository.find(req.scene.play_id);
   if (
     play &&
-    troupeRepository.findMember(play.troupe_id, req.me.id)?.role === "ADMIN"
+    troupeRepository.findMemberRole(play.troupe_id, req.me.id) === "ADMIN"
   ) {
     next();
   } else {
@@ -60,7 +60,7 @@ router.get(PLAY_SCENES_PATH, checkIsPlayTroupeMember, sceneActions.browse);
 router.post(
   PLAY_SCENES_PATH,
   checkIsPlayTroupeAdmin,
-  sceneValidator.validate,
+  sceneValidators.add,
   sceneActions.add,
 );
 
@@ -68,7 +68,7 @@ router.post(
 router.put(
   SCENE_PATH,
   checkIsSceneTroupeAdmin,
-  sceneValidator.validate,
+  sceneValidators.edit,
   sceneActions.edit,
 );
 router.delete(SCENE_PATH, checkIsSceneTroupeAdmin, sceneActions.destroy);

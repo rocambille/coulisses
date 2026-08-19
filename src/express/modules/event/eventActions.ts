@@ -12,12 +12,12 @@ const browse: RequestHandler = (req, res) => {
 };
 
 const add: RequestHandler = (req, res) => {
-  const insertId = eventRepository.create(req.troupe.id, req.me.id, req.body);
+  const insertId = eventRepository.create(req.body);
   res.status(201).json({ insertId });
 };
 
 const edit: RequestHandler = (req, res) => {
-  eventRepository.update(req.event.id, req.body);
+  eventRepository.update(req.body);
   res.sendStatus(204);
 };
 
@@ -27,8 +27,7 @@ const destroy: RequestHandler = (req, res) => {
 };
 
 const setPresence: RequestHandler = (req, res) => {
-  const { status } = req.body;
-  eventRepository.setPresence(req.event.id, req.me.id, status);
+  eventRepository.setPresence(req.body);
   res.sendStatus(204);
 };
 

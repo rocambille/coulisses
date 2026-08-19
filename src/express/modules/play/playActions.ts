@@ -25,7 +25,7 @@ const add: RequestHandler = (req, res) => {
 };
 
 const edit: RequestHandler = (req, res) => {
-  playRepository.update(req.play.id, req.body);
+  playRepository.update(req.body);
   res.sendStatus(204);
 };
 

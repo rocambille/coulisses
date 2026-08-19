@@ -1,11 +1,11 @@
 import { useOutletContext, useParams } from "react-router";
-import { useAuth } from "../auth/AuthContext";
+import { useMe } from "../auth/MeContext";
 import PreferenceSelector from "../ui/PreferenceSelector";
 import RoleBadge from "../ui/RoleBadge";
 
 interface SceneCardProps {
   scene: Scene;
-  roles: Role[];
+  roles: RoleWithScenes[];
   scenePreferences: ScenePreference[];
   rolePreferences: RolePreference[];
   onEdit: (sceneId: number) => void;
@@ -22,10 +22,10 @@ export default function SceneCard({
 }: SceneCardProps) {
   const { playId } = useParams();
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
-  const { me } = useAuth();
+  const { user } = useMe();
 
   const myScenePreference = scenePreferences.find(
-    (p) => p.scene_id === scene.id && p.user_id === me?.id,
+    (p) => p.scene_id === scene.id && p.user_id === user?.id,
   );
 
   return (
@@ -81,7 +81,7 @@ export default function SceneCard({
           ) : (
             roles.map((role) => {
               const myRolePreference = rolePreferences.find(
-                (p) => p.role_id === role.id && p.user_id === me?.id,
+                (p) => p.role_id === role.id && p.user_id === user?.id,
               );
               return (
                 <div

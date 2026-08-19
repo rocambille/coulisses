@@ -15,7 +15,7 @@ import roleParamConverter from "../role/roleParamConverter";
 import sceneParamConverter from "../scene/sceneParamConverter";
 import troupeRepository from "../troupe/troupeRepository";
 import castingActions from "./castingActions";
-import castingValidator from "./castingValidator";
+import castingValidators from "./castingValidators";
 
 const PLAY_CASTINGS_PATH = "/api/plays/:playId/castings";
 const CASTINGS_PATH = "/api/castings";
@@ -25,7 +25,7 @@ router.param("sceneId", sceneParamConverter.convert);
 router.param("roleId", roleParamConverter.convert);
 
 const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
-  if (troupeRepository.findMember(req.play.troupe_id, req.me.id) != null) {
+  if (troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) != null) {
     next();
   } else {
     res.sendStatus(403);
@@ -36,7 +36,7 @@ const checkIsSceneTroupeAdmin: RequestHandler = (req, res, next) => {
   const play = playRepository.findByScene(req.body.scene_id);
   if (
     play &&
-    troupeRepository.findMember(play.troupe_id, req.me.id)?.role === "ADMIN"
+    troupeRepository.findMemberRole(play.troupe_id, req.me.id) === "ADMIN"
   ) {
     next();
   } else {
@@ -56,7 +56,7 @@ router.get(
 // Assign / Unassign
 router
   .route(CASTINGS_PATH)
-  .all(castingValidator.validate, checkIsSceneTroupeAdmin)
+  .all(castingValidators.validate, checkIsSceneTroupeAdmin)
   .post(castingActions.assign)
   .delete(castingActions.unassign);
 

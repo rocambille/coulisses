@@ -2,37 +2,17 @@
   Purpose:
   Centralize all persistence logic related to Role entities.
 */
-import { z } from "zod";
 
 import database from "../../../database";
-import { sceneShape } from "../scene/sceneRepository";
-
-export const roleShape = {
-  id: z.number(),
-  name: z.string(),
-  description: z.string(),
-  play_id: z.number(),
-};
-
-const roleSchema: z.ZodType<Role> = z.object(roleShape);
-
-const roleWithScenesSchema: z.ZodType<RoleWithScenes> = z.object({
-  ...roleShape,
-  scenes: z.preprocess(
-    (val: string) => {
-      const parsed = JSON.parse(val);
-      return Array.isArray(parsed) ? parsed : [];
-    },
-    z.array(z.object(sceneShape)),
-  ),
-});
+import {
+  type Role,
+  type RoleDTOWithPlayId,
+  RoleSchema,
+  RoleWithScenesSchema,
+} from "./roleSchemas";
 
 class RoleRepository {
-  create(
-    playId: RowId,
-    role: Omit<Role, "id" | "play_id">,
-    sceneIds: RowId[] = [],
-  ): RowId {
+  create(role: RoleDTOWithPlayId): Role["id"] {
     database.exec("BEGIN");
 
     try {
@@ -40,15 +20,15 @@ class RoleRepository {
         .prepare(
           `insert into role (play_id, name, description) values (?, ?, ?)`,
         )
-        .run(playId, role.name, role.description);
+        .run(role.play_id, role.name, role.description);
 
       const roleId = result.lastInsertRowid;
 
-      if (sceneIds.length > 0) {
+      if (role.sceneIds.length > 0) {
         const insertRoleScene = database.prepare(
           `insert into role_scene (role_id, scene_id) values (?, ?)`,
         );
-        for (const sceneId of sceneIds) {
+        for (const sceneId of role.sceneIds) {
           insertRoleScene.run(roleId, sceneId);
         }
       }
@@ -61,7 +41,7 @@ class RoleRepository {
     }
   }
 
-  findByPlay(playId: RowId): RoleWithScenes[] {
+  findByPlay(playId: Play["id"]): RoleWithScenes[] {
     const rows = database
       .prepare(
         `select r.id, r.name, r.description, r.play_id,
@@ -85,16 +65,16 @@ class RoleRepository {
       )
       .all(playId);
 
-    return rows.map((row) => roleWithScenesSchema.parse(row));
+    return rows.map((row) => RoleWithScenesSchema.parse(row));
   }
 
-  find(id: RowId): Role | null {
+  find(id: Role["id"]): Role | null {
     const row = database.prepare("select * from role where id = ?").get(id);
 
-    return row ? roleSchema.parse(row) : null;
+    return row ? RoleSchema.parse(row) : null;
   }
 
-  linkScene(roleId: RowId, sceneId: RowId): void {
+  linkScene(roleId: Role["id"], sceneId: Scene["id"]): void {
     database
       .prepare(
         `insert or ignore into role_scene (role_id, scene_id) values (?, ?)`,
@@ -102,7 +82,7 @@ class RoleRepository {
       .run(roleId, sceneId);
   }
 
-  delete(roleId: RowId): void {
+  delete(roleId: Role["id"]): void {
     database.prepare("delete from role where id = ?").run(roleId);
   }
 }

@@ -24,7 +24,11 @@ export default function CastingPage() {
   const actors = dashboard.actors;
   const scenes = dashboard.scenes;
 
-  const handleAssign = async (sceneId: RowId, roleId: RowId, userId: RowId) => {
+  const handleAssign = async (
+    sceneId: Scene["id"],
+    roleId: RoleWithScenes["id"],
+    userId: User["id"],
+  ) => {
     await mutate(
       `/api/castings`,
       "post",
@@ -34,9 +38,9 @@ export default function CastingPage() {
   };
 
   const handleUnassign = async (
-    sceneId: RowId,
-    roleId: RowId,
-    userId: RowId,
+    sceneId: Scene["id"],
+    roleId: RoleWithScenes["id"],
+    userId: User["id"],
   ) => {
     await mutate(
       `/api/castings`,

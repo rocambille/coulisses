@@ -1,5 +1,10 @@
 import { teacherUser } from "../fixtures/users";
 
+const dummyImageBuffer = Buffer.from(
+  "UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=",
+  "base64",
+);
+
 export default (<Contract>{
   read_me: {
     method: "get",
@@ -35,6 +40,67 @@ export default (<Contract>{
   delete_me: {
     method: "delete",
     path: "/api/users/me",
+    cases: {
+      as_me: {
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 204, body: {} },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+    },
+  },
+  upload_me_avatar: {
+    method: "post",
+    path: "/api/users/me/avatar",
+    cases: {
+      as_me: {
+        request: {
+          jwtPayload: { sub: teacherUser.id },
+          attach: {
+            name: "avatar",
+            file: dummyImageBuffer,
+            options: { filename: "avatar.webp", contentType: "image/webp" },
+          },
+        },
+        response: {
+          status: 201,
+          body: {
+            avatar_url: expect.stringMatching(/^\/uploads\/avatars\/.*\.webp$/),
+          },
+        },
+      },
+      invalid_file_type: {
+        request: {
+          jwtPayload: { sub: teacherUser.id },
+          attach: {
+            name: "avatar",
+            file: Buffer.from("plain text"),
+            options: { filename: "doc.txt", contentType: "text/plain" },
+          },
+        },
+        response: {
+          status: 400,
+          body: { message: expect.stringMatching(/Invalid file type/i) },
+        },
+      },
+      no_attached_file: {
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: {
+          status: 400,
+          body: { message: expect.stringMatching(/No file attached/i) },
+        },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+    },
+  },
+  delete_me_avatar: {
+    method: "delete",
+    path: "/api/users/me/avatar",
     cases: {
       as_me: {
         request: { jwtPayload: { sub: teacherUser.id } },

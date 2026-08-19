@@ -22,10 +22,8 @@ export default function RolesPage() {
   const mutate = useMutate();
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
 
-  const roles = use<Role[]>(getOrFetch<Role[]>(`/api/plays/${playId}/roles`));
-  const scenes = use<Scene[]>(
-    getOrFetch<Scene[]>(`/api/plays/${playId}/scenes`),
-  );
+  const roles = use(getOrFetch<RoleWithScenes[]>(`/api/plays/${playId}/roles`));
+  const scenes = use(getOrFetch<Scene[]>(`/api/plays/${playId}/scenes`));
 
   const handleAdd = async (formData: FormData) => {
     const name = formData.get("name")?.toString();
@@ -48,7 +46,7 @@ export default function RolesPage() {
     ]);
   };
 
-  const handleDelete = async (roleId: Role["id"]) => {
+  const handleDelete = async (roleId: RoleWithScenes["id"]) => {
     if (!confirm("Supprimer ce rôle ?")) return;
     await mutate(`/api/roles/${roleId}`, "delete", undefined, [
       `/api/plays/${playId}/roles`,

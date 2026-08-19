@@ -15,7 +15,7 @@ import roleParamConverter from "../role/roleParamConverter";
 import sceneParamConverter from "../scene/sceneParamConverter";
 import troupeRepository from "../troupe/troupeRepository";
 import preferenceActions from "./preferenceActions";
-import preferenceValidator from "./preferenceValidator";
+import preferenceValidators from "./preferenceValidatorq";
 
 const ME_PREFERENCES_PATH = "/api/preferences/me";
 const PLAY_PREFERENCES_PATH = "/api/plays/:playId/preferences";
@@ -27,7 +27,7 @@ router.param("sceneId", sceneParamConverter.convert);
 router.param("roleId", roleParamConverter.convert);
 
 const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
-  if (troupeRepository.findMember(req.play.troupe_id, req.me.id) != null) {
+  if (troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) != null) {
     next();
   } else {
     res.sendStatus(403);
@@ -36,7 +36,10 @@ const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
 
 const checkIsSceneTroupeMember: RequestHandler = (req, res, next) => {
   const play = playRepository.find(req.scene.play_id);
-  if (play && troupeRepository.findMember(play.troupe_id, req.me.id) != null) {
+  if (
+    play &&
+    troupeRepository.findMemberRole(play.troupe_id, req.me.id) != null
+  ) {
     next();
   } else {
     res.sendStatus(403);
@@ -58,21 +61,21 @@ router.get(ME_PREFERENCES_PATH, preferenceActions.getMePreferences);
 router.post(
   PLAY_PREFERENCES_PATH,
   checkIsPlayTroupeMember,
-  preferenceValidator.validate,
+  preferenceValidators.setPlayPreference,
   preferenceActions.setPlayPreference,
 );
 
 router.post(
   SCENE_PREFERENCES_PATH,
   checkIsSceneTroupeMember,
-  preferenceValidator.validate,
+  preferenceValidators.setScenePreference,
   preferenceActions.setScenePreference,
 );
 
 router.post(
   ROLE_PREFERENCES_PATH,
   checkIsSceneTroupeMember, // same check as scene level
-  preferenceValidator.validate,
+  preferenceValidators.setRolePreference,
   preferenceActions.setRolePreference,
 );
 

@@ -3,20 +3,11 @@
   Centralize all persistence logic related to Play entities.
 */
 
-import { z } from "zod";
 import database from "../../../database";
-
-const playShape = {
-  id: z.number(),
-  troupe_id: z.number(),
-  title: z.string(),
-  description: z.string(),
-};
-
-const playSchema: z.ZodType<Play> = z.object(playShape);
+import { type PlayDTOWithTroupeId, PlaySchema } from "./playSchemas";
 
 class PlayRepository {
-  create(play: Omit<Play, "id">): RowId {
+  create(play: PlayDTOWithTroupeId): Play["id"] {
     const result = database
       .prepare(
         `insert into play (troupe_id, title, description)
@@ -27,39 +18,39 @@ class PlayRepository {
     return Number(result.lastInsertRowid);
   }
 
-  find(id: RowId): Play | null {
+  find(id: Play["id"]): Play | null {
     const row = database.prepare(`select * from play where id = ?`).get(id);
 
-    return row ? playSchema.parse(row) : null;
+    return row ? PlaySchema.parse(row) : null;
   }
 
-  findByScene(sceneId: RowId): Play | null {
+  findByScene(sceneId: Scene["id"]): Play | null {
     const row = database
       .prepare(
         `select p.* from play p join scene s on s.play_id = p.id where s.id = ?`,
       )
       .get(sceneId);
 
-    return row ? playSchema.parse(row) : null;
+    return row ? PlaySchema.parse(row) : null;
   }
 
-  findByTroupe(troupeId: RowId): Play[] {
+  findByTroupe(troupeId: Troupe["id"]): Play[] {
     const rows = database
       .prepare(`select * from play where troupe_id = ?`)
       .all(troupeId);
 
-    return rows.map((row) => playSchema.parse(row));
+    return rows.map((row) => PlaySchema.parse(row));
   }
 
-  update(id: RowId, play: Omit<Play, "id" | "troupe_id">): boolean {
+  update(play: Play): boolean {
     const result = database
       .prepare("update play set title = ?, description = ? where id = ?")
-      .run(play.title, play.description, id);
+      .run(play.title, play.description, play.id);
 
     return result.changes > 0;
   }
 
-  hardDelete(id: RowId): boolean {
+  hardDelete(id: Play["id"]): boolean {
     const result = database.prepare("delete from play where id = ?").run(id);
 
     return result.changes > 0;

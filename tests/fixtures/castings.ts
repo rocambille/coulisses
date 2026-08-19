@@ -39,6 +39,7 @@ const matrix = (
     id: a.id,
     name: a.name,
     email: a.email,
+    avatar_url: a.avatar_url,
     deleted_at: a.deleted_at,
     created_at: a.created_at,
   })),

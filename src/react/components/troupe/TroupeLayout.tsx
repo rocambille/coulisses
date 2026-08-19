@@ -1,12 +1,12 @@
 import { use, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
 import { getOrFetch } from "../../helpers/cache";
-import { useAuth } from "../auth/AuthContext";
+import { useMe } from "../auth/MeContext";
 import { useRefresh } from "../DataRefreshContext";
 
 export default function TroupeLayout() {
   const { troupeId } = useParams();
-  const { me } = useAuth();
+  const { user } = useMe();
   useRefresh(); // Subscribes this component to re-renders when tick changes
 
   const [moreBreadcrumb, pushBreadcrumb] = useState<NavItem[]>([]);
@@ -21,7 +21,7 @@ export default function TroupeLayout() {
     rolePreferences: RolePreference[];
   }>(getOrFetch("/api/preferences/me"));
 
-  const myMemberInfo = members.find((m) => m.id === me?.id);
+  const myMemberInfo = members.find((m) => m.id === user?.id);
   const isAdmin = myMemberInfo?.role === "ADMIN";
 
   return (

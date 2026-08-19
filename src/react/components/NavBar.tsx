@@ -14,7 +14,8 @@
 import type { ReactNode } from "react";
 import { NavLink } from "react-router";
 
-import { useAuth } from "./auth/AuthContext";
+import Avatar from "./auth/Avatar";
+import { useMe } from "./auth/MeContext";
 
 /*
   Helper to keep JSX concise and consistent.
@@ -29,13 +30,21 @@ const link = (to: string, children: ReactNode) => (
 );
 
 function NavBar() {
-  const { check } = useAuth();
+  const { user, isAuthenticated } = useMe();
 
   return (
     <nav>
       <ul>
         {link("/", "🎭 Coulisses")}
-        {check() && link("/account", "Mon compte")}
+        {isAuthenticated && (
+          <>
+            {link("/account", "Mon compte")}
+            {link(
+              "/account",
+              <Avatar url={user?.avatar_url} name={user?.name} size="1.2rlh" />,
+            )}
+          </>
+        )}
       </ul>
     </nav>
   );

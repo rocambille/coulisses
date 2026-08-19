@@ -14,7 +14,7 @@ import playRepository from "../play/playRepository";
 import troupeRepository from "../troupe/troupeRepository";
 import roleActions from "./roleActions";
 import roleParamConverter from "./roleParamConverter";
-import roleValidator from "./roleValidator";
+import roleValidators from "./roleValidators";
 
 const PLAY_ROLES_PATH = "/api/plays/:playId/roles";
 const ROLE_PATH = "/api/roles/:roleId";
@@ -25,7 +25,7 @@ router.param("roleId", roleParamConverter.convert);
 
 // Helper for play routes
 const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
-  if (troupeRepository.findMember(req.play.troupe_id, req.me.id) != null) {
+  if (troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) != null) {
     next();
   } else {
     res.sendStatus(403);
@@ -34,7 +34,7 @@ const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
 
 const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
   if (
-    troupeRepository.findMember(req.play.troupe_id, req.me.id)?.role === "ADMIN"
+    troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) === "ADMIN"
   ) {
     next();
   } else {
@@ -47,7 +47,7 @@ const checkIsRoleTroupeAdmin: RequestHandler = (req, res, next) => {
   const play = playRepository.find(req.role.play_id);
   if (
     play &&
-    troupeRepository.findMember(play.troupe_id, req.me.id)?.role === "ADMIN"
+    troupeRepository.findMemberRole(play.troupe_id, req.me.id) === "ADMIN"
   ) {
     next();
   } else {
@@ -64,20 +64,14 @@ router.get(PLAY_ROLES_PATH, checkIsPlayTroupeMember, roleActions.browse);
 router.post(
   PLAY_ROLES_PATH,
   checkIsPlayTroupeAdmin,
-  roleValidator.validate,
+  roleValidators.add,
   roleActions.add,
 );
-
-// Link scene to role
-import { z } from "zod";
-import { createValidator } from "../../helpers/validation";
-
-const linkSceneValidator = createValidator(z.object({ sceneId: z.number() }));
 
 router.post(
   ROLE_SCENES_PATH,
   checkIsRoleTroupeAdmin,
-  linkSceneValidator.validate,
+  roleValidators.linkScene,
   roleActions.linkScene,
 );
 
