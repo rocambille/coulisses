@@ -43,61 +43,67 @@ class CastingRepository {
     const scenesWithRolesAndCastings = database
       .prepare(
         `select s.*,
-         json_group_array(
-           json_object(
-             'id',
-             r.id,
-             'name',
-             r.name,
-             'description',
-             r.description,
-             'play_id',
-             r.play_id,
-             'preferences',
-             (
-               select json_group_array(
-                 json_object(
-                   'user_id',
-                   rp.user_id,
-                   'level',
-                   rp.level,
-                   'created_at',
-                   rp.created_at,
-                   'role_id',
-                   rp.role_id,
-                   'scene_id',
-                   rp.scene_id
+         (
+           select coalesce(
+             json_group_array(
+               json_object(
+                 'id',
+                 r.id,
+                 'name',
+                 r.name,
+                 'description',
+                 r.description,
+                 'play_id',
+                 r.play_id,
+                 'preferences',
+                 (
+                   select json_group_array(
+                     json_object(
+                       'user_id',
+                       rp.user_id,
+                       'level',
+                       rp.level,
+                       'created_at',
+                       rp.created_at,
+                       'role_id',
+                       rp.role_id,
+                       'scene_id',
+                       rp.scene_id
+                     )
+                   )
+                   from role_preference rp
+                   where rp.role_id = r.id and rp.scene_id = s.id
+                 ),
+                 'assigned_user',
+                 (
+                   select json_object(
+                     'id',
+                     u.id,
+                     'name',
+                     u.name,
+                     'email',
+                     u.email,
+                     'avatar_url',
+                     u.avatar_url,
+                     'created_at',
+                     u.created_at,
+                     'deleted_at',
+                     u.deleted_at
+                   )
+                   from user u
+                   join casting c on u.id = c.user_id
+                   where c.role_id = r.id and c.scene_id = s.id
                  )
                )
-               from role_preference rp
-               where rp.role_id = r.id and rp.scene_id = s.id
              ),
-             'assigned_user',
-             (
-               select json_object(
-                 'id',
-                 u.id,
-                 'name',
-                 u.name,
-                 'email',
-                 u.email,
-                 'avatar_url',
-                 u.avatar_url,
-                 'created_at',
-                 u.created_at,
-                 'deleted_at',
-                 u.deleted_at
-               )
-               from user u
-               join casting c on u.id = c.user_id
-               where c.role_id = r.id and c.scene_id = s.id
-             )
+             '[]'
            )
+           from role_scene rs
+           join role r on r.id = rs.role_id
+           where rs.scene_id = s.id
          ) as roles
          from scene s
-         join role r on r.play_id = s.play_id
          where s.play_id = ?
-         group by s.id
          order by s.order_in_play asc`,
       )
       .all(playId);

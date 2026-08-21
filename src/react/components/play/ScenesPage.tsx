@@ -50,8 +50,9 @@ export default function ScenesPage() {
         duration_estimated_seconds: 0,
         order_in_play: scenes.length + 1,
         is_active: true,
+        roleIds: [],
       },
-      [`/api/plays/${playId}/scenes`],
+      [`/api/plays/${playId}/scenes`, `/api/plays/${playId}/roles`],
     );
   };
 
@@ -59,6 +60,7 @@ export default function ScenesPage() {
     if (!confirm("Supprimer cette scène ?")) return;
     await mutate(`/api/scenes/${sceneId}`, "delete", null, [
       `/api/plays/${playId}/scenes`,
+      `/api/plays/${playId}/roles`,
     ]);
   };
 
@@ -85,6 +87,7 @@ export default function ScenesPage() {
             {editing === scene.id ? (
               <SceneForm
                 scene={scene}
+                roles={roles}
                 onCancel={() => setEditing(null)}
                 onSave={() => setEditing(null)}
               />

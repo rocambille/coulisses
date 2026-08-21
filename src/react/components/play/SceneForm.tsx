@@ -15,14 +15,17 @@ const sceneFormSchema = z.object({
   duration_estimated_seconds: z.int().nonnegative(),
   order_in_play: z.int(),
   is_active: z.boolean(),
+  roleIds: z.array(z.number()),
 });
 
 export default function SceneForm({
   scene,
+  roles,
   onCancel,
   onSave,
 }: {
   scene: Scene;
+  roles: RoleWithScenes[];
   onCancel: () => void;
   onSave: () => void;
 }) {
@@ -38,6 +41,7 @@ export default function SceneForm({
     );
     const order_in_play = Number(formData.get("order_in_play"));
     const is_active = formData.get("is_active") === "on";
+    const roleIds = formData.getAll("roleIds").map(Number);
 
     const parsed = sceneFormSchema.safeParse({
       title,
@@ -46,6 +50,7 @@ export default function SceneForm({
       duration_estimated_seconds,
       order_in_play,
       is_active,
+      roleIds,
     });
 
     if (!parsed.success) {
@@ -59,7 +64,7 @@ export default function SceneForm({
       {
         ...parsed.data,
       },
-      [`/api/plays/${playId}/scenes`],
+      [`/api/plays/${playId}/scenes`, `/api/plays/${playId}/roles`],
     );
 
     onSave();
@@ -118,6 +123,38 @@ export default function SceneForm({
           defaultValue={scene.cut_notes}
         />
       </label>
+      <fieldset>
+        <legend>Rôles présents dans cette scène</legend>
+        {roles.length === 0 ? (
+          <p
+            style={{
+              color: "var(--pico-muted-color)",
+              fontSize: "smaller",
+            }}
+          >
+            Aucun rôle défini pour cette pièce.
+          </p>
+        ) : (
+          roles.map((role) => (
+            <label
+              key={role.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
+              <input
+                type="checkbox"
+                name="roleIds"
+                value={Number(role.id)}
+                defaultChecked={role.scenes?.some((s) => s.id === scene.id)}
+              />
+              <span>{role.name}</span>
+            </label>
+          ))
+        )}
+      </fieldset>
       <label>
         <input
           aria-label={`Scène active (incluse dans le montage) ${scene.id}`}

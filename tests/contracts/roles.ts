@@ -74,6 +74,43 @@ export default (<Contract>{
       },
     },
   },
+  edit: {
+    method: "put",
+    path: `/api/roles/${mainRoles[0].id}`,
+    cases: {
+      as_admin: {
+        request: {
+          body: {
+            name: "Updated Role",
+            description: "Updated Description",
+            sceneIds: [mainScenes[0].id, mainScenes[1].id],
+          },
+          jwtPayload: { sub: teacherUser.id },
+        },
+        response: { status: 204, body: {} },
+      },
+      bad_request: {
+        request: {
+          body: {},
+          jwtPayload: { sub: teacherUser.id },
+        },
+        response: { status: 400, body: expect.any(Array) },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: thirdUser.id } },
+        response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/roles/${NaN}`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 404, body: {} },
+      },
+    },
+  },
   delete: {
     method: "delete",
     path: `/api/roles/${mainRoles[0].id}`,

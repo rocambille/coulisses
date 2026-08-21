@@ -6,6 +6,7 @@
 import database from "../../../database";
 import {
   type Role,
+  type RoleDTO,
   type RoleDTOWithPlayId,
   RoleSchema,
   RoleWithScenesSchema,
@@ -45,27 +46,56 @@ class RoleRepository {
     const rows = database
       .prepare(
         `select r.id, r.name, r.description, r.play_id,
-       json_group_array(
-         json_object(
-           'id', s.id, 
-           'title', s.title, 
-           'description', s.description, 
-           'cut_notes', s.cut_notes,
-           'duration_estimated_seconds', s.duration_estimated_seconds, 
-           'play_id', s.play_id, 
-           'order_in_play', s.order_in_play, 
-           'is_active', s.is_active
-         )
-       ) as scenes
-       from role r
-       left join role_scene rs on r.id = rs.role_id
-       left join scene s on rs.scene_id = s.id
-       where r.play_id = ?
-       group by r.id`,
+          (select
+            json_group_array(
+              json_object(
+                'id', s.id, 
+                'title', s.title, 
+                'description', s.description, 
+                'cut_notes', s.cut_notes,
+                'duration_estimated_seconds', s.duration_estimated_seconds, 
+                'play_id', s.play_id, 
+                'order_in_play', s.order_in_play, 
+                'is_active', s.is_active
+              )
+            )
+            from scene s
+            left join role_scene rs on s.id = rs.scene_id
+            where rs.role_id = r.id
+          ) as scenes
+          from role r
+          where r.play_id = ?`,
       )
       .all(playId);
 
     return rows.map((row) => RoleWithScenesSchema.parse(row));
+  }
+
+  update(role: RoleDTO & { id: Role["id"] }): boolean {
+    database.exec("BEGIN");
+
+    try {
+      const result = database
+        .prepare(`update role set name = ?, description = ? where id = ?`)
+        .run(role.name, role.description, role.id);
+
+      database.prepare(`delete from role_scene where role_id = ?`).run(role.id);
+
+      if (role.sceneIds.length > 0) {
+        const insertRoleScene = database.prepare(
+          `insert into role_scene (role_id, scene_id) values (?, ?)`,
+        );
+        for (const sceneId of role.sceneIds) {
+          insertRoleScene.run(role.id, sceneId);
+        }
+      }
+
+      database.exec("COMMIT");
+      return result.changes > 0;
+    } catch (error) {
+      database.exec("ROLLBACK");
+      throw error;
+    }
   }
 
   find(id: Role["id"]): Role | null {

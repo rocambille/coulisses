@@ -132,6 +132,93 @@ describe("React: RolesPage", () => {
       expect(alert).toHaveBeenCalled();
     });
 
+    it("should edit a role", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/roles",
+        Component: RolesPage,
+        initialEntries: [`/plays/${mainPlay.id}/roles`],
+        me: teacherUser,
+      });
+
+      await user.click(
+        screen.getByRole("button", {
+          name: new RegExp(`modifier.*rôle.*${mainRoles[0].id}`, "i"),
+        }),
+      );
+
+      await user.clear(
+        screen.getByLabelText(new RegExp(`nom.*rôle.*${mainRoles[0].id}`, "i")),
+      );
+      await user.type(
+        screen.getByLabelText(new RegExp(`nom.*rôle.*${mainRoles[0].id}`, "i")),
+        String(requestValue("roles", "edit", "as_admin", "name")),
+      );
+      await user.clear(
+        screen.getByLabelText(
+          new RegExp(`description.*rôle.*${mainRoles[0].id}`, "i"),
+        ),
+      );
+      await user.type(
+        screen.getByLabelText(
+          new RegExp(`description.*rôle.*${mainRoles[0].id}`, "i"),
+        ),
+        String(requestValue("roles", "edit", "as_admin", "description")),
+      );
+
+      await user.click(
+        screen.getByRole("button", {
+          name: new RegExp(
+            `enregistrer.*modification.*rôle.*${mainRoles[0].id}`,
+            "i",
+          ),
+        }),
+      );
+
+      expectContractCall("roles", "edit", "as_admin");
+    });
+
+    it("should cancel editing a role", async () => {
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/roles",
+        Component: RolesPage,
+        initialEntries: [`/plays/${mainPlay.id}/roles`],
+        me: teacherUser,
+      });
+
+      await user.click(
+        screen.getByRole("button", {
+          name: new RegExp(`modifier.*rôle.*${mainRoles[0].id}`, "i"),
+        }),
+      );
+
+      expect(
+        screen.getByRole("form", {
+          name: new RegExp(
+            `formulaire.*édition.*rôle.*${mainRoles[0].id}`,
+            "i",
+          ),
+        }),
+      ).toBeTruthy();
+
+      await user.click(
+        screen.getByRole("button", {
+          name: new RegExp(
+            `annuler.*modification.*rôle.*${mainRoles[0].id}`,
+            "i",
+          ),
+        }),
+      );
+
+      expect(
+        screen.queryByRole("form", {
+          name: new RegExp(
+            `formulaire.*édition.*rôle.*${mainRoles[0].id}`,
+            "i",
+          ),
+        }),
+      ).toBeNull();
+    });
+
     it("should delete a role", async () => {
       vi.spyOn(window, "confirm").mockReturnValueOnce(true);
 

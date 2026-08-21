@@ -1,4 +1,5 @@
 import { emptyPlay, mainPlay } from "../fixtures/plays";
+import { mainRoles } from "../fixtures/roles";
 import { mainScenes } from "../fixtures/scenes";
 import { teacherUser, thirdUser } from "../fixtures/users";
 
@@ -44,6 +45,7 @@ export default (<Contract>{
             duration_estimated_seconds: 0,
             order_in_play: 4,
             is_active: true,
+            roleIds: [],
           },
           jwtPayload: { sub: teacherUser.id },
         },
@@ -85,6 +87,7 @@ export default (<Contract>{
               mainScenes[0].duration_estimated_seconds,
             order_in_play: mainScenes[0].order_in_play,
             is_active: mainScenes[0].is_active,
+            roleIds: [mainRoles[0].id],
           },
           jwtPayload: { sub: teacherUser.id },
         },

@@ -13,9 +13,14 @@ const add = createValidator(
   { inject: (req) => ({ play_id: req.play.id }) },
 );
 
+const edit = createValidator(
+  { body: RoleDTOSchema },
+  { inject: (req) => ({ id: req.role.id, play_id: req.role.play_id }) },
+);
+
 const linkScene = createValidator(
   { body: z.object({ sceneId: SceneSchema.shape.id }) },
   { inject: (req) => ({ roleId: req.role.id }) },
 );
 
-export default { add, linkScene };
+export default { add, edit, linkScene };

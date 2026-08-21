@@ -16,6 +16,11 @@ const add: RequestHandler = (req, res) => {
   res.status(201).json({ insertId });
 };
 
+const edit: RequestHandler = (req, res) => {
+  roleRepository.update(req.body);
+  res.sendStatus(204);
+};
+
 const linkScene: RequestHandler = (req, res) => {
   const { sceneId } = req.body;
   roleRepository.linkScene(req.role.id, sceneId);
@@ -30,6 +35,7 @@ const destroy: RequestHandler = (req, res) => {
 export default {
   browse,
   add,
+  edit,
   linkScene,
   destroy,
 };

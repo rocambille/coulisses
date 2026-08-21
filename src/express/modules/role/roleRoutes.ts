@@ -75,6 +75,10 @@ router.post(
   roleActions.linkScene,
 );
 
-router.delete(ROLE_PATH, checkIsRoleTroupeAdmin, roleActions.destroy);
+router
+  .route(ROLE_PATH)
+  .all(checkIsRoleTroupeAdmin)
+  .put(roleValidators.edit, roleActions.edit)
+  .delete(roleActions.destroy);
 
 export default router;

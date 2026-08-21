@@ -45,20 +45,22 @@ const matrix = (
   })),
   scenes: scenes.map((s) => ({
     ...s,
-    roles: roles.map(({ scenes, ...r }) => {
-      const casting = castings.find(
-        (c) => c.role_id === r.id && c.scene_id === s.id,
-      );
-      return {
-        ...r,
-        preferences: preferences.filter(
-          (rp) => rp.role_id === r.id && rp.scene_id === s.id,
-        ),
-        assigned_user: casting
-          ? (allUsers.find((u) => u.id === casting.user_id) ?? null)
-          : null,
-      };
-    }),
+    roles: roles
+      .filter((r) => r.scenes?.some((rs) => rs.id === s.id))
+      .map(({ scenes, ...r }) => {
+        const casting = castings.find(
+          (c) => c.role_id === r.id && c.scene_id === s.id,
+        );
+        return {
+          ...r,
+          preferences: preferences.filter(
+            (rp) => rp.role_id === r.id && rp.scene_id === s.id,
+          ),
+          assigned_user: casting
+            ? (allUsers.find((u) => u.id === casting.user_id) ?? null)
+            : null,
+        };
+      }),
   })),
 });
 

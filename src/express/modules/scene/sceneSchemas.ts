@@ -21,6 +21,8 @@ export type Scene = z.infer<typeof SceneSchema>;
 export const SceneDTOSchema = SceneSchema.omit({
   id: true,
   play_id: true,
+}).extend({
+  roleIds: z.array(z.number()),
 });
 
 export type SceneDTO = z.infer<typeof SceneDTOSchema>;
