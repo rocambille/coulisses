@@ -164,19 +164,26 @@ export default function SceneForm({
         />
         Scène active (incluse dans le montage)
       </label>
-      <footer style={{ marginTop: "1rem" }}>
+      <footer
+        style={{
+          marginTop: "1rem",
+          display: "flex",
+          gap: "0.5rem",
+          justifyContent: "end",
+        }}
+      >
         <button
           aria-label={`Annuler la modification de la scène ${scene.id}`}
           type="button"
           className="secondary outline"
           onClick={onCancel}
-          style={{ marginRight: "0.5rem" }}
         >
           Annuler
         </button>
         <button
           aria-label={`Enregistrer les modifications de la scène ${scene.id}`}
           type="submit"
+          style={{ width: "initial" }}
         >
           Enregistrer
         </button>

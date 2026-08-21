@@ -153,3 +153,14 @@ create table event_presence (
   foreign key(event_id) references event(id) on delete cascade,
   foreign key(user_id) references user(id) on delete cascade
 );
+
+create table play_document (
+  id integer primary key,
+  play_id integer not null,
+  file_url text not null,
+  mime_type varchar(64) not null,
+  original_name varchar(255) not null,
+  order_index integer not null default 0,
+  created_at datetime default (strftime('%Y-%m-%dT%H:%M:%SZ')),
+  foreign key(play_id) references play(id) on delete cascade
+);

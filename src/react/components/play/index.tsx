@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router";
 
 import CastingPage from "./CastingPage";
+import DocumentsPage from "./DocumentsPage";
 import PlayLayout from "./PlayLayout";
 import RolesPage from "./RolesPage";
 import ScenesPage from "./ScenesPage";
@@ -21,6 +22,10 @@ export const playRoutes: RouteObject[] = [
       {
         path: "casting",
         element: <CastingPage />,
+      },
+      {
+        path: "documents",
+        element: <DocumentsPage />,
       },
     ],
   },

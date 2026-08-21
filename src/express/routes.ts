@@ -98,6 +98,10 @@ import castingRoutes from "./modules/casting/castingRoutes";
 
 router.use(castingRoutes);
 
+import documentRoutes from "./modules/document/documentRoutes";
+
+router.use(documentRoutes);
+
 import eventRoutes from "./modules/event/eventRoutes";
 
 router.use(eventRoutes);

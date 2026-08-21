@@ -22,6 +22,7 @@ const MIME_TO_EXTENSION = new Map([
   ["image/png", ".png"],
   ["image/webp", ".webp"],
   ["image/gif", ".gif"],
+  ["application/pdf", ".pdf"],
 ]);
 
 const DEFAULT_OPTIONS: Required<Omit<UploaderOptions, "subfolder">> = {

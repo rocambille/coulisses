@@ -56,3 +56,7 @@ values
 insert into event_presence(event_id, user_id, status)
 values
   (1, 2, 'PENDING');
+
+insert into play_document(id, play_id, file_url, mime_type, original_name, order_index)
+values
+  (1, 1, '/uploads/plays/hamlet_couverture.jpg', 'image/jpeg', 'Hamlet_Couverture.jpg', 1);

@@ -65,6 +65,11 @@ export default function PlayLayout() {
               Distribution
             </Link>
           </li>
+          <li>
+            <Link to={`/troupes/${troupeId}/plays/${playId}/documents`}>
+              Documents
+            </Link>
+          </li>
         </ul>
       </nav>
 

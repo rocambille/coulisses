@@ -13,6 +13,7 @@ import database from "../../src/database";
 // -------------------------
 
 import { mainCastings } from "../fixtures/castings";
+import { allDocuments } from "../fixtures/documents";
 import { allEvents, mainEventPresences } from "../fixtures/events";
 import { allPlays } from "../fixtures/plays";
 import {
@@ -243,6 +244,22 @@ const mockDatabase = () => {
       presence.event_id,
       presence.user_id,
       presence.status,
+    );
+  }
+
+  /* insert all play documents */
+  const insertPlayDocument = database.prepare(
+    "insert into play_document(id, play_id, file_url, mime_type, original_name, order_index, created_at) values(?, ?, ?, ?, ?, ?, ?)",
+  );
+  for (const doc of allDocuments) {
+    insertPlayDocument.run(
+      doc.id,
+      doc.play_id,
+      doc.file_url,
+      doc.mime_type,
+      doc.original_name,
+      doc.order_index,
+      doc.created_at ?? null,
     );
   }
 

@@ -10,6 +10,8 @@ type EventData = import("../express/modules/event/eventSchemas").EventData;
 type EventPresence =
   import("../express/modules/event/eventSchemas").EventPresence;
 type Play = import("../express/modules/play/playSchemas").Play;
+type PlayDocument =
+  import("../express/modules/document/documentSchemas").PlayDocument;
 type PlayPreference =
   import("../express/modules/preference/preferenceSchemas").PlayPreference;
 type RolePreference =
