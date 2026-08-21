@@ -9,7 +9,7 @@ La structure de l'API suit une approche "hybride" :
 
 ---
 
-## 🔒 1. Authentification (Magic Link)
+## 🔒 1. Authentification & Compte Utilisateur
 
 L'authentification repose sur un système de lien magique (token éphémère envoyé par email) et l'utilisation de cookies HTTP-Only (`__Host-auth`) pour le maintien de session.
 
@@ -20,6 +20,23 @@ L'authentification repose sur un système de lien magique (token éphémère env
 - `POST /api/auth/verify`
   - **Body** : `{ token: string }`
   - **Action** : Valide le token magique et renvoie un cookie sécurisé contenant la session.
+
+- `GET /api/users/me`
+  - **Action** : Renvoie le profil de l'utilisateur connecté (`User`).
+
+- `PUT /api/users/me`
+  - **Body** : `{ name?: string, email?: string }`
+  - **Action** : Met à jour les informations du compte.
+
+- `DELETE /api/users/me`
+  - **Action** : Supprime (soft-delete) le compte de l'utilisateur connecté.
+
+- `POST /api/users/me/avatar`
+  - **Body** : `multipart/form-data` avec le champ `avatar` (fichier image).
+  - **Action** : Téléverse et associe un avatar à l'utilisateur connecté.
+
+- `DELETE /api/users/me/avatar`
+  - **Action** : Supprime l'avatar de l'utilisateur connecté.
 
 ---
 
@@ -42,8 +59,12 @@ L'authentification repose sur un système de lien magique (token éphémère env
   - **Body** : `{ email: string, role: 'ADMIN' | 'ACTOR' }`
   - **Action** : Invite un utilisateur dans la troupe. Si l'email n'existe pas en base, un profil temporaire est créé.
 
+- `PUT /api/troupes/:troupeId/members/:userId` *(Admin uniquement)*
+  - **Body** : `{ role: 'ADMIN' | 'ACTOR' }`
+  - **Action** : Modifie le rôle du membre dans la troupe.
+
 - `DELETE /api/troupes/:troupeId/members/:userId` *(Admin uniquement)*
-  - **Action** : Retire un utilisateur de la troupe.
+  - **Action** : Retire un utilisateur de la troupe (contrainte : au moins un admin doit subsister).
 
 ---
 
@@ -59,7 +80,14 @@ L'authentification repose sur un système de lien magique (token éphémère env
 - `GET /api/plays/:playId`
   - **Action** : Détails d'une pièce spécifique.
 
-- `POST /api/plays/:playId/preferences` *(Comédien)*
+- `PUT /api/plays/:playId` *(Admin uniquement)*
+  - **Body** : `{ title: string, description?: string }`
+  - **Action** : Modifie une pièce.
+
+- `DELETE /api/plays/:playId` *(Admin uniquement)*
+  - **Action** : Supprime une pièce.
+
+- `POST /api/plays/:playId/preferences` *(Comédien & Admin)*
   - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
   - **Action** : L'utilisateur enregistre ou met à jour son niveau d'envie global pour cette pièce (`play_preference`).
 
@@ -71,19 +99,29 @@ L'authentification repose sur un système de lien magique (token éphémère env
   - **Action** : Liste toutes les scènes de la pièce (la conduite), ordonnées par `order_in_play`.
 
 - `POST /api/plays/:playId/scenes` *(Admin uniquement)*
-  - **Body** : `{ title: string, description?: string, cut_notes?: string, order_in_play: number, duration_estimated_seconds?: number }`
-  - **Action** : Ajoute une scène à la pièce.
+  - **Body** : `{ title: string, description?: string, cut_notes?: string, order_in_play: number, duration_estimated_seconds?: number, is_active?: boolean, roleIds: number[] }`
+  - **Action** : Ajoute une scène à la pièce et associe les rôles sélectionnés.
 
 - `PUT /api/scenes/:sceneId` *(Admin uniquement)*
-  - **Body** : `{ title?: string, cut_notes?: string, order_in_play?: number, is_active?: boolean }`
-  - **Action** : Modifie les attributs d'une scène (notamment pour l'activer/désactiver ou modifier les notes de coupes).
+  - **Body** : `{ title: string, description?: string, cut_notes?: string, order_in_play: number, duration_estimated_seconds?: number, is_active: boolean, roleIds: number[] }`
+  - **Action** : Modifie les attributs d'une scène et synchronise les rôles associés dans `role_scene`.
+
+- `DELETE /api/scenes/:sceneId` *(Admin uniquement)*
+  - **Action** : Supprime la scène.
 
 - `GET /api/plays/:playId/roles`
-  - **Action** : Liste les rôles de la pièce.
+  - **Action** : Liste les rôles de la pièce (incluant le tableau de scènes associées `scenes`).
 
 - `POST /api/plays/:playId/roles` *(Admin uniquement)*
-  - **Body** : `{ name: string, description?: string }`
-  - **Action** : Crée un nouveau rôle.
+  - **Body** : `{ name: string, description?: string, sceneIds: number[] }`
+  - **Action** : Crée un nouveau rôle et l'associe aux scènes sélectionnées.
+
+- `PUT /api/roles/:roleId` *(Admin uniquement)*
+  - **Body** : `{ name: string, description?: string, sceneIds: number[] }`
+  - **Action** : Modifie un rôle et synchronise ses scènes associées dans `role_scene`.
+
+- `DELETE /api/roles/:roleId` *(Admin uniquement)*
+  - **Action** : Supprime le rôle.
 
 - `POST /api/roles/:roleId/scenes` *(Admin uniquement)*
   - **Body** : `{ sceneId: number }`
@@ -93,27 +131,26 @@ L'authentification repose sur un système de lien magique (token éphémère env
 
 ## ⭐️ 5. Casting & Distribution
 
+- `GET /api/preferences/me`
+  - **Action** : Retourne l'ensemble des préférences de l'utilisateur connecté (`{ playPreferences, scenePreferences, rolePreferences }`).
+
+- `POST /api/scenes/:sceneId/preferences` *(Comédien & Admin)*
+  - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
+  - **Action** : L'utilisateur indique son souhait que cette scène soit conservée dans le spectacle (`scene_preference`).
+
+- `POST /api/scenes/:sceneId/roles/:roleId/preferences` *(Comédien & Admin)*
+  - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
+  - **Action** : L'utilisateur indique son niveau d'envie pour interpréter ce rôle précis dans cette scène (`role_preference`).
+
 - `GET /api/plays/:playId/castings`
-  - **Action** : Endpoint agrégé (Dashboard). Retourne l'ensemble de la matrice : les scènes, les rôles associés, toutes les préférences des comédiens, et le casting officiel actuel.
+  - **Action** : Endpoint agrégé (Dashboard). Retourne l'ensemble de la matrice : les scènes de la pièce, les rôles associés à chaque scène, toutes les préférences des comédiens, et le casting officiel actuel.
 
-- `POST /api/scenes/:sceneId/preferences` *(Comédien)*
-  - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
-  - **Action** : Le comédien indique son souhait que cette scène soit conservée dans le spectacle (`scene_preference`).
-
-- `POST /api/scenes/:sceneId/roles/:roleId/preferences` *(Comédien)*
-  - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
-  - **Action** : Le comédien indique son niveau d'envie pour interpréter ce rôle précis dans cette scène (`role_preference`).
-
-- `POST /api/roles/:roleId/preferences` *(Comédien)*
-  - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
-  - **Action** : Le comédien indique son niveau d'envie pour interpréter ce rôle dans toutes les scènes où ce rôle apparaît (`role_preference`).
-
-- `POST /api/plays/:playId/castings` *(Admin uniquement)*
-  - **Body** : `{ userId: number, roleId: number, sceneId: number }`
+- `POST /api/castings` *(Admin uniquement)*
+  - **Body** : `{ user_id: number, role_id: number, scene_id: number }`
   - **Action** : L'administrateur attribue officiellement ce rôle à ce comédien pour cette scène spécifique. (Contrainte : 1 seul comédien par rôle par scène).
 
-- `DELETE /api/plays/:playId/castings` *(Admin uniquement)*
-  - **Body** : `{ userId: number, roleId: number, sceneId: number }`
+- `DELETE /api/castings` *(Admin uniquement)*
+  - **Body** : `{ user_id: number, role_id: number, scene_id: number }`
   - **Action** : Retire l'acteur de son rôle dans cette scène.
 
 ---
@@ -136,5 +173,5 @@ L'authentification repose sur un système de lien magique (token éphémère env
   - **Action** : Supprime l'événement.
 
 - `POST /api/events/:eventId/presence` *(Tous les membres)*
-  - **Body** : `{ status: 'PRESENT' | 'ABSENT' }`
+  - **Body** : `{ status: 'PENDING' | 'PRESENT' | 'ABSENT' }`
   - **Action** : Met à jour la participation de l'utilisateur connecté à l'événement (`event_presence`).

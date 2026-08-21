@@ -39,33 +39,61 @@ Le projet utilisant la stack de base (sans ORM lourd de type Prisma, mais avec d
 -- schema.sql
 
 -- ==========================================
--- ESPACE DE TRAVAIL
+-- ESPACE DE TRAVAIL & AUTH
 -- ==========================================
 
 CREATE TABLE user (
     id INTEGER PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    email VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    avatar_url TEXT DEFAULT NULL,
+    created_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ')),
+    deleted_at DATETIME DEFAULT NULL
+);
+
+CREATE TABLE magic_link_token (
+    user_id INTEGER PRIMARY KEY,
+    token_hash CHAR(64) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    consumed_at DATETIME DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 );
 
 CREATE TABLE troupe (
     id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT,
-    external_discussion_link TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    external_discussion_link VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ'))
 );
 
 CREATE TABLE troupe_member (
     user_id INTEGER NOT NULL,
     troupe_id INTEGER NOT NULL,
-    role TEXT NOT NULL CHECK(role IN ('ADMIN', 'ACTOR')),
-    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    role VARCHAR(16) CHECK(role IN ('ADMIN', 'ACTOR')) NOT NULL,
+    joined_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ')),
     PRIMARY KEY (user_id, troupe_id),
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY (troupe_id) REFERENCES troupe(id) ON DELETE CASCADE
 );
+
+CREATE TRIGGER enforce_min_one_admin
+  BEFORE UPDATE ON troupe_member
+  FOR EACH ROW
+  WHEN OLD.role = 'ADMIN' AND NEW.role != 'ADMIN'
+BEGIN
+  SELECT RAISE(ABORT, 'troupe must have at least one admin')
+  WHERE (SELECT COUNT(*) FROM troupe_member WHERE troupe_id = OLD.troupe_id AND role = 'ADMIN') <= 1;
+END;
+
+CREATE TRIGGER enforce_min_one_admin_delete
+  BEFORE DELETE ON troupe_member
+  FOR EACH ROW
+  WHEN OLD.role = 'ADMIN'
+BEGIN
+  SELECT RAISE(ABORT, 'troupe must have at least one admin')
+  WHERE (SELECT COUNT(*) FROM troupe_member WHERE troupe_id = OLD.troupe_id AND role = 'ADMIN') <= 1;
+END;
 
 -- ==========================================
 -- RÉPERTOIRE
@@ -74,16 +102,16 @@ CREATE TABLE troupe_member (
 CREATE TABLE play (
     id INTEGER PRIMARY KEY,
     troupe_id INTEGER NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
     FOREIGN KEY (troupe_id) REFERENCES troupe(id) ON DELETE CASCADE
 );
 
 CREATE TABLE play_preference (
     user_id INTEGER NOT NULL,
     play_id INTEGER NOT NULL,
-    level TEXT NOT NULL CHECK(level IN ('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED')),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    level VARCHAR(16) CHECK(level IN ('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED')) NOT NULL,
+    created_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ')),
     PRIMARY KEY (user_id, play_id),
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY (play_id) REFERENCES play(id) ON DELETE CASCADE
@@ -96,20 +124,20 @@ CREATE TABLE play_preference (
 CREATE TABLE scene (
     id INTEGER PRIMARY KEY,
     play_id INTEGER NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    cut_notes TEXT,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    cut_notes TEXT NOT NULL,
     order_in_play INTEGER NOT NULL DEFAULT 0,
     duration_estimated_seconds INTEGER NOT NULL DEFAULT 0,
-    is_active INTEGER NOT NULL DEFAULT 1, -- boolean in sqlite
+    is_active BOOLEAN DEFAULT 1,
     FOREIGN KEY (play_id) REFERENCES play(id) ON DELETE CASCADE
 );
 
 CREATE TABLE role (
     id INTEGER PRIMARY KEY,
     play_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
     FOREIGN KEY (play_id) REFERENCES play(id) ON DELETE CASCADE
 );
 
@@ -128,8 +156,8 @@ CREATE TABLE role_scene (
 CREATE TABLE scene_preference (
     user_id INTEGER NOT NULL,
     scene_id INTEGER NOT NULL,
-    level TEXT NOT NULL CHECK(level IN ('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED')),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    level VARCHAR(16) CHECK(level IN ('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED')) NOT NULL,
+    created_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ')),
     PRIMARY KEY (user_id, scene_id),
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY (scene_id) REFERENCES scene(id) ON DELETE CASCADE
@@ -139,8 +167,8 @@ CREATE TABLE role_preference (
     user_id INTEGER NOT NULL,
     scene_id INTEGER NOT NULL,
     role_id INTEGER NOT NULL,
-    level TEXT NOT NULL CHECK(level IN ('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED')),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    level VARCHAR(16) CHECK(level IN ('HIGH', 'MEDIUM', 'LOW', 'NOT_INTERESTED')) NOT NULL,
+    created_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ')),
     PRIMARY KEY (user_id, scene_id, role_id),
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY (scene_id) REFERENCES scene(id) ON DELETE CASCADE,
@@ -148,10 +176,10 @@ CREATE TABLE role_preference (
 );
 
 CREATE TABLE casting (
-    user_id TEXT NOT NULL,
-    scene_id TEXT NOT NULL,
-    role_id TEXT NOT NULL,
-    assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER NOT NULL,
+    scene_id INTEGER NOT NULL,
+    role_id INTEGER NOT NULL,
+    assigned_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ')),
     PRIMARY KEY (scene_id, role_id), -- Contrainte métier stricte: un seul comédien par rôle dans une scène
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY (scene_id) REFERENCES scene(id) ON DELETE CASCADE,
@@ -166,21 +194,21 @@ CREATE TABLE event (
     id INTEGER PRIMARY KEY,
     troupe_id INTEGER NOT NULL,
     owner_id INTEGER NOT NULL,
-    type TEXT NOT NULL CHECK(type IN ('COURSE', 'REHEARSAL', 'SHOW', 'OTHER')),
-    title TEXT NOT NULL,
+    type VARCHAR(16) CHECK(type IN ('COURSE', 'REHEARSAL', 'SHOW', 'OTHER')) NOT NULL,
+    title VARCHAR(255) NOT NULL,
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
-    location TEXT,
-    description TEXT,
+    location VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
     FOREIGN KEY (troupe_id) REFERENCES troupe(id) ON DELETE CASCADE,
     FOREIGN KEY (owner_id) REFERENCES user(id) ON DELETE CASCADE
 );
 
 CREATE TABLE event_presence (
-    event_id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
-    status TEXT NOT NULL CHECK(status IN ('PRESENT', 'ABSENT')),
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    event_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    status VARCHAR(16) CHECK(status IN ('PENDING', 'PRESENT', 'ABSENT')) NOT NULL DEFAULT 'PENDING',
+    updated_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ')),
     PRIMARY KEY (event_id, user_id),
     FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
