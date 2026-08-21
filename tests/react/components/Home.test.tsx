@@ -64,29 +64,35 @@ describe("<DashboardPage />", () => {
       me: teacherUser,
     });
 
+    await user.click(
+      screen.getByRole("button", { name: /créer une nouvelle troupe/i }),
+    );
+
     await user.type(
-      screen.getByLabelText(/nom/i),
+      screen.getByLabelText(/nom de la nouvelle troupe/i),
       String(requestValue("troupes", "add", "as_admin", "name")),
     );
-    await user.click(screen.getByRole("button", { name: /créer/i }));
+    await user.click(screen.getByRole("button", { name: /^créer$/i }));
 
     expectContractCall("troupes", "add", "as_admin");
   });
 
-  it("should alert when submitted data is not matching the contract", async () => {
-    vi.spyOn(window, "alert").mockImplementationOnce(() => {});
-
-    await renderWithStub({
+  it("should display inline errors when submitted data is invalid", async () => {
+    const { user } = await renderWithStub({
       path: "/",
       Component: Home,
       initialEntries: ["/"],
       me: teacherUser,
     });
 
+    await user.click(
+      screen.getByRole("button", { name: /créer une nouvelle troupe/i }),
+    );
+
     await act(async () => {
       await fireEvent.submit(screen.getByRole("form"));
     });
 
-    expect(alert).toHaveBeenCalled();
+    await screen.findByText(/le nom est requis/i);
   });
 });

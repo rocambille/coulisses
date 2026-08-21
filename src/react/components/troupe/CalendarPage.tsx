@@ -4,9 +4,11 @@
   Route: /plays/:playId/calendar
 */
 
-import { use, useState } from "react";
+import { use, useId, useState } from "react";
 import { useParams } from "react-router";
-import z, { ZodError } from "zod";
+import { z } from "zod";
+import type { $ZodIssue as ZodIssue } from "zod/v4/core";
+
 import { getOrFetch } from "../../helpers/cache";
 import {
   fromInputParts,
@@ -16,15 +18,17 @@ import {
 } from "../../helpers/datetime";
 import { useMutate } from "../../helpers/mutate";
 import { useMe } from "../auth/MeContext";
+import { FormError, hasError } from "../FormError";
+import Modal from "../ui/Modal";
 import PresenceToggle from "../ui/PresenceToggle";
 
 const eventSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   type: z.enum(["SHOW", "COURSE", "REHEARSAL", "OTHER"]),
-  start_date: z.iso.date(),
-  start_time: z.iso.time(),
-  end_date: z.iso.date(),
-  end_time: z.iso.time(),
+  start_date: z.iso.date("Date de début invalide"),
+  start_time: z.iso.time("Heure de début invalide"),
+  end_date: z.iso.date("Date de fin invalide"),
+  end_time: z.iso.time("Heure de fin invalide"),
   location: z.string(),
   description: z.string(),
 });
@@ -36,8 +40,8 @@ const validate = (data: FormData) => {
   const startTime = data.get("start_time")?.toString();
   const endDate = data.get("end_date")?.toString();
   const endTime = data.get("end_time")?.toString();
-  const location = data.get("location")?.toString();
-  const description = data.get("description")?.toString();
+  const location = data.get("location")?.toString() ?? "";
+  const description = data.get("description")?.toString() ?? "";
 
   const parsed = eventSchema.safeParse({
     title,
@@ -106,6 +110,26 @@ function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [addErrors, setAddErrors] = useState<ZodIssue[]>([]);
+  const [editErrors, setEditErrors] = useState<ZodIssue[]>([]);
+
+  const addTitleId = useId();
+  const addTypeId = useId();
+  const addStartDateId = useId();
+  const addStartTimeId = useId();
+  const addEndDateId = useId();
+  const addEndTimeId = useId();
+  const addLocationId = useId();
+  const addDescriptionId = useId();
+
+  const editTitleId = useId();
+  const editTypeId = useId();
+  const editStartDateId = useId();
+  const editStartTimeId = useId();
+  const editEndDateId = useId();
+  const editEndTimeId = useId();
+  const editLocationId = useId();
+  const editDescriptionId = useId();
 
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -131,6 +155,7 @@ function CalendarPage() {
   const handleAdd = async (formData: FormData) => {
     try {
       const parsedData = validate(formData);
+      setAddErrors([]);
 
       const response = await mutate(
         `/api/troupes/${troupeId}/events`,
@@ -143,8 +168,8 @@ function CalendarPage() {
         setSelectedDate(null);
       }
     } catch (err) {
-      if (err instanceof ZodError) {
-        alert(z.prettifyError(err));
+      if (err instanceof z.ZodError) {
+        setAddErrors(err.issues);
       }
     }
   };
@@ -154,6 +179,7 @@ function CalendarPage() {
 
     try {
       const parsedData = validate(formData);
+      setEditErrors([]);
 
       const response = await mutate(
         `/api/events/${selectedEvent.id}`,
@@ -166,8 +192,8 @@ function CalendarPage() {
         setSelectedEvent(null);
       }
     } catch (err) {
-      if (err instanceof ZodError) {
-        alert(z.prettifyError(err));
+      if (err instanceof z.ZodError) {
+        setEditErrors(err.issues);
       }
     }
   };
@@ -263,6 +289,7 @@ function CalendarPage() {
                 type="button"
                 aria-label={`Ajouter un événement le ${toInputDate(currentDayDate.toISOString())}`}
                 onClick={() => {
+                  setAddErrors([]);
                   setSelectedDate(currentDayDate);
                 }}
                 style={{
@@ -306,6 +333,7 @@ function CalendarPage() {
                     aria-label={e.title}
                     onClick={(evt) => {
                       evt.stopPropagation();
+                      setEditErrors([]);
                       setSelectedEvent(e);
                     }}
                     style={{
@@ -335,30 +363,192 @@ function CalendarPage() {
         })}
       </div>
 
-      {showAddModal && (
-        <dialog open>
-          <article>
-            <header>
+      {showAddModal && selectedDate && (
+        <Modal
+          title="Nouvel événement"
+          onClose={() => {
+            setAddErrors([]);
+            setSelectedDate(null);
+          }}
+        >
+          <form
+            aria-label="Formulaire d'ajout d'un événement"
+            action={handleAdd}
+          >
+            <label htmlFor={addTitleId}>
+              Titre
+              <input
+                id={addTitleId}
+                name="title"
+                required
+                aria-invalid={hasError(addErrors, "title") || undefined}
+                aria-describedby={`${addTitleId}-error`}
+              />
+              <FormError
+                issues={addErrors}
+                name="title"
+                id={`${addTitleId}-error`}
+              />
+            </label>
+
+            <label htmlFor={addTypeId}>
+              Type
+              <select id={addTypeId} name="type" required>
+                <option value="SHOW">Représentation</option>
+                <option value="REHEARSAL">Répétition</option>
+                <option value="COURSE">Cours</option>
+                <option value="OTHER">Autre</option>
+              </select>
+            </label>
+
+            <div className="grid">
+              <label htmlFor={addStartDateId}>
+                Date de début
+                <input
+                  id={addStartDateId}
+                  name="start_date"
+                  type="date"
+                  defaultValue={toInputDate(selectedDate.toISOString())}
+                  required
+                  aria-invalid={hasError(addErrors, "start_date") || undefined}
+                  aria-describedby={`${addStartDateId}-error`}
+                />
+                <FormError
+                  issues={addErrors}
+                  name="start_date"
+                  id={`${addStartDateId}-error`}
+                />
+              </label>
+              <label htmlFor={addStartTimeId}>
+                Heure
+                <input
+                  id={addStartTimeId}
+                  name="start_time"
+                  type="time"
+                  defaultValue={toInputTime(selectedDate.toISOString())}
+                  required
+                  aria-invalid={hasError(addErrors, "start_time") || undefined}
+                  aria-describedby={`${addStartTimeId}-error`}
+                />
+                <FormError
+                  issues={addErrors}
+                  name="start_time"
+                  id={`${addStartTimeId}-error`}
+                />
+              </label>
+            </div>
+
+            <div className="grid">
+              <label htmlFor={addEndDateId}>
+                Date de fin
+                <input
+                  id={addEndDateId}
+                  name="end_date"
+                  type="date"
+                  defaultValue={toInputDate(selectedDate.toISOString())}
+                  required
+                  aria-invalid={hasError(addErrors, "end_date") || undefined}
+                  aria-describedby={`${addEndDateId}-error`}
+                />
+                <FormError
+                  issues={addErrors}
+                  name="end_date"
+                  id={`${addEndDateId}-error`}
+                />
+              </label>
+              <label htmlFor={addEndTimeId}>
+                Heure
+                <input
+                  id={addEndTimeId}
+                  name="end_time"
+                  type="time"
+                  defaultValue={toInputTime(selectedDate.toISOString())}
+                  required
+                  aria-invalid={hasError(addErrors, "end_time") || undefined}
+                  aria-describedby={`${addEndTimeId}-error`}
+                />
+                <FormError
+                  issues={addErrors}
+                  name="end_time"
+                  id={`${addEndTimeId}-error`}
+                />
+              </label>
+            </div>
+
+            <label htmlFor={addLocationId}>
+              Lieu
+              <input id={addLocationId} name="location" />
+            </label>
+
+            <label htmlFor={addDescriptionId}>
+              Description
+              <textarea id={addDescriptionId} name="description" />
+            </label>
+
+            <footer
+              style={{
+                marginTop: "1rem",
+                display: "flex",
+                gap: "0.5rem",
+                justifyContent: "end",
+              }}
+            >
               <button
                 type="button"
-                rel="prev"
-                aria-label="Fermer"
-                onClick={() => setSelectedDate(null)}
-              ></button>
-              Nouvel événement
-            </header>
+                className="secondary outline"
+                onClick={() => {
+                  setAddErrors([]);
+                  setSelectedDate(null);
+                }}
+              >
+                Annuler
+              </button>
+              <button type="submit" style={{ width: "initial" }}>
+                Ajouter
+              </button>
+            </footer>
+          </form>
+        </Modal>
+      )}
+
+      {selectedEvent && (
+        <Modal
+          title="Détails de l'événement"
+          onClose={() => {
+            setEditErrors([]);
+            setSelectedEvent(null);
+          }}
+        >
+          {selectedEvent.owner_id === user?.id ? (
             <form
-              aria-label="Formulaire d'ajout d'un événement"
-              action={handleAdd}
+              aria-label={`Formulaire de modification de l'événement ${selectedEvent.id}`}
+              action={handleEdit}
             >
-              <label>
+              <label htmlFor={editTitleId}>
                 Titre
-                <input name="title" required />
+                <input
+                  id={editTitleId}
+                  name="title"
+                  defaultValue={selectedEvent.title}
+                  required
+                  aria-invalid={hasError(editErrors, "title") || undefined}
+                  aria-describedby={`${editTitleId}-error`}
+                />
+                <FormError
+                  issues={editErrors}
+                  name="title"
+                  id={`${editTitleId}-error`}
+                />
               </label>
 
-              <label>
+              <label htmlFor={editTypeId}>
                 Type
-                <select name="type" required>
+                <select
+                  id={editTypeId}
+                  name="type"
+                  defaultValue={selectedEvent.type}
+                  required
+                >
                   <option value="SHOW">Représentation</option>
                   <option value="REHEARSAL">Répétition</option>
                   <option value="COURSE">Cours</option>
@@ -367,214 +557,158 @@ function CalendarPage() {
               </label>
 
               <div className="grid">
-                <label>
+                <label htmlFor={editStartDateId}>
                   Date de début
                   <input
+                    id={editStartDateId}
                     name="start_date"
                     type="date"
-                    defaultValue={toInputDate(selectedDate.toISOString())}
+                    defaultValue={toInputDate(selectedEvent.start_time)}
                     required
+                    aria-invalid={
+                      hasError(editErrors, "start_date") || undefined
+                    }
+                    aria-describedby={`${editStartDateId}-error`}
+                  />
+                  <FormError
+                    issues={editErrors}
+                    name="start_date"
+                    id={`${editStartDateId}-error`}
                   />
                 </label>
-                <label>
+                <label htmlFor={editStartTimeId}>
                   Heure
                   <input
+                    id={editStartTimeId}
                     name="start_time"
                     type="time"
-                    defaultValue={toInputTime(selectedDate.toISOString())}
+                    defaultValue={toInputTime(selectedEvent.start_time)}
                     required
+                    aria-invalid={
+                      hasError(editErrors, "start_time") || undefined
+                    }
+                    aria-describedby={`${editStartTimeId}-error`}
+                  />
+                  <FormError
+                    issues={editErrors}
+                    name="start_time"
+                    id={`${editStartTimeId}-error`}
                   />
                 </label>
               </div>
 
               <div className="grid">
-                <label>
+                <label htmlFor={editEndDateId}>
                   Date de fin
                   <input
+                    id={editEndDateId}
                     name="end_date"
                     type="date"
-                    defaultValue={toInputDate(selectedDate.toISOString())}
+                    defaultValue={toInputDate(selectedEvent.end_time)}
                     required
+                    aria-invalid={hasError(editErrors, "end_date") || undefined}
+                    aria-describedby={`${editEndDateId}-error`}
+                  />
+                  <FormError
+                    issues={editErrors}
+                    name="end_date"
+                    id={`${editEndDateId}-error`}
                   />
                 </label>
-                <label>
+                <label htmlFor={editEndTimeId}>
                   Heure
                   <input
+                    id={editEndTimeId}
                     name="end_time"
                     type="time"
-                    defaultValue={toInputTime(selectedDate.toISOString())}
+                    defaultValue={toInputTime(selectedEvent.end_time)}
                     required
+                    aria-invalid={hasError(editErrors, "end_time") || undefined}
+                    aria-describedby={`${editEndTimeId}-error`}
+                  />
+                  <FormError
+                    issues={editErrors}
+                    name="end_time"
+                    id={`${editEndTimeId}-error`}
                   />
                 </label>
               </div>
 
-              <label>
+              <label htmlFor={editLocationId}>
                 Lieu
-                <input name="location" />
+                <input
+                  id={editLocationId}
+                  name="location"
+                  defaultValue={selectedEvent.location}
+                />
               </label>
 
-              <label>
+              <label htmlFor={editDescriptionId}>
                 Description
-                <textarea name="description" />
+                <textarea
+                  id={editDescriptionId}
+                  name="description"
+                  defaultValue={selectedEvent.description}
+                />
               </label>
 
-              <footer>
-                <button type="submit">Ajouter</button>
+              <footer
+                style={{
+                  marginTop: "1rem",
+                  display: "flex",
+                  gap: "0.5rem",
+                  justifyContent: "end",
+                }}
+              >
+                <button
+                  type="button"
+                  className="contrast outline"
+                  onClick={() => handleDelete(selectedEvent.id)}
+                >
+                  Supprimer
+                </button>
+                <button type="submit" style={{ width: "initial" }}>
+                  Enregistrer
+                </button>
               </footer>
             </form>
-          </article>
-        </dialog>
-      )}
-
-      {selectedEvent && (
-        <dialog open>
-          <article>
-            <header>
-              <button
-                type="button"
-                rel="prev"
-                aria-label="Fermer"
-                onClick={() => {
-                  setSelectedEvent(null);
-                }}
-              ></button>
-              Détails de l'événement
-            </header>
-            {selectedEvent.owner_id === user?.id ? (
-              <form
-                aria-label={`Formulaire de modification de l'événement ${selectedEvent.id}`}
-                action={handleEdit}
-              >
-                <label>
-                  Titre
-                  <input
-                    name="title"
-                    defaultValue={selectedEvent.title}
-                    required
-                  />
-                </label>
-
-                <label>
-                  Type
-                  <select
-                    name="type"
-                    defaultValue={selectedEvent.type}
-                    required
-                  >
-                    <option value="SHOW">Représentation</option>
-                    <option value="REHEARSAL">Répétition</option>
-                    <option value="COURSE">Cours</option>
-                    <option value="OTHER">Autre</option>
-                  </select>
-                </label>
-
-                <div className="grid">
-                  <label>
-                    Date de début
-                    <input
-                      name="start_date"
-                      type="date"
-                      defaultValue={toInputDate(selectedEvent.start_time)}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Heure
-                    <input
-                      name="start_time"
-                      type="time"
-                      defaultValue={toInputTime(selectedEvent.start_time)}
-                      required
-                    />
-                  </label>
-                </div>
-
-                <div className="grid">
-                  <label>
-                    Date de fin
-                    <input
-                      name="end_date"
-                      type="date"
-                      defaultValue={toInputDate(selectedEvent.end_time)}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Heure
-                    <input
-                      name="end_time"
-                      type="time"
-                      defaultValue={toInputTime(selectedEvent.end_time)}
-                      required
-                    />
-                  </label>
-                </div>
-
-                <label>
-                  Lieu
-                  <input
-                    name="location"
-                    defaultValue={selectedEvent.location}
-                  />
-                </label>
-
-                <label>
-                  Description
-                  <textarea
-                    name="description"
-                    defaultValue={selectedEvent.description}
-                  />
-                </label>
-
-                <footer>
-                  <button
-                    type="button"
-                    className="contrast"
-                    onClick={() => handleDelete(selectedEvent.id)}
-                  >
-                    Supprimer
-                  </button>
-                  <button type="submit">Enregistrer</button>
-                </footer>
-              </form>
-            ) : (
-              <div>
-                <strong>Type:</strong>{" "}
-                {selectedEvent.type === "SHOW"
-                  ? "🎭 Représentation"
-                  : selectedEvent.type === "REHEARSAL"
-                    ? "📅 Répétition"
-                    : selectedEvent.type === "COURSE"
-                      ? "🎓 Cours"
-                      : "📌 Autre"}
-                <br />
-                <strong>Début:</strong>{" "}
-                {toDisplayString(selectedEvent.start_time)}
-                <br />
-                <strong>Fin:</strong> {toDisplayString(selectedEvent.end_time)}
-                <br />
-                {selectedEvent.location && (
-                  <>
-                    <strong>Lieu:</strong> {selectedEvent.location}
-                    <br />
-                  </>
-                )}
-                {selectedEvent.description && (
-                  <>
-                    <strong>Description:</strong> {selectedEvent.description}
-                  </>
-                )}
-                <div style={{ marginTop: "1rem" }}>
-                  <strong>Ma présence : </strong>
-                  <PresenceToggle
-                    eventId={Number(selectedEvent.id)}
-                    initialStatus="PENDING"
-                  />
-                </div>
+          ) : (
+            <div>
+              <strong>Type:</strong>{" "}
+              {selectedEvent.type === "SHOW"
+                ? "🎭 Représentation"
+                : selectedEvent.type === "REHEARSAL"
+                  ? "📅 Répétition"
+                  : selectedEvent.type === "COURSE"
+                    ? "🎓 Cours"
+                    : "📌 Autre"}
+              <br />
+              <strong>Début:</strong>{" "}
+              {toDisplayString(selectedEvent.start_time)}
+              <br />
+              <strong>Fin:</strong> {toDisplayString(selectedEvent.end_time)}
+              <br />
+              {selectedEvent.location && (
+                <>
+                  <strong>Lieu:</strong> {selectedEvent.location}
+                  <br />
+                </>
+              )}
+              {selectedEvent.description && (
+                <>
+                  <strong>Description:</strong> {selectedEvent.description}
+                </>
+              )}
+              <div style={{ marginTop: "1rem" }}>
+                <strong>Ma présence : </strong>
+                <PresenceToggle
+                  eventId={Number(selectedEvent.id)}
+                  initialStatus="PENDING"
+                />
               </div>
-            )}
-          </article>
-        </dialog>
+            </div>
+          )}
+        </Modal>
       )}
     </>
   );

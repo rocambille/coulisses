@@ -129,30 +129,36 @@ describe("React: TroupeDashboardPage", () => {
         me: teacherUser,
       });
 
+      await user.click(
+        screen.getByRole("button", { name: /ajouter une pièce/i }),
+      );
+
       await user.type(
         screen.getByLabelText(/titre/i),
         String(requestValue("plays", "add", "as_admin", "title")),
       );
-      await user.click(screen.getByRole("button", { name: /ajouter/i }));
+      await user.click(screen.getByRole("button", { name: /^ajouter$/i }));
 
       expectContractCall("plays", "add", "as_admin");
     });
 
-    it("should alert when submitted data is invalid", async () => {
-      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
-
-      await renderWithStub({
+    it("should display inline errors when submitted data is invalid", async () => {
+      const { user } = await renderWithStub({
         path: "/troupes/:troupeId",
         Component: TroupeDashboardPage,
         initialEntries: [`/troupes/${mainTroupe.id}`],
         me: teacherUser,
       });
 
+      await user.click(
+        screen.getByRole("button", { name: /ajouter une pièce/i }),
+      );
+
       await act(async () => {
         await fireEvent.submit(screen.getByRole("form"));
       });
 
-      expect(alert).toHaveBeenCalled();
+      await screen.findByText(/le titre est requis/i);
     });
   });
 });

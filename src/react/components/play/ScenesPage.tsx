@@ -4,17 +4,13 @@
   Route: /troupes/:troupeId/plays/:playId/scenes
 */
 
-import React, { use, useState } from "react";
+import { use, useState } from "react";
 import { useOutletContext, useParams } from "react-router";
-import z from "zod";
 import { getOrFetch } from "../../helpers/cache";
 import { useMutate } from "../../helpers/mutate";
+import Modal from "../ui/Modal";
 import SceneCard from "./SceneCard";
-import SceneForm from "./SceneForm";
-
-const sceneSchema = z.object({
-  title: z.string().min(1, "Le titre est requis"),
-});
+import SceneForm, { type SceneFormData } from "./SceneForm";
 
 export default function ScenesPage() {
   const { playId } = useParams();
@@ -25,35 +21,28 @@ export default function ScenesPage() {
     rolePreferences: RolePreference[];
   }>();
 
-  const [editing, setEditing] = useState<Scene["id"] | null>(null);
+  const [editingScene, setEditingScene] = useState<Scene | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   const scenes = use<Scene[]>(getOrFetch(`/api/plays/${playId}/scenes`));
   const roles = use<RoleWithScenes[]>(getOrFetch(`/api/plays/${playId}/roles`));
 
-  const handleAdd = async (formData: FormData) => {
-    const parsed = sceneSchema.safeParse({
-      title: formData.get("title")?.toString(),
-    });
-
-    if (!parsed.success) {
-      alert(z.prettifyError(parsed.error));
-      return;
-    }
-
-    await mutate(
+  const handleAdd = async (data: SceneFormData) => {
+    await mutate(`/api/plays/${playId}/scenes`, "post", data, [
       `/api/plays/${playId}/scenes`,
-      "post",
-      {
-        title: parsed.data.title,
-        description: "",
-        cut_notes: "",
-        duration_estimated_seconds: 0,
-        order_in_play: scenes.length + 1,
-        is_active: true,
-        roleIds: [],
-      },
-      [`/api/plays/${playId}/scenes`, `/api/plays/${playId}/roles`],
-    );
+      `/api/plays/${playId}/roles`,
+    ]);
+    setIsAdding(false);
+  };
+
+  const handleEdit = async (data: SceneFormData) => {
+    if (!editingScene) return;
+
+    await mutate(`/api/scenes/${editingScene.id}`, "put", data, [
+      `/api/plays/${playId}/scenes`,
+      `/api/plays/${playId}/roles`,
+    ]);
+    setEditingScene(null);
   };
 
   const handleDelete = async (sceneId: Scene["id"]) => {
@@ -64,60 +53,104 @@ export default function ScenesPage() {
     ]);
   };
 
+  const emptyScene: SceneFormData = {
+    title: "",
+    description: "",
+    cut_notes: "",
+    duration_estimated_seconds: 0,
+    order_in_play: scenes.length + 1,
+    is_active: true,
+    roleIds: [],
+  };
+
   return (
     <>
-      <hgroup>
-        <h3>La Conduite</h3>
-        <p>Organisation des scènes de la pièce et expression des envies.</p>
-        <p>
-          ⏱️{" "}
-          {scenes.reduce(
-            (acc, scene) => acc + scene.duration_estimated_seconds,
-            0,
-          ) / 60}
-          min
-        </p>
-      </hgroup>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: "1rem",
+          marginBottom: "1rem",
+        }}
+      >
+        <hgroup style={{ margin: 0 }}>
+          <h3>La Conduite</h3>
+          <p>Organisation des scènes de la pièce et expression des envies.</p>
+          <p>
+            ⏱️{" "}
+            {scenes.reduce(
+              (acc, scene) => acc + scene.duration_estimated_seconds,
+              0,
+            ) / 60}{" "}
+            min
+          </p>
+        </hgroup>
+
+        {isAdmin && (
+          <button
+            type="button"
+            aria-label="Ajouter une scène"
+            onClick={() => setIsAdding(true)}
+            style={{ width: "auto" }}
+          >
+            ➕ Ajouter une scène
+          </button>
+        )}
+      </div>
 
       {scenes.length === 0 ? (
         <p>Aucune scène pour le moment.</p>
       ) : (
         scenes.map((scene) => (
-          <React.Fragment key={scene.id}>
-            {editing === scene.id ? (
-              <SceneForm
-                scene={scene}
-                roles={roles}
-                onCancel={() => setEditing(null)}
-                onSave={() => setEditing(null)}
-              />
-            ) : (
-              <SceneCard
-                scene={scene}
-                roles={roles.filter((r) =>
-                  r.scenes?.some((s) => s.id === scene.id),
-                )}
-                scenePreferences={scenePreferences}
-                rolePreferences={rolePreferences}
-                onEdit={setEditing}
-                onDelete={handleDelete}
-              />
+          <SceneCard
+            key={scene.id}
+            scene={scene}
+            roles={roles.filter((r) =>
+              r.scenes?.some((s) => s.id === scene.id),
             )}
-          </React.Fragment>
+            scenePreferences={scenePreferences}
+            rolePreferences={rolePreferences}
+            onEdit={(id) => {
+              const target = scenes.find((s) => s.id === id);
+              if (target) setEditingScene(target);
+            }}
+            onDelete={handleDelete}
+          />
         ))
       )}
 
-      {isAdmin && (
-        <details>
-          <summary>Ajouter une scène</summary>
-          <form aria-label="Formulaire d'ajout d'une scène" action={handleAdd}>
-            <label>
-              Titre
-              <input name="title" required />
-            </label>
-            <button type="submit">Ajouter</button>
-          </form>
-        </details>
+      {/* Add Modal */}
+      {isAdding && (
+        <Modal title="Ajouter une scène" onClose={() => setIsAdding(false)}>
+          <SceneForm
+            scene={emptyScene}
+            roles={roles}
+            onCancel={() => setIsAdding(false)}
+            onSave={handleAdd}
+          />
+        </Modal>
+      )}
+
+      {/* Edit Modal */}
+      {editingScene && (
+        <Modal
+          title={`Modifier la scène ${editingScene.title}`}
+          onClose={() => setEditingScene(null)}
+        >
+          <SceneForm
+            scene={{
+              ...editingScene,
+              roleIds: roles
+                .filter((r) => r.scenes?.some((s) => s.id === editingScene.id))
+                .map((r) => r.id),
+            }}
+            roles={roles}
+            onCancel={() => setEditingScene(null)}
+            onSave={handleEdit}
+          />
+        </Modal>
       )}
     </>
   );

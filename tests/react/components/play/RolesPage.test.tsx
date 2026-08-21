@@ -84,11 +84,15 @@ describe("React: RolesPage", () => {
         me: teacherUser,
       });
 
+      await user.click(
+        screen.getByRole("button", { name: /ajouter un rôle/i }),
+      );
+
       await user.type(
-        screen.getByLabelText(/nom/i),
+        screen.getByLabelText(/nom du rôle/i),
         String(requestValue("roles", "add", "as_admin", "name")),
       );
-      await user.click(screen.getByRole("button", { name: /ajouter/i }));
+      await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
       expectContractCall("roles", "add", "as_admin");
     });
@@ -101,8 +105,12 @@ describe("React: RolesPage", () => {
         me: teacherUser,
       });
 
+      await user.click(
+        screen.getByRole("button", { name: /ajouter un rôle/i }),
+      );
+
       await user.type(
-        screen.getByLabelText(/nom/i),
+        screen.getByLabelText(/nom du rôle/i),
         String(requestValue("roles", "add", "as_admin", "name")),
       );
       await user.click(
@@ -110,26 +118,28 @@ describe("React: RolesPage", () => {
           name: new RegExp(mainScenes[0].title, "i"),
         }),
       );
-      await user.click(screen.getByRole("button", { name: /ajouter/i }));
+      await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
       expectContractCall("roles", "add", "with_scene");
     });
 
-    it("should alert when submitted data is invalid", async () => {
-      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
-
-      await renderWithStub({
+    it("should display inline errors when submitted data is invalid", async () => {
+      const { user } = await renderWithStub({
         path: "/plays/:playId/roles",
         Component: RolesPage,
         initialEntries: [`/plays/${mainPlay.id}/roles`],
         me: teacherUser,
       });
 
+      await user.click(
+        screen.getByRole("button", { name: /ajouter un rôle/i }),
+      );
+
       await act(async () => {
         await fireEvent.submit(screen.getByRole("form"));
       });
 
-      expect(alert).toHaveBeenCalled();
+      await screen.findByText(/le nom est requis/i);
     });
 
     it("should edit a role", async () => {
@@ -146,33 +156,18 @@ describe("React: RolesPage", () => {
         }),
       );
 
-      await user.clear(
-        screen.getByLabelText(new RegExp(`nom.*rôle.*${mainRoles[0].id}`, "i")),
-      );
+      await user.clear(screen.getByLabelText(/nom du rôle/i));
       await user.type(
-        screen.getByLabelText(new RegExp(`nom.*rôle.*${mainRoles[0].id}`, "i")),
+        screen.getByLabelText(/nom du rôle/i),
         String(requestValue("roles", "edit", "as_admin", "name")),
       );
-      await user.clear(
-        screen.getByLabelText(
-          new RegExp(`description.*rôle.*${mainRoles[0].id}`, "i"),
-        ),
-      );
+      await user.clear(screen.getByLabelText(/description/i));
       await user.type(
-        screen.getByLabelText(
-          new RegExp(`description.*rôle.*${mainRoles[0].id}`, "i"),
-        ),
+        screen.getByLabelText(/description/i),
         String(requestValue("roles", "edit", "as_admin", "description")),
       );
 
-      await user.click(
-        screen.getByRole("button", {
-          name: new RegExp(
-            `enregistrer.*modification.*rôle.*${mainRoles[0].id}`,
-            "i",
-          ),
-        }),
-      );
+      await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
       expectContractCall("roles", "edit", "as_admin");
     });
@@ -191,32 +186,11 @@ describe("React: RolesPage", () => {
         }),
       );
 
-      expect(
-        screen.getByRole("form", {
-          name: new RegExp(
-            `formulaire.*édition.*rôle.*${mainRoles[0].id}`,
-            "i",
-          ),
-        }),
-      ).toBeTruthy();
+      expect(screen.getByRole("dialog")).toBeTruthy();
 
-      await user.click(
-        screen.getByRole("button", {
-          name: new RegExp(
-            `annuler.*modification.*rôle.*${mainRoles[0].id}`,
-            "i",
-          ),
-        }),
-      );
+      await user.click(screen.getByRole("button", { name: /annuler/i }));
 
-      expect(
-        screen.queryByRole("form", {
-          name: new RegExp(
-            `formulaire.*édition.*rôle.*${mainRoles[0].id}`,
-            "i",
-          ),
-        }),
-      ).toBeNull();
+      expect(screen.queryByRole("dialog")).toBeNull();
     });
 
     it("should delete a role", async () => {

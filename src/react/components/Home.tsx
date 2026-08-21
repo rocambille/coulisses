@@ -4,53 +4,79 @@
   Route: / (index, protected)
 */
 
-import { use } from "react";
-import z from "zod";
+import { use, useId, useState } from "react";
+import { z } from "zod";
+import type { $ZodIssue as ZodIssue } from "zod/v4/core";
 
 import { getOrFetch } from "../helpers/cache";
 import { useMutate } from "../helpers/mutate";
 import { useMe } from "./auth/MeContext";
+import { FormError, hasError } from "./FormError";
 import TroupeCard from "./troupe/TroupeCard";
+import Modal from "./ui/Modal";
 
 const troupeSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   description: z.string(),
-  external_discussion_link: z.url().or(z.literal("")),
+  external_discussion_link: z
+    .url("Le lien de discussion doit être une URL valide")
+    .or(z.literal("")),
 });
 
 function DashboardPage() {
   const { user } = useMe();
   const mutate = useMutate();
+  const [isAdding, setIsAdding] = useState(false);
+  const [errors, setErrors] = useState<ZodIssue[]>([]);
+
+  const nameId = useId();
+  const descriptionId = useId();
+  const discussionLinkId = useId();
 
   const troupes: Troupe[] = use(getOrFetch<Troupe[]>("/api/troupes"));
 
   const handleAdd = async (formData: FormData) => {
-    const name = formData.get("name")?.toString();
-    const description = formData.get("description")?.toString();
-    const external_discussion_link = formData
-      .get("external_discussion_link")
-      ?.toString();
-
-    const parsed = troupeSchema.safeParse({
-      name,
-      description,
-      external_discussion_link,
-    });
+    const parsed = troupeSchema.safeParse(Object.fromEntries(formData));
 
     if (!parsed.success) {
-      alert(z.prettifyError(parsed.error));
+      setErrors(parsed.error.issues);
       return;
     }
 
+    setErrors([]);
     await mutate("/api/troupes", "post", parsed.data, ["/api/troupes"]);
+    setIsAdding(false);
   };
 
   return (
     <>
-      <hgroup>
-        <h1>Mes troupes</h1>
-        <p>Bienvenue, {user?.name}</p>
-      </hgroup>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: "1rem",
+          marginBottom: "1rem",
+        }}
+      >
+        <hgroup style={{ margin: 0 }}>
+          <h1>Mes troupes</h1>
+          <p>Bienvenue, {user?.name}</p>
+        </hgroup>
+
+        <button
+          type="button"
+          aria-label="Créer une nouvelle troupe"
+          onClick={() => {
+            setErrors([]);
+            setIsAdding(true);
+          }}
+          style={{ width: "auto" }}
+        >
+          ➕ Créer une troupe
+        </button>
+      </div>
 
       {troupes.length === 0 ? (
         <p>Tu ne fais partie d'aucune troupe pour le moment.</p>
@@ -62,29 +88,88 @@ function DashboardPage() {
         </div>
       )}
 
-      <details>
-        <summary>Créer une nouvelle troupe</summary>
-        <form aria-label="Formulaire d'ajout d'une troupe" action={handleAdd}>
-          <input
-            name="name"
-            placeholder="Nom de la troupe"
-            aria-label="Nom de la nouvelle troupe"
-            required
-          />
-          <input
-            name="description"
-            placeholder="Description (optionnel)"
-            aria-label="Description"
-          />
-          <input
-            name="external_discussion_link"
-            type="url"
-            placeholder="Lien de discussion (ex: WhatsApp) (optionnel)"
-            aria-label="Lien de discussion externe"
-          />
-          <button type="submit">Créer</button>
-        </form>
-      </details>
+      {isAdding && (
+        <Modal
+          title="Créer une nouvelle troupe"
+          onClose={() => {
+            setErrors([]);
+            setIsAdding(false);
+          }}
+        >
+          <form aria-label="Formulaire d'ajout d'une troupe" action={handleAdd}>
+            <label htmlFor={nameId}>
+              Nom de la troupe
+              <input
+                id={nameId}
+                name="name"
+                placeholder="Nom de la troupe"
+                aria-label="Nom de la nouvelle troupe"
+                required
+                aria-invalid={hasError(errors, "name") || undefined}
+                aria-describedby={`${nameId}-error`}
+              />
+              <FormError issues={errors} name="name" id={`${nameId}-error`} />
+            </label>
+            <label htmlFor={descriptionId}>
+              Description (optionnel)
+              <input
+                id={descriptionId}
+                name="description"
+                placeholder="Description (optionnel)"
+                aria-label="Description"
+                aria-invalid={hasError(errors, "description") || undefined}
+                aria-describedby={`${descriptionId}-error`}
+              />
+              <FormError
+                issues={errors}
+                name="description"
+                id={`${descriptionId}-error`}
+              />
+            </label>
+            <label htmlFor={discussionLinkId}>
+              Lien de discussion (optionnel)
+              <input
+                id={discussionLinkId}
+                name="external_discussion_link"
+                type="url"
+                placeholder="Lien de discussion (ex: WhatsApp) (optionnel)"
+                aria-label="Lien de discussion externe"
+                aria-invalid={
+                  hasError(errors, "external_discussion_link") || undefined
+                }
+                aria-describedby={`${discussionLinkId}-error`}
+              />
+              <FormError
+                issues={errors}
+                name="external_discussion_link"
+                id={`${discussionLinkId}-error`}
+              />
+            </label>
+            <footer
+              style={{
+                marginTop: "1rem",
+                display: "flex",
+                gap: "0.5rem",
+                justifyContent: "end",
+              }}
+            >
+              <button
+                type="button"
+                className="secondary outline"
+                onClick={() => {
+                  setErrors([]);
+                  setIsAdding(false);
+                }}
+              >
+                Annuler
+              </button>
+              <button type="submit" style={{ width: "initial" }}>
+                Créer
+              </button>
+            </footer>
+          </form>
+        </Modal>
+      )}
     </>
   );
 }

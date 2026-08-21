@@ -72,30 +72,36 @@ describe("React: MembersPage", () => {
         me: teacherUser,
       });
 
+      await user.click(
+        screen.getByRole("button", { name: /inviter un nouveau membre/i }),
+      );
+
       await user.type(
         screen.getByLabelText(/email/i),
         String(requestValue("members", "add", "as_admin", "email")),
       );
-      await user.click(screen.getByRole("button", { name: /inviter/i }));
+      await user.click(screen.getByRole("button", { name: /^inviter$/i }));
 
       expectContractCall("members", "add", "as_admin");
     });
 
-    it("should alert when submitted data is invalid", async () => {
-      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
-
-      await renderWithStub({
+    it("should display inline errors when submitted data is invalid", async () => {
+      const { user } = await renderWithStub({
         path: "/troupes/:troupeId/members",
         Component: MembersPage,
         initialEntries: [`/troupes/${mainTroupe.id}/members`],
         me: teacherUser,
       });
 
+      await user.click(
+        screen.getByRole("button", { name: /inviter un nouveau membre/i }),
+      );
+
       await act(async () => {
         await fireEvent.submit(screen.getByRole("form"));
       });
 
-      expect(alert).toHaveBeenCalled();
+      await screen.findByText(/l'email doit être une adresse email valide/i);
     });
 
     it("should update a member successfully", async () => {

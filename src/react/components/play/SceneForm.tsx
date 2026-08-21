@@ -1,22 +1,28 @@
 /*
   Purpose:
-  Scenes management page (La Conduite).
-  Route: /troupes/:troupeId/plays/:playId/scenes
+  Form component to create or edit a Scene.
+  Collects data, validates against schema, and calls onSave.
 */
 
-import { useParams } from "react-router";
-import z from "zod";
-import { useMutate } from "../../helpers/mutate";
+import { useId, useState } from "react";
+import { z } from "zod";
+import type { $ZodIssue as ZodIssue } from "zod/v4/core";
 
-const sceneFormSchema = z.object({
+import { FormError, hasError } from "../FormError";
+
+export const sceneFormSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   description: z.string(),
   cut_notes: z.string(),
-  duration_estimated_seconds: z.int().nonnegative(),
-  order_in_play: z.int(),
-  is_active: z.boolean(),
-  roleIds: z.array(z.number()),
+  duration_estimated_seconds: z.coerce
+    .number()
+    .nonnegative("La durée doit être positive ou nulle"),
+  order_in_play: z.coerce.number(),
+  is_active: z.coerce.boolean(),
+  roleIds: z.array(z.coerce.number()),
 });
+
+export type SceneFormData = z.infer<typeof sceneFormSchema>;
 
 export default function SceneForm({
   scene,
@@ -24,103 +30,120 @@ export default function SceneForm({
   onCancel,
   onSave,
 }: {
-  scene: Scene;
+  scene: SceneFormData;
   roles: RoleWithScenes[];
   onCancel: () => void;
-  onSave: () => void;
+  onSave: (data: SceneFormData) => void | Promise<void>;
 }) {
-  const { playId } = useParams();
-  const mutate = useMutate();
+  const [errors, setErrors] = useState<ZodIssue[]>([]);
 
-  const handleEdit = async (sceneId: Scene["id"], formData: FormData) => {
-    const title = formData.get("title")?.toString();
-    const description = formData.get("description")?.toString();
-    const cut_notes = formData.get("cut_notes")?.toString();
-    const duration_estimated_seconds = Number(
-      formData.get("duration_estimated_seconds"),
-    );
-    const order_in_play = Number(formData.get("order_in_play"));
-    const is_active = formData.get("is_active") === "on";
-    const roleIds = formData.getAll("roleIds").map(Number);
+  const titleId = useId();
+  const descriptionId = useId();
+  const orderId = useId();
+  const durationId = useId();
+  const cutNotesId = useId();
 
+  const handleSubmit = (formData: FormData) => {
     const parsed = sceneFormSchema.safeParse({
-      title,
-      description,
-      cut_notes,
-      duration_estimated_seconds,
-      order_in_play,
-      is_active,
-      roleIds,
+      ...Object.fromEntries(formData),
+      roleIds: formData.getAll("roleIds"),
     });
 
     if (!parsed.success) {
-      alert(z.prettifyError(parsed.error));
+      setErrors(parsed.error.issues);
       return;
     }
 
-    await mutate(
-      `/api/scenes/${sceneId}`,
-      "put",
-      {
-        ...parsed.data,
-      },
-      [`/api/plays/${playId}/scenes`, `/api/plays/${playId}/roles`],
-    );
-
-    onSave();
+    setErrors([]);
+    onSave(parsed.data);
   };
 
   return (
-    <form
-      aria-label={`Formulaire d'édition de la scène ${scene.id}`}
-      action={(formData) => handleEdit(Number(scene.id), formData)}
-    >
-      <label>
+    <form aria-label="Formulaire de scène" action={handleSubmit}>
+      <label htmlFor={titleId}>
         Titre
         <input
-          aria-label={`Titre de la scène ${scene.id}`}
+          id={titleId}
+          aria-label="Titre de la scène"
           name="title"
           defaultValue={scene.title}
           required
+          aria-invalid={hasError(errors, "title") || undefined}
+          aria-describedby={`${titleId}-error`}
         />
+        <FormError issues={errors} name="title" id={`${titleId}-error`} />
       </label>
-      <label>
+      <label htmlFor={descriptionId}>
         Description
         <input
-          aria-label={`Description de la scène ${scene.id}`}
+          id={descriptionId}
+          aria-label="Description de la scène"
           name="description"
           defaultValue={scene.description}
+          aria-invalid={hasError(errors, "description") || undefined}
+          aria-describedby={`${descriptionId}-error`}
+        />
+        <FormError
+          issues={errors}
+          name="description"
+          id={`${descriptionId}-error`}
         />
       </label>
       <div className="grid">
-        <label>
+        <label htmlFor={orderId}>
           Ordre d'apparition
           <input
-            aria-label={`Ordre d'apparition de la scène ${scene.id}`}
+            id={orderId}
+            aria-label="Ordre d'apparition de la scène"
             name="order_in_play"
             type="number"
             defaultValue={scene.order_in_play}
             required
+            aria-invalid={hasError(errors, "order_in_play") || undefined}
+            aria-describedby={`${orderId}-error`}
+          />
+          <FormError
+            issues={errors}
+            name="order_in_play"
+            id={`${orderId}-error`}
           />
         </label>
-        <label>
+        <label htmlFor={durationId}>
           Durée (secondes)
           <input
-            aria-label={`Durée estimée de la scène ${scene.id}`}
+            id={durationId}
+            aria-label="Durée estimée de la scène"
             name="duration_estimated_seconds"
             type="number"
             min={0}
             defaultValue={scene.duration_estimated_seconds}
             required
+            aria-invalid={
+              hasError(errors, "duration_estimated_seconds") || undefined
+            }
+            aria-describedby={`${durationId}-error`}
+          />
+          <FormError
+            issues={errors}
+            name="duration_estimated_seconds"
+            id={`${durationId}-error`}
           />
         </label>
       </div>
-      <label>
+      <label htmlFor={cutNotesId}>
         Notes de coupe (cut)
         <input
-          aria-label={`Notes de coupe de la scène ${scene.id}`}
+          id={cutNotesId}
+          aria-label="Notes de coupe de la scène"
           name="cut_notes"
           defaultValue={scene.cut_notes}
+          aria-invalid={hasError(errors, "cut_notes") || undefined}
+          aria-describedby={`${cutNotesId}-error`}
+        />
+        <FormError
+          issues={errors}
+          name="cut_notes"
+          id={`${cutNotesId}-error`}
         />
       </label>
       <fieldset>
@@ -148,7 +171,7 @@ export default function SceneForm({
                 type="checkbox"
                 name="roleIds"
                 value={Number(role.id)}
-                defaultChecked={role.scenes?.some((s) => s.id === scene.id)}
+                defaultChecked={scene.roleIds.includes(Number(role.id))}
               />
               <span>{role.name}</span>
             </label>
@@ -157,7 +180,7 @@ export default function SceneForm({
       </fieldset>
       <label>
         <input
-          aria-label={`Scène active (incluse dans le montage) ${scene.id}`}
+          aria-label="Scène active (incluse dans le montage)"
           name="is_active"
           type="checkbox"
           defaultChecked={scene.is_active}
@@ -173,7 +196,7 @@ export default function SceneForm({
         }}
       >
         <button
-          aria-label={`Annuler la modification de la scène ${scene.id}`}
+          aria-label="Annuler"
           type="button"
           className="secondary outline"
           onClick={onCancel}
@@ -181,7 +204,7 @@ export default function SceneForm({
           Annuler
         </button>
         <button
-          aria-label={`Enregistrer les modifications de la scène ${scene.id}`}
+          aria-label="Enregistrer"
           type="submit"
           style={{ width: "initial" }}
         >

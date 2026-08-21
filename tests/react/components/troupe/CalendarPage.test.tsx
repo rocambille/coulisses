@@ -192,9 +192,7 @@ describe("React: CalendarPage", () => {
       await waitFor(() => expect(screen.queryByLabelText(/titre/i)).toBeNull());
     });
 
-    it("should alert when submitted data is invalid", async () => {
-      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
-
+    it("should display inline error when submitted data is invalid", async () => {
       const { user } = await renderWithStub({
         path: "/troupes/:troupeId/calendar",
         Component: CalendarPage,
@@ -208,7 +206,7 @@ describe("React: CalendarPage", () => {
         await fireEvent.submit(screen.getByRole("form"));
       });
 
-      expect(alert).toHaveBeenCalled();
+      await screen.findByText(/le titre est requis/i);
     });
   });
 
@@ -282,7 +280,11 @@ describe("React: CalendarPage", () => {
 
       expectContractCall("events", "edit", "owner");
 
-      expect(screen.queryByRole("button", { name: /enregistrer/i })).toBeNull();
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("button", { name: /enregistrer/i }),
+        ).toBeNull(),
+      );
     });
 
     it("should open form and delete an event", async () => {
@@ -303,7 +305,9 @@ describe("React: CalendarPage", () => {
 
       expectContractCall("events", "delete", "owner");
 
-      expect(screen.queryByRole("button", { name: /supprimer/i })).toBeNull();
+      await waitFor(() =>
+        expect(screen.queryByRole("button", { name: /supprimer/i })).toBeNull(),
+      );
     });
   });
 });

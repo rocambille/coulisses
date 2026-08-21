@@ -162,33 +162,39 @@ describe("React: ScenesPage", () => {
         me: teacherUser,
       });
 
+      await user.click(
+        screen.getByRole("button", { name: /ajouter une scène/i }),
+      );
+
       await user.type(
         screen.getByLabelText(/titre/i),
         String(requestValue("scenes", "add", "as_admin", "title")),
       );
-      await user.click(screen.getByRole("button", { name: /ajouter/i }));
+      await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
       expectContractCall("scenes", "add", "as_admin");
     });
 
-    it("should alert when submitted data is invalid", async () => {
-      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
-
-      await renderWithStub({
+    it("should display inline errors when submitted data is invalid", async () => {
+      const { user } = await renderWithStub({
         path: "/plays/:playId/scenes",
         Component: ScenesPage,
         initialEntries: [`/plays/${mainPlay.id}/scenes`],
         me: teacherUser,
       });
 
+      await user.click(
+        screen.getByRole("button", { name: /ajouter une scène/i }),
+      );
+
       await act(async () => {
         await fireEvent.submit(screen.getByRole("form"));
       });
 
-      expect(alert).toHaveBeenCalled();
+      await screen.findByText(/le titre est requis/i);
     });
 
-    it("should display edit form when clicking on edit button", async () => {
+    it("should display edit modal when clicking on edit button", async () => {
       const { user } = await renderWithStub({
         path: "/plays/:playId/scenes",
         Component: ScenesPage,
@@ -202,15 +208,8 @@ describe("React: ScenesPage", () => {
         ),
       );
 
-      await screen.findByLabelText(
-        new RegExp(
-          `enregistrer.*modification.*scène.*${mainScenes[0].id}`,
-          "i",
-        ),
-      );
-      await screen.findByLabelText(
-        new RegExp(`annuler.*modification.*scène.*${mainScenes[0].id}`, "i"),
-      );
+      await screen.findByRole("button", { name: /enregistrer/i });
+      await screen.findByRole("button", { name: /annuler/i });
     });
 
     it("should cancel editing a scene when clicking on cancel button", async () => {
@@ -227,15 +226,9 @@ describe("React: ScenesPage", () => {
         ),
       );
 
-      await user.click(
-        screen.getByLabelText(
-          new RegExp(`annuler.*modification.*scène.*${mainScenes[0].id}`, "i"),
-        ),
-      );
+      await user.click(screen.getByRole("button", { name: /annuler/i }));
 
-      await screen.findByLabelText(
-        new RegExp(`modifier.*scène.*${mainScenes[0].id}`, "i"),
-      );
+      expect(screen.queryByRole("dialog")).toBeNull();
     });
 
     it("should edit a scene", async () => {
@@ -252,39 +245,19 @@ describe("React: ScenesPage", () => {
         ),
       );
 
-      await screen.findByLabelText(
-        new RegExp(
-          `enregistrer.*modification.*scène.*${mainScenes[0].id}`,
-          "i",
-        ),
-      );
+      await screen.findByRole("button", { name: /enregistrer/i });
 
-      await user.clear(
-        screen.getByLabelText(
-          new RegExp(`titre.*scène.*${mainScenes[0].id}`, "i"),
-        ),
-      );
+      await user.clear(screen.getByLabelText(/titre/i));
       await user.type(
-        screen.getByLabelText(
-          new RegExp(`titre.*scène.*${mainScenes[0].id}`, "i"),
-        ),
+        screen.getByLabelText(/titre/i),
         String(requestValue("scenes", "edit", "as_admin", "title")),
       );
-      await user.click(
-        screen.getByLabelText(
-          new RegExp(
-            `enregistrer.*modification.*scène.*${mainScenes[0].id}`,
-            "i",
-          ),
-        ),
-      );
+      await user.click(screen.getByRole("button", { name: /enregistrer/i }));
 
       expectContractCall("scenes", "edit", "as_admin");
     });
 
-    it("should alert when submitted data for editing a scene is invalid", async () => {
-      vi.spyOn(window, "alert").mockImplementationOnce(() => {});
-
+    it("should display inline errors when submitted data for editing a scene is invalid", async () => {
       const { user } = await renderWithStub({
         path: "/plays/:playId/scenes",
         Component: ScenesPage,
@@ -298,21 +271,13 @@ describe("React: ScenesPage", () => {
         ),
       );
 
-      await user.clear(
-        screen.getByLabelText(
-          new RegExp(`titre.*scène.*${mainScenes[0].id}`, "i"),
-        ),
-      );
+      await user.clear(screen.getByLabelText(/titre/i));
 
       await act(async () => {
-        await fireEvent.submit(
-          screen.getByRole("form", {
-            name: new RegExp(`édition.*scène.*${mainScenes[0].id}`, "i"),
-          }),
-        );
+        await fireEvent.submit(screen.getByRole("form"));
       });
 
-      expect(alert).toHaveBeenCalled();
+      await screen.findByText(/le titre est requis/i);
     });
 
     it("should delete a scene", async () => {
