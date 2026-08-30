@@ -141,6 +141,7 @@ export async function createServerWith(routesPath: string) {
     });
 
     app.use(limiter);
+    app.set("trust proxy", 1);
   }
 
   /* ********************************************************************** */
