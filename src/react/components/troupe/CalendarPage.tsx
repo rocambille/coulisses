@@ -75,11 +75,11 @@ const validate = (data: FormData) => {
 };
 
 function getDaysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate();
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 }
 
 function getFirstDayOfMonth(year: number, month: number) {
-  const day = new Date(year, month, 1).getDay();
+  const day = new Date(Date.UTC(year, month, 1)).getUTCDay();
   return day === 0 ? 6 : day - 1; // Convert Sunday=0 to Monday=0
 }
 
@@ -131,24 +131,20 @@ function CalendarPage() {
   const editLocationId = useId();
   const editDescriptionId = useId();
 
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
+  const [currentYear, currentMonth] = toInputDate(currentDate.toISOString())
+    .split("-")
+    .map((v, i) => (i === 1 ? Number(v) - 1 : Number(v)));
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
 
   const prevMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+    setCurrentDate(new Date(Date.UTC(currentYear, currentMonth - 1, 1)));
   };
 
   const nextMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+    setCurrentDate(new Date(Date.UTC(currentYear, currentMonth + 1, 1)));
   };
-
-  const currentMonthEvents = events.filter((e) => {
-    const d = new Date(e.start_time);
-    return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-  });
 
   const showAddModal = selectedDate != null;
 
@@ -264,10 +260,11 @@ function CalendarPage() {
 
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
-          // Create a local date for the current day (noon to avoid DST edge cases)
-          const currentDayDate = new Date(currentYear, currentMonth, day, 12);
-          const dayEvents = currentMonthEvents.filter(
-            (e) => new Date(e.start_time).getDate() === day,
+          const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          // Create a date in the configured timezone (noon to avoid DST edge cases)
+          const currentDayDate = fromInputParts(dateStr, "12:00");
+          const dayEvents = events.filter(
+            (e) => toInputDate(e.start_time) === dateStr,
           );
 
           return (
