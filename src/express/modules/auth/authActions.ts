@@ -120,7 +120,7 @@ const sendMagicLink: RequestHandler = async (req, res) => {
 
   if (transporter) {
     await transporter.sendMail({
-      from: "starter@mail.com",
+      from: { name: "Coulisses", address: "hello@codecollectif.fr" },
       to: email,
       subject: "Login link",
       html: `<a href="${magicLink}">Click here to login</a>`,
