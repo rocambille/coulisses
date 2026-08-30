@@ -18,66 +18,58 @@
   - https://react.dev/reference/react-dom/client/hydrateRoot
 -->
 <html lang="en">
-  <head>
-    <!-- ----------------------------------------------------------------- -->
-    <!-- Document metadata                                                 -->
-    <!-- ----------------------------------------------------------------- -->
 
-    <meta charset="UTF-8" />
+<head>
+  <!-- ----------------------------------------------------------------- -->
+  <!-- Document metadata                                                 -->
+  <!-- ----------------------------------------------------------------- -->
 
-    <!--
+  <meta charset="UTF-8" />
+
+  <!--
       Responsive behavior is required for most modern layouts.
       This keeps CSS frameworks and custom styles predictable.
     -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Start Express React</title>
+  <title>Start Express React</title>
 
-    <!-- ----------------------------------------------------------------- -->
-    <!-- Assets                                                            -->
-    <!-- ----------------------------------------------------------------- -->
+  <!-- ----------------------------------------------------------------- -->
+  <!-- Assets                                                            -->
+  <!-- ----------------------------------------------------------------- -->
 
-    <!--
-      Favicon is served as a static asset by Vite in dev
-      and by the production static server after build.
-    -->
-    <link
-      rel="shortcut icon"
-      href="/src/react/assets/images/favicon.webp"
-      type="image/png"
-    />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎭</text></svg>">
 
-    <!-- ----------------------------------------------------------------- -->
-    <!-- Base styling                                                      -->
-    <!-- ----------------------------------------------------------------- -->
+  <!-- ----------------------------------------------------------------- -->
+  <!-- Base styling                                                      -->
+  <!-- ----------------------------------------------------------------- -->
 
-    <!--
+  <!--
       Pico.css is used as a lightweight, classless CSS framework.
       It provides sensible defaults without enforcing a design system.
     -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-    />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
 
-    <!--
+  <!--
       Local CSS variables allow small visual tweaks
       without overriding or forking the framework.
     -->
-    <style>
-      :root {
-        --pico-border-radius: 2rem;
-        --pico-form-element-spacing-vertical: 0.5rem;
-        --pico-form-element-spacing-horizontal: 1rem;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- ----------------------------------------------------------------- -->
-    <!-- Application root                                                  -->
-    <!-- ----------------------------------------------------------------- -->
+  <style>
+    :root {
+      --pico-border-radius: 2rem;
+      --pico-form-element-spacing-vertical: 0.5rem;
+      --pico-form-element-spacing-horizontal: 1rem;
+    }
+  </style>
+</head>
 
-    <!--
+<body>
+  <!-- ----------------------------------------------------------------- -->
+  <!-- Application root                                                  -->
+  <!-- ----------------------------------------------------------------- -->
+
+  <!--
       This is the single mounting point for the React application.
 
       In SSR mode:
@@ -87,17 +79,18 @@
       In client-only mode:
       - React renders everything from scratch
     -->
-    <div class="container" id="root"><!--ssr-outlet--></div>
+  <div class="container" id="root"><!--ssr-outlet--></div>
 
-    <!-- ----------------------------------------------------------------- -->
-    <!-- Client entry                                                      -->
-    <!-- ----------------------------------------------------------------- -->
+  <!-- ----------------------------------------------------------------- -->
+  <!-- Client entry                                                      -->
+  <!-- ----------------------------------------------------------------- -->
 
-    <!--
+  <!--
       Client-side entry point:
       - Attaches React to the existing DOM
       - Enables interactivity and navigation
     -->
-    <script type="module" src="/src/entry-client"></script>
-  </body>
+  <script type="module" src="/src/entry-client"></script>
+</body>
+
 </html>
