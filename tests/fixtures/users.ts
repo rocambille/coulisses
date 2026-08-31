@@ -20,7 +20,7 @@ export const allUsers: User[] = [
     id: 2,
     email: "actor@mail.com",
     name: "actor",
-    avatar_url: null,
+    avatar_url: "/uploads/avatars/actor.webp",
     created_at: "2026-01-01T00:00:00.000Z",
     deleted_at: null,
   },
@@ -40,9 +40,18 @@ export const allUsers: User[] = [
     created_at: "2026-01-01T00:00:00.000Z",
     deleted_at: "2026-01-01T10:00:00.000Z",
   },
+  {
+    id: 5,
+    email: "corrupted@mail.com",
+    name: "corrupted",
+    avatar_url: "http://[invalid",
+    created_at: "2026-01-01T00:00:00.000Z",
+    deleted_at: null,
+  },
 ];
 
 export const teacherUser = allUsers[0];
 export const actorUser = allUsers[1];
 export const thirdUser = allUsers[2];
 export const deletedUser = allUsers[3];
+export const corruptedUser = allUsers[4];
