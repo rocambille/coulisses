@@ -8,7 +8,7 @@
 import { use, useId, useState } from "react";
 import { useOutletContext, useParams } from "react-router";
 import { getOrFetch } from "../../helpers/cache";
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 
 export default function DocumentsPage() {
   const { playId } = useParams();
@@ -19,7 +19,6 @@ export default function DocumentsPage() {
   const documents = use(
     getOrFetch<PlayDocument[]>(`/api/plays/${playId}/documents`),
   );
-  const mutate = useMutate();
 
   const cameraInputId = useId();
   const fileInputId = useId();

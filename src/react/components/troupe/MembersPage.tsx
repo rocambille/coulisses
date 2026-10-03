@@ -9,7 +9,7 @@ import { useOutletContext, useParams } from "react-router";
 import { z } from "zod";
 import type { $ZodIssue as ZodIssue } from "zod/v4/core";
 
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 import { FormError, hasError } from "../FormError";
 import Modal from "../ui/Modal";
 import MemberRow from "./MemberRow";
@@ -21,7 +21,6 @@ const inviteSchema = z.object({
 
 export default function MembersPage() {
   const { troupeId } = useParams();
-  const mutate = useMutate();
   const { members, isAdmin } = useOutletContext<{
     members: TroupeMember[];
     isAdmin: boolean;

@@ -7,6 +7,8 @@
   Use descriptive names (e.g., teacherUser, mainPlay, mainTroupe) to make tests more readable.
 */
 
+import type { DatabaseSync } from "node:sqlite";
+
 import { mainPlay } from "./plays";
 
 export const mainScenes: Scene[] = [
@@ -41,3 +43,21 @@ export const mainScenes: Scene[] = [
     is_active: true,
   },
 ];
+
+export const seedScenes = (db: DatabaseSync) => {
+  const insertScene = db.prepare(
+    "insert into scene(id, play_id, title, description, cut_notes, duration_estimated_seconds, order_in_play, is_active) values(?, ?, ?, ?, ?, ?, ?, ?)",
+  );
+  for (const scene of mainScenes) {
+    insertScene.run(
+      scene.id,
+      scene.play_id,
+      scene.title,
+      scene.description,
+      scene.cut_notes,
+      scene.duration_estimated_seconds,
+      scene.order_in_play,
+      scene.is_active ? 1 : 0,
+    );
+  }
+};

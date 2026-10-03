@@ -7,14 +7,13 @@
 import { use, useState } from "react";
 import { useOutletContext, useParams } from "react-router";
 import { getOrFetch } from "../../helpers/cache";
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 import Modal from "../ui/Modal";
 import SceneCard from "./SceneCard";
 import SceneForm, { type SceneFormData } from "./SceneForm";
 
 export default function ScenesPage() {
   const { playId } = useParams();
-  const mutate = useMutate();
   const { isAdmin, scenePreferences, rolePreferences } = useOutletContext<{
     isAdmin: boolean;
     scenePreferences: ScenePreference[];

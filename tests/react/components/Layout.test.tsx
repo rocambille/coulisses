@@ -1,7 +1,6 @@
 import { screen } from "@testing-library/react";
 import Layout from "../../../src/react/components/Layout";
-
-import { teacherUser } from "../../fixtures/users";
+import { standardUser } from "../../fixtures/users";
 import { renderWithStub, setupMocks } from "../test-utils";
 
 describe("<Layout />", () => {
@@ -41,7 +40,7 @@ describe("<Layout />", () => {
       path: "/",
       Component: () => <Layout />,
       initialEntries: ["/"],
-      me: teacherUser,
+      me: standardUser,
     });
 
     await screen.findByText(/compte/i);

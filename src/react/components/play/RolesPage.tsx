@@ -7,14 +7,13 @@
 import { use, useState } from "react";
 import { useOutletContext, useParams } from "react-router";
 import { getOrFetch } from "../../helpers/cache";
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 import Modal from "../ui/Modal";
 import RoleBadge from "../ui/RoleBadge";
 import RoleForm, { type RoleFormData } from "./RoleForm";
 
 export default function RolesPage() {
   const { playId } = useParams();
-  const mutate = useMutate();
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
 
   const [editingRole, setEditingRole] = useState<RoleWithScenes | null>(null);

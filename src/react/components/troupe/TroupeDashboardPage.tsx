@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { $ZodIssue as ZodIssue } from "zod/v4/core";
 
 import { getOrFetch } from "../../helpers/cache";
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 import { FormError, hasError } from "../FormError";
 import Modal from "../ui/Modal";
 import PreferenceSelector from "../ui/PreferenceSelector";
@@ -20,7 +20,6 @@ export default function TroupeDashboardPage() {
     isAdmin: boolean;
     playPreferences: PlayPreference[];
   }>();
-  const mutate = useMutate();
   const [isAddingPlay, setIsAddingPlay] = useState(false);
   const [errors, setErrors] = useState<ZodIssue[]>([]);
 

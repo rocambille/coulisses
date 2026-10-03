@@ -1,5 +1,7 @@
 import { cookies } from "supertest";
-import { teacherUser } from "../fixtures/users";
+
+import { authTokens } from "../fixtures/auth";
+import { standardUser } from "../fixtures/users";
 
 export default (<Contract>{
   magic_link: {
@@ -7,8 +9,15 @@ export default (<Contract>{
     path: "/api/auth/magic-link",
     cases: {
       success: {
-        request: { body: { email: teacherUser.email } },
-        response: { status: 204, body: {} },
+        request: {
+          body: {
+            email: standardUser.email,
+          },
+        },
+        response: {
+          status: 204,
+          body: {},
+        },
       },
       new_user: {
         request: { body: { email: "new_user@mail.com" } },
@@ -25,10 +34,14 @@ export default (<Contract>{
     path: "/api/auth/verify",
     cases: {
       success: {
-        request: { body: { token: "success_token" } },
+        request: {
+          body: {
+            token: authTokens.success,
+          },
+        },
         response: {
           status: 201,
-          body: teacherUser,
+          body: standardUser,
           and: () => {
             expect(
               cookies.set({
@@ -73,7 +86,7 @@ export default (<Contract>{
         },
       },
       consumed: {
-        request: { body: { token: "consumed_token" } },
+        request: { body: { token: authTokens.consumed } },
         response: {
           status: 401,
           body: {},
@@ -87,7 +100,7 @@ export default (<Contract>{
         },
       },
       expired: {
-        request: { body: { token: "expired_token" } },
+        request: { body: { token: authTokens.expired } },
         response: {
           status: 401,
           body: {},
@@ -102,8 +115,8 @@ export default (<Contract>{
       },
       deleted_user: {
         request: {
-          body: { token: "deleted_user_token" },
-          jwtPayload: { sub: "deleted_user@mail.com" },
+          body: { token: authTokens.deletedUser },
+          jwtPayload: { sub: "deleted@mail.com" },
         },
         response: {
           status: 401,

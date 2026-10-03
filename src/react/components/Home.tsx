@@ -9,7 +9,7 @@ import { z } from "zod";
 import type { $ZodIssue as ZodIssue } from "zod/v4/core";
 
 import { getOrFetch } from "../helpers/cache";
-import { useMutate } from "../helpers/mutate";
+import { mutate } from "../helpers/mutate";
 import { useMe } from "./auth/MeContext";
 import { FormError, hasError } from "./FormError";
 import TroupeCard from "./troupe/TroupeCard";
@@ -25,7 +25,6 @@ const troupeSchema = z.object({
 
 function DashboardPage() {
   const { user } = useMe();
-  const mutate = useMutate();
   const [isAdding, setIsAdding] = useState(false);
   const [errors, setErrors] = useState<ZodIssue[]>([]);
 

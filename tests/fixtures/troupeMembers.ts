@@ -7,6 +7,8 @@
   Use descriptive names (e.g., teacherUser, mainPlay, mainTroupe) to make tests more readable.
 */
 
+import type { DatabaseSync } from "node:sqlite";
+
 import { emptyTroupe, mainTroupe } from "./troupes";
 import { actorUser, teacherUser } from "./users";
 
@@ -33,3 +35,25 @@ export const emptyTroupeMembers: TroupeMember[] = [
     ...teacherUser,
   },
 ];
+
+export const seedTroupeMembers = (db: DatabaseSync) => {
+  const insertTroupeMember = db.prepare(
+    "insert into troupe_member(user_id, troupe_id, role, joined_at) values(?, ?, ?, ?)",
+  );
+  for (const member of mainTroupeMembers) {
+    insertTroupeMember.run(
+      member.id,
+      member.troupe_id,
+      member.role,
+      member.joined_at,
+    );
+  }
+  for (const member of emptyTroupeMembers) {
+    insertTroupeMember.run(
+      member.id,
+      member.troupe_id,
+      member.role,
+      member.joined_at,
+    );
+  }
+};

@@ -3,6 +3,8 @@
   Centralize all mocked data for play documents.
 */
 
+import type { DatabaseSync } from "node:sqlite";
+
 import { mainPlay } from "./plays";
 
 export const allDocuments: PlayDocument[] = [
@@ -28,3 +30,20 @@ export const allDocuments: PlayDocument[] = [
 
 export const mainDocument = allDocuments[0];
 export const pdfDocument = allDocuments[1];
+
+export const seedDocuments = (db: DatabaseSync) => {
+  const insertDocument = db.prepare(
+    "insert into play_document(id, play_id, file_url, mime_type, original_name, order_index, created_at) values(?, ?, ?, ?, ?, ?, ?)",
+  );
+  for (const document of allDocuments) {
+    insertDocument.run(
+      document.id,
+      document.play_id,
+      document.file_url,
+      document.mime_type,
+      document.original_name,
+      document.order_index,
+      document.created_at ?? null,
+    );
+  }
+};

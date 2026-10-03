@@ -1,5 +1,5 @@
 import React from "react";
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 
 type PresenceStatus = "PRESENT" | "ABSENT" | "PENDING";
 
@@ -13,7 +13,6 @@ export default function PresenceToggle({
   initialStatus,
 }: PresenceToggleProps) {
   const [status, setStatus] = React.useState<PresenceStatus>(initialStatus);
-  const mutate = useMutate();
   const [isPending, setIsPending] = React.useState(false);
 
   const toggle = async () => {

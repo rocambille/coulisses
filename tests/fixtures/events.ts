@@ -7,6 +7,8 @@
   Use descriptive names (e.g., teacherUser, mainPlay, mainTroupe) to make tests more readable.
 */
 
+import type { DatabaseSync } from "node:sqlite";
+
 import { mainTroupe } from "./troupes";
 import { actorUser, teacherUser } from "./users";
 
@@ -66,3 +68,33 @@ export const mainEventPresences: EventPresence[] = [
     updated_at: "2026-01-01T00:00:00.000Z",
   },
 ];
+
+export const seedEvents = (db: DatabaseSync) => {
+  const insertEvent = db.prepare(
+    "insert into event(id, troupe_id, owner_id, type, title, description, location, start_time, end_time) values(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  );
+  for (const event of allEvents) {
+    insertEvent.run(
+      event.id,
+      event.troupe_id,
+      event.owner_id,
+      event.type,
+      event.title,
+      event.description,
+      event.location,
+      event.start_time,
+      event.end_time,
+    );
+  }
+
+  const insertEventPresence = db.prepare(
+    "insert into event_presence(event_id, user_id, status) values(?, ?, ?)",
+  );
+  for (const presence of mainEventPresences) {
+    insertEventPresence.run(
+      presence.event_id,
+      presence.user_id,
+      presence.status,
+    );
+  }
+};

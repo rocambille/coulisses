@@ -7,6 +7,8 @@
   Use descriptive names (e.g., teacherUser, mainPlay, mainTroupe) to make tests more readable.
 */
 
+import type { DatabaseSync } from "node:sqlite";
+
 import { mainRolePreferences } from "./preferences";
 import { mainRoles } from "./roles";
 import { mainScenes } from "./scenes";
@@ -72,3 +74,17 @@ export const mainMatrix = matrix(
   mainRolePreferences,
 );
 export const emptyMatrix = matrix(emptyTroupeMembers, [], [], [], []);
+
+export const seedCastings = (db: DatabaseSync) => {
+  const insertCasting = db.prepare(
+    "insert into casting(user_id, scene_id, role_id, assigned_at) values(?, ?, ?, ?)",
+  );
+  for (const casting of mainCastings) {
+    insertCasting.run(
+      casting.user_id,
+      casting.scene_id,
+      casting.role_id,
+      casting.assigned_at,
+    );
+  }
+};

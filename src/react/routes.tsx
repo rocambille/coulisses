@@ -8,7 +8,6 @@ import { type RouteObject, useLoaderData } from "react-router";
 import AccountPage from "./components/auth/AccountPage";
 import { MeProvider } from "./components/auth/MeContext";
 import VerifyPage from "./components/auth/VerifyPage";
-import { DataRefreshProvider } from "./components/DataRefreshContext";
 import ErrorPage from "./components/ErrorPage";
 import Home from "./components/Home";
 import Layout from "./components/Layout";
@@ -28,9 +27,7 @@ const routes: RouteObject[] = [
 
       return (
         <MeProvider initialUser={me}>
-          <DataRefreshProvider>
-            <Layout />
-          </DataRefreshProvider>
+          <Layout />
         </MeProvider>
       );
     },

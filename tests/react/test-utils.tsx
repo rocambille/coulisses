@@ -4,8 +4,7 @@ import * as ReactRouter from "react-router";
 import { createRoutesStub } from "react-router";
 
 import { MeProvider } from "../../src/react/components/auth/MeContext";
-import { DataRefreshProvider } from "../../src/react/components/DataRefreshContext";
-import { forget } from "../../src/react/helpers/cache";
+import { refresh } from "../../src/react/helpers/cache";
 import contracts from "../contracts";
 
 // -------------------------
@@ -208,9 +207,7 @@ export const renderWithStub = async ({
       HydrateFallback: () => null,
       Component: () => (
         <MeProvider initialUser={me}>
-          <DataRefreshProvider>
-            <Component />
-          </DataRefreshProvider>
+          <Component />
         </MeProvider>
       ),
       ErrorBoundary:
@@ -263,7 +260,7 @@ export const setupMocks = ({
 
   mockFetch(customFetch);
 
-  forget("*");
+  refresh("*");
 };
 
 export const setupTroupeLayoutMocks = ({

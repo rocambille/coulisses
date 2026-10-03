@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 
 function PreferenceSelector({
   sceneId,
@@ -13,7 +13,6 @@ function PreferenceSelector({
   currentLevel?: string;
 }) {
   const selectId = useId();
-  const mutate = useMutate();
   const [isPending, setIsPending] = useState(false);
 
   const handleChange = async (level: string) => {

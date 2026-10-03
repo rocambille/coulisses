@@ -7,12 +7,11 @@
 import React, { use } from "react";
 import { useOutletContext, useParams } from "react-router";
 import { getOrFetch } from "../../helpers/cache";
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 import PreferenceBadge from "../ui/PreferenceBadge";
 
 export default function CastingPage() {
   const { playId } = useParams();
-  const mutate = useMutate();
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
 
   // The matrix directly provides actors and scenes with roles and preferences

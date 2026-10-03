@@ -16,7 +16,7 @@ import {
   toInputDate,
   toInputTime,
 } from "../../helpers/datetime";
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 import { useMe } from "../auth/MeContext";
 import { FormError, hasError } from "../FormError";
 import Modal from "../ui/Modal";
@@ -101,7 +101,6 @@ const MONTHS = [
 function CalendarPage() {
   const { troupeId } = useParams();
   const { user } = useMe();
-  const mutate = useMutate();
 
   const events: EventData[] = use(
     getOrFetch<EventData[]>(`/api/troupes/${troupeId}/events`),

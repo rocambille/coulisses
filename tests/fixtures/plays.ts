@@ -7,6 +7,8 @@
   Use descriptive names (e.g., teacherUser, mainPlay, mainTroupe) to make tests more readable.
 */
 
+import type { DatabaseSync } from "node:sqlite";
+
 import { mainTroupe } from "./troupes";
 
 export const allPlays: Play[] = [
@@ -26,3 +28,12 @@ export const allPlays: Play[] = [
 
 export const mainPlay = allPlays[0];
 export const emptyPlay = allPlays[1];
+
+export const seedPlays = (db: DatabaseSync) => {
+  const insertPlay = db.prepare(
+    "insert into play(id, troupe_id, title, description) values(?, ?, ?, ?)",
+  );
+  for (const play of allPlays) {
+    insertPlay.run(play.id, play.troupe_id, play.title, play.description);
+  }
+};

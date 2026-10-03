@@ -6,6 +6,7 @@
   Naming:
   Use descriptive names (e.g., teacherUser, mainPlay, mainTroupe) to make tests more readable.
 */
+import type { DatabaseSync } from "node:sqlite";
 
 export const allTroupes: Troupe[] = [
   {
@@ -26,3 +27,18 @@ export const allTroupes: Troupe[] = [
 
 export const mainTroupe = allTroupes[0];
 export const emptyTroupe = allTroupes[1];
+
+export const seedTroupes = (db: DatabaseSync) => {
+  const insertTroupe = db.prepare(
+    "insert into troupe(id, name, description, external_discussion_link, created_at) values(?, ?, ?, ?, ?)",
+  );
+  for (const troupe of allTroupes) {
+    insertTroupe.run(
+      troupe.id,
+      troupe.name,
+      troupe.description,
+      troupe.external_discussion_link,
+      troupe.created_at,
+    );
+  }
+};

@@ -1,8 +1,7 @@
 import { use, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
-import { getOrFetch } from "../../helpers/cache";
+import { getOrFetch, useRefresh } from "../../helpers/cache";
 import { useMe } from "../auth/MeContext";
-import { useRefresh } from "../DataRefreshContext";
 
 export default function TroupeLayout() {
   const { troupeId } = useParams();

@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { useOutletContext, useParams } from "react-router";
-import { useMutate } from "../../helpers/mutate";
+import { mutate } from "../../helpers/mutate";
 
 interface MemberRowProps {
   member: TroupeMember;
@@ -15,7 +15,6 @@ interface MemberRowProps {
 export default function MemberRow({ member }: MemberRowProps) {
   const { troupeId } = useParams();
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
-  const mutate = useMutate();
 
   const [role, setRole] = useState<TroupeMember["role"]>(member.role);
 
