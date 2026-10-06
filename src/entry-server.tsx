@@ -150,7 +150,7 @@ export const render = async (template: string, req: Request, res: Response) => {
 
   const { pipe } = renderToPipeableStream(
     <StrictMode>
-      <StaticRouterProvider router={router} context={context} />
+      <StaticRouterProvider router={router} context={context} nonce={nonce} />
     </StrictMode>,
     { nonce },
   );
