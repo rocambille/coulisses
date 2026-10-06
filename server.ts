@@ -124,10 +124,6 @@ export async function createServerWith(routesPath: string) {
   // are blocked by Helmet's default CSP.
 
   app.use(helmet({ contentSecurityPolicy: false })); // All but CSP, handled apart
-  app.use((_req, res, next) => {
-    res.locals.cspNonce = crypto.randomBytes(16).toString("base64");
-    next();
-  });
   app.use((req, res, next) => {
     if (!isProduction) {
       return next();
