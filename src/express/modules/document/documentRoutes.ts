@@ -41,16 +41,6 @@ const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
   }
 };
 
-const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
-  if (
-    troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) === "ADMIN"
-  ) {
-    next();
-  } else {
-    res.sendStatus(403);
-  }
-};
-
 const checkIsDocumentPlayTroupeAdmin: RequestHandler = (req, res, next) => {
   const play = playRepository.find(req.document.play_id);
 
@@ -74,7 +64,7 @@ router.get(
 
 router.post(
   PLAY_DOCUMENTS_PATH,
-  checkIsPlayTroupeAdmin,
+  checkIsPlayTroupeMember,
   documentUploader.array("documents"),
   documentActions.upload,
 );

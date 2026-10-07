@@ -65,13 +65,35 @@ export default (<Contract>{
           ],
         },
       },
+      as_member: {
+        request: {
+          jwtPayload: { sub: actorUser.id },
+          attach: {
+            name: "documents",
+            file: dummyImageBuffer,
+            options: { filename: "page1.webp", contentType: "image/webp" },
+          },
+        },
+        response: {
+          status: 201,
+          body: [
+            expect.objectContaining({
+              id: expect.any(Number),
+              play_id: mainPlay.id,
+              file_url: expect.stringMatching(/^\/uploads\/plays\/.*\.webp$/),
+              mime_type: "image/webp",
+              original_name: "page1.webp",
+            }),
+          ],
+        },
+      },
       unauthorized: {
         request: { jwtPayload: null },
         response: { status: 401, body: {} },
       },
       forbidden: {
         request: {
-          jwtPayload: { sub: actorUser.id },
+          jwtPayload: { sub: thirdUser.id },
           attach: {
             name: "documents",
             file: dummyImageBuffer,
