@@ -53,7 +53,7 @@ describe("<DashboardPage />", () => {
       me: teacherUser,
     });
 
-    await screen.findByText("👺");
+    await screen.findByText("...");
   });
 
   it("should add a troupe", async () => {

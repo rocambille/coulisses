@@ -75,7 +75,9 @@ export default function TroupeDashboardPage() {
       <nav>
         <ul>
           <li>
-            <NavLink to="members">👥 Gérer les membres</NavLink>
+            <NavLink to="members">
+              {isAdmin ? "👥 Gérer les membres" : "👥 Voir les membres"}
+            </NavLink>
           </li>
           <li>
             <NavLink to="calendar">📅 Voir l'Agenda</NavLink>
@@ -84,7 +86,11 @@ export default function TroupeDashboardPage() {
       </nav>
 
       {plays.length === 0 ? (
-        <p>Aucune pièce pour le moment.</p>
+        <p className="empty-state">
+          <strong>La scène est vide pour l'instant.</strong>
+          <br />
+          Ajoutez une première pièce pour commencer à organiser les répétitions.
+        </p>
       ) : (
         <div className="grid">
           {plays.map((play) => (
@@ -108,7 +114,7 @@ export default function TroupeDashboardPage() {
                   }
                 />
               </header>
-              <p>{play.description || "Aucune description"}</p>
+              <p>{play.description || "..."}</p>
             </article>
           ))}
         </div>

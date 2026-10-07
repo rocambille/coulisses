@@ -50,7 +50,7 @@ export default function SceneCard({
       </header>
 
       <p>
-        <em>{scene.description || "Aucune description"}</em>
+        <em>{scene.description || "..."}</em>
       </p>
 
       <div

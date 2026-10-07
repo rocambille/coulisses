@@ -85,7 +85,10 @@ export default function RolesPage() {
       </div>
 
       {roles.length === 0 ? (
-        <p>Aucun rôle défini.</p>
+        <p className="empty-state">
+          <strong>Aucun rôle défini pour le moment.</strong>
+          Ajoutez un rôle pour commencer à organiser les répétitions.
+        </p>
       ) : (
         <div className="grid">
           {roles.map((role) => (
@@ -96,7 +99,7 @@ export default function RolesPage() {
                 </strong>
               </header>
               <p>
-                <em>{role.description || "Aucune description"}</em>
+                <em>{role.description || "..."}</em>
               </p>
               {isAdmin && (
                 <footer

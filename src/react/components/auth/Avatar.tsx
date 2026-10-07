@@ -37,7 +37,7 @@ function Avatar({ url, name, size = "3rlh", style }: AvatarProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "#666",
+        color: "#5B7C99",
         fontSize: "1.2rem",
         fontWeight: "bold",
       }}

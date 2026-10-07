@@ -12,7 +12,7 @@ export default function TroupeCard({ troupe }: TroupeCardProps) {
           <strong>{troupe.name}</strong>
         </Link>
       </header>
-      <p>{troupe.description || "👺"}</p>
+      <p>{troupe.description || "..."}</p>
       {troupe.external_discussion_link && (
         <footer>
           <a

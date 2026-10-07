@@ -68,7 +68,7 @@ describe("React: TroupeDashboardPage", () => {
         me: actorUser,
       });
 
-      await screen.findByText(/aucune pièce/i);
+      await screen.findByText(/la scène est vide pour l'instant/i);
     });
 
     it("should update preference successfully", async () => {

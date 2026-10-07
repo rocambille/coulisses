@@ -75,7 +75,7 @@ export default function ScenesPage() {
         }}
       >
         <hgroup style={{ margin: 0 }}>
-          <h3>La Conduite</h3>
+          <h3>La pièce</h3>
           <p>Organisation des scènes de la pièce et expression des envies.</p>
           <p>
             ⏱️{" "}
@@ -100,7 +100,10 @@ export default function ScenesPage() {
       </div>
 
       {scenes.length === 0 ? (
-        <p>Aucune scène pour le moment.</p>
+        <p className="empty-state">
+          <strong>Aucune scène pour le moment.</strong>
+          Ajoutez une scène pour commencer à organiser la pièce.
+        </p>
       ) : (
         scenes.map((scene) => (
           <SceneCard

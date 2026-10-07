@@ -1,1 +1,160 @@
-/* Look at index.html and give a try to Pico */
+/* ==========================================================================
+   COULISSES — Thème Pico v2
+   À charger APRÈS pico.min.css. Ne redéfinit aucun sélecteur Pico :
+   surcharge uniquement ses variables --pico-*, comme documenté par Pico
+   (https://picocss.com/docs/css-variables).
+
+   Police à ajouter dans le <head> :
+   <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+   ========================================================================== */
+
+/* ---------- Variables indépendantes du mode clair/sombre ---------- */
+:root {
+  --pico-font-family-sans-serif:
+    "Inter", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+    var(--pico-font-family-emoji);
+  --pico-border-radius: 0.5rem; /* 8px — cartes, inputs. Les boutons pill restent une règle locale séparée. */
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  --pico-font-family: "Fraunces", serif;
+  --pico-font-weight: 600;
+}
+
+button,
+[role="button"],
+input[type="submit"] {
+  --pico-font-weight: 600;
+}
+
+/* ---------- Couleurs — mode clair (par défaut, et forcé) ----------
+   On force ces valeurs aussi dans les blocs "sombre" plus bas : la marque
+   n'a pour l'instant qu'une version claire, donc on ne veut pas qu'un
+   visiteur en dark mode système retombe sur le bleu Pico par défaut. */
+[data-theme="light"],
+:root:not([data-theme="dark"]) {
+  --pico-background-color: #ffffff;
+  --pico-color: #171310; /* encre — même noir que le mark */
+  --pico-text-selection-color: rgba(240, 168, 48, 0.25);
+  --pico-muted-color: #6b6459;
+  --pico-muted-border-color: #e4e0da;
+
+  /* Primaire = ambre du projecteur.
+     Deux teintes distinctes, pour deux usages distincts :
+     - "background" reste l'ambre vif : fonds de bouton, badges, toujours
+       associé au texte encre (--primary-inverse) qui porte le contraste.
+     - "primary"/"hover" (texte, liens) passe en ambre foncé : l'ambre vif
+       est à ~2:1 de contraste sur blanc, loin des 4.5:1 requis pour du
+       texte. L'ambre foncé tient ~5:1, même teinte, lisible. */
+  --pico-primary: #9a6316;
+  --pico-primary-background: #f0a830;
+  --pico-primary-border: var(--pico-primary-background);
+  --pico-primary-underline: rgba(154, 99, 22, 0.5);
+  --pico-primary-hover: #7a4e10;
+  --pico-primary-hover-background: #d6921e;
+  --pico-primary-hover-border: var(--pico-primary-hover-background);
+  --pico-primary-hover-underline: var(--pico-primary-hover);
+  --pico-primary-focus: rgba(240, 168, 48, 0.35);
+  --pico-primary-inverse: #171310; /* texte encre sur fond ambre, pas blanc */
+
+  /* Secondaire = bleu veilleuse */
+  --pico-secondary: #5b7c99;
+  --pico-secondary-background: #5b7c99;
+  --pico-secondary-border: var(--pico-secondary-background);
+  --pico-secondary-underline: rgba(91, 124, 153, 0.5);
+  --pico-secondary-hover: #46657f;
+  --pico-secondary-hover-background: #46657f;
+  --pico-secondary-hover-border: var(--pico-secondary-hover-background);
+  --pico-secondary-hover-underline: var(--pico-secondary-hover);
+  --pico-secondary-focus: rgba(91, 124, 153, 0.25);
+  --pico-secondary-inverse: #fff;
+
+  /* Contrast = encre, aligné pile sur la couleur du mark */
+  --pico-contrast: #171310;
+  --pico-contrast-background: #171310;
+  --pico-contrast-border: var(--pico-contrast-background);
+  --pico-contrast-underline: rgba(23, 19, 16, 0.5);
+  --pico-contrast-hover: #000000;
+  --pico-contrast-hover-background: #000000;
+  --pico-contrast-hover-border: var(--pico-contrast-hover-background);
+  --pico-contrast-inverse: #fff;
+
+  --pico-h1-color: var(--pico-color);
+  --pico-h2-color: var(--pico-color);
+  --pico-h3-color: var(--pico-color);
+  --pico-h4-color: var(--pico-color);
+  --pico-h5-color: var(--pico-color);
+  --pico-h6-color: var(--pico-color);
+
+  --pico-card-sectioning-background-color: #f7f5f2; /* en-tête de carte (ex. "Groupe du jeudi") */
+  --pico-form-element-border-color: #e4e0da;
+  --pico-form-element-background-color: #fcfbf9; /* aligne les champs sur le blanc cassé chaud */
+}
+
+/* ---------- Mode sombre système : on force quand même la marque claire ---------- */
+@media only screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --pico-background-color: #ffffff;
+    --pico-color: #171310;
+    --pico-muted-color: #6b6459;
+    --pico-muted-border-color: #e4e0da;
+    --pico-primary: #9a6316;
+    --pico-primary-background: #f0a830;
+    --pico-primary-border: var(--pico-primary-background);
+    --pico-primary-hover: #7a4e10;
+    --pico-primary-hover-background: #d6921e;
+    --pico-primary-inverse: #171310;
+    --pico-secondary: #5b7c99;
+    --pico-secondary-background: #5b7c99;
+    --pico-secondary-hover: #46657f;
+    --pico-secondary-hover-background: #46657f;
+    --pico-contrast: #171310;
+    --pico-contrast-background: #171310;
+    --pico-contrast-inverse: #fff;
+    --pico-h1-color: var(--pico-color);
+    --pico-h2-color: var(--pico-color);
+    --pico-h3-color: var(--pico-color);
+    --pico-card-sectioning-background-color: #f7f5f2;
+  }
+}
+
+/* ---------- Statuts de présence — réutilise directement les tokens ci-dessus ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.2em 0.7em;
+  border-radius: var(--pico-border-radius);
+}
+.badge.present {
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+}
+.badge.pending {
+  background: color-mix(in srgb, var(--pico-secondary) 15%, white);
+  color: var(--pico-secondary-hover);
+}
+.badge.absent {
+  background: color-mix(in srgb, #c2493b 12%, white);
+  color: #c2493b;
+}
+
+/* ---------- État vide — une invitation, pas une excuse ---------- */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--pico-muted-color);
+}
+.empty-state strong {
+  display: block;
+  font-family: "Fraunces", serif;
+  font-size: 1.1875rem;
+  color: var(--pico-color);
+  margin-bottom: 0.25rem;
+}

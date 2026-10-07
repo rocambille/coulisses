@@ -16,6 +16,7 @@ import { NavLink } from "react-router";
 
 import Avatar from "./auth/Avatar";
 import { useMe } from "./auth/MeContext";
+import Logo from "./ui/Logo";
 
 /*
   Helper to keep JSX concise and consistent.
@@ -24,7 +25,7 @@ import { useMe } from "./auth/MeContext";
   apply active styles based on the current route.
 */
 const link = (to: string, children: ReactNode) => (
-  <li>
+  <li style={{ display: "flex" }}>
     <NavLink to={to}>{children}</NavLink>
   </li>
 );
@@ -35,7 +36,12 @@ function NavBar() {
   return (
     <nav>
       <ul>
-        {link("/", "🎭 Coulisses")}
+        {link(
+          "/",
+          <span>
+            <Logo compact size="1.2rlh" />
+          </span>,
+        )}
         {isAuthenticated && (
           <>
             {link("/account", "Mon compte")}

@@ -142,15 +142,17 @@ export default function DocumentsPage() {
       )}
 
       {documents.length === 0 && !uploading && (
-        <article style={{ textAlign: "center", padding: "2rem" }}>
-          <p>Aucun document ni photo pour cette pièce pour le moment.</p>
+        <p className="empty-state">
+          <strong>
+            Aucun document ni photo pour cette pièce pour le moment.
+          </strong>
           {isAdmin && (
-            <p style={{ color: "var(--pico-muted-color)", fontSize: "0.9rem" }}>
+            <>
               Utilisez les boutons ci-dessus pour prendre une photo avec votre
               appareil ou importer des fichiers.
-            </p>
+            </>
           )}
-        </article>
+        </p>
       )}
 
       {documents.length > 0 && (
