@@ -85,7 +85,7 @@ describe("React: DocumentsPage", () => {
       ).toBeNull();
     });
 
-    it("should not show upload or delete buttons for non-admin", async () => {
+    it("should not show delete button for non-admin", async () => {
       await renderWithStub({
         path: "/plays/:playId/documents",
         Component: DocumentsPage,
@@ -97,10 +97,6 @@ describe("React: DocumentsPage", () => {
         level: 3,
         name: /documents.*photos/i,
       });
-      expect(
-        screen.queryByRole("button", { name: /prendre.*photo/i }),
-      ).toBeNull();
-      expect(screen.queryByRole("button", { name: /importer/i })).toBeNull();
       expect(screen.queryByRole("button", { name: /supprimer/i })).toBeNull();
     });
   });

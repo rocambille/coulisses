@@ -84,44 +84,42 @@ export default function DocumentsPage() {
           </p>
         </div>
 
-        {isAdmin && (
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-            <input
-              id={cameraInputId}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-              disabled={uploading}
-            />
-            <button
-              type="button"
-              style={{ cursor: uploading ? "wait" : "pointer" }}
-              onClick={() => document.getElementById(cameraInputId)?.click()}
-            >
-              📸 Prendre une photo
-            </button>
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          <input
+            id={cameraInputId}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+            disabled={uploading}
+          />
+          <button
+            type="button"
+            style={{ cursor: uploading ? "wait" : "pointer" }}
+            onClick={() => document.getElementById(cameraInputId)?.click()}
+          >
+            📸 Prendre une photo
+          </button>
 
-            <input
-              id={fileInputId}
-              type="file"
-              accept="image/*,application/pdf"
-              multiple
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-              disabled={uploading}
-            />
-            <button
-              type="button"
-              className="secondary outline"
-              style={{ cursor: uploading ? "wait" : "pointer" }}
-              onClick={() => document.getElementById(fileInputId)?.click()}
-            >
-              📁 Importer photos / PDF
-            </button>
-          </div>
-        )}
+          <input
+            id={fileInputId}
+            type="file"
+            accept="image/*,application/pdf"
+            multiple
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+            disabled={uploading}
+          />
+          <button
+            type="button"
+            className="secondary outline"
+            style={{ cursor: uploading ? "wait" : "pointer" }}
+            onClick={() => document.getElementById(fileInputId)?.click()}
+          >
+            📁 Importer photos / PDF
+          </button>
+        </div>
       </div>
 
       {uploading && (
@@ -146,12 +144,8 @@ export default function DocumentsPage() {
           <strong>
             Aucun document ni photo pour cette pièce pour le moment.
           </strong>
-          {isAdmin && (
-            <>
-              Utilisez les boutons ci-dessus pour prendre une photo avec votre
-              appareil ou importer des fichiers.
-            </>
-          )}
+          Utilisez les boutons ci-dessus pour prendre une photo avec votre
+          appareil ou importer des fichiers.
         </p>
       )}
 

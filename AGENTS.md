@@ -230,7 +230,7 @@ async find(id: number): Promise<Item | null> { ... }
 
 ### Soft delete by default
 
-The `destroy` action uses `softDelete` (sets `deleted_at = datetime('now')`), not `hardDelete`. All read queries filter with `WHERE deleted_at IS NULL`. Do not bypass this without explicit intent.
+The `destroy` action uses `softDelete` (sets `deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')`), not `hardDelete`. All read queries filter with `WHERE deleted_at IS NULL`. Do not bypass this without explicit intent.
 
 ### Validation at the edge with Zod
 
