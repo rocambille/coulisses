@@ -4,7 +4,7 @@
 */
 
 import type { RequestHandler } from "express";
-import { Router } from "express";
+import { Router, static as serveStatic } from "express";
 import { createUploader } from "../../helpers/upload";
 import authActions from "../auth/authActions";
 import playParamConverter from "../play/playParamConverter";
@@ -55,6 +55,13 @@ const checkIsDocumentPlayTroupeAdmin: RequestHandler = (req, res, next) => {
 };
 
 router.use([PLAY_DOCUMENTS_PATH, DOCUMENT_PATH], authActions.verifyAccessToken);
+
+router.use(
+  "/uploads/plays",
+  authActions.verifyAccessToken,
+  checkIsPlayTroupeMember,
+  serveStatic(documentUploader.destDir),
+);
 
 router.get(
   PLAY_DOCUMENTS_PATH,

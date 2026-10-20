@@ -17,7 +17,7 @@
 /* Router setup                                                             */
 /* ************************************************************************ */
 
-import { Router } from "express";
+import { Router, static as serveStatic } from "express";
 
 const router = Router();
 
@@ -54,6 +54,12 @@ const avatarUploader = createUploader({
   subfolder: "avatars",
   maxSizeBytes: 2 * 1024 * 1024,
 });
+
+router.use(
+  "/uploads/avatars",
+  authActions.verifyAccessToken,
+  serveStatic(avatarUploader.destDir),
+);
 
 /* ************************************************************************ */
 /* Route constants                                                          */

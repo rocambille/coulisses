@@ -160,7 +160,6 @@ export async function createServerWith(routesPath: string) {
   /* Static file serving                                                    */
   /* ********************************************************************** */
 
-  app.use("/uploads", express.static("./data/uploads"));
   app.use("/images", express.static("./src/assets/images"));
   app.use("/manifest.json", express.static("./src/assets/manifest.json"));
 

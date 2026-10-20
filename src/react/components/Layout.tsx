@@ -21,6 +21,8 @@ import { Outlet, useLocation } from "react-router";
 import MagicLinkForm from "./auth/MagicLinkForm";
 import { useMe } from "./auth/MeContext";
 import NavBar from "./NavBar";
+import PrototypeBanner from "./ui/PrototypeBanner";
+import SiteFooter from "./ui/SiteFooter";
 
 function Layout() {
   const { isAuthenticated } = useMe();
@@ -36,6 +38,8 @@ function Layout() {
       {/* **************************************************************** */}
       {/* Persistent header                                                */}
       {/* **************************************************************** */}
+
+      <PrototypeBanner />
 
       <header>
         <NavBar />
@@ -60,6 +64,8 @@ function Layout() {
           <MagicLinkForm />
         )}
       </main>
+
+      <SiteFooter />
     </>
   );
 }

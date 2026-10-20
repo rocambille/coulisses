@@ -11,6 +11,8 @@ import VerifyPage from "./components/auth/VerifyPage";
 import ErrorPage from "./components/ErrorPage";
 import Home from "./components/Home";
 import Layout from "./components/Layout";
+import LegalPage from "./components/LegalPage";
+import PrivacyPage from "./components/PrivacyPage";
 
 import { troupeRoutes } from "./components/troupe";
 
@@ -69,6 +71,14 @@ const routes: RouteObject[] = [
           {
             path: "verify",
             element: <VerifyPage />,
+          },
+          {
+            path: "privacy",
+            element: <PrivacyPage />,
+          },
+          {
+            path: "legal",
+            element: <LegalPage />,
           },
           ...troupeRoutes,
         ],
