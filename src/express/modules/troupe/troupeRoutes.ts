@@ -19,6 +19,8 @@ const BASE_PATH = "/api/troupes";
 const TROUPE_PATH = "/api/troupes/:troupeId";
 const MEMBERS_PATH = "/api/troupes/:troupeId/members";
 const TROUPE_MEMBER_PATH = "/api/troupes/:troupeId/members/:userId";
+const INVITE_LINK_PATH = "/api/troupes/:troupeId/invite-link";
+const JOIN_PATH = "/api/troupes/:troupeId/join";
 
 router.param("troupeId", troupeParamConverter.convert);
 router.param("userId", userParamConverter.convert);
@@ -52,8 +54,11 @@ const checkCanRemoveMember: RequestHandler = async (req, res, next) => {
   }
 };
 
+// Direct join preview (Public GET with valid invite token)
+router.get(JOIN_PATH, troupeActions.getJoinInfo);
+
 router.use(
-  [BASE_PATH, TROUPE_PATH, MEMBERS_PATH, TROUPE_MEMBER_PATH],
+  [BASE_PATH, TROUPE_PATH, MEMBERS_PATH, TROUPE_MEMBER_PATH, INVITE_LINK_PATH],
   authActions.verifyAccessToken,
 );
 
@@ -61,6 +66,10 @@ router.post(BASE_PATH, troupeValidators.add, troupeActions.add);
 router.get(BASE_PATH, troupeActions.browse);
 
 router.route(TROUPE_PATH).all(checkIsMember).get(troupeActions.read);
+
+// Invite link (Admin) & Join action (Authenticated)
+router.get(INVITE_LINK_PATH, checkIsAdmin, troupeActions.getInviteLink);
+router.post(JOIN_PATH, authActions.verifyAccessToken, troupeActions.join);
 
 // Members
 router

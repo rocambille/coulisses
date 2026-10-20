@@ -24,6 +24,7 @@ export default defineConfig(({ mode }) => ({
           environment: "jsdom",
           name: "jsdom",
           setupFiles: ["tests/react/setup.ts"],
+          env: loadEnv(mode, process.cwd(), ""),
         },
       },
     ],

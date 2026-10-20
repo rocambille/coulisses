@@ -5,6 +5,11 @@
 
 import type { RequestHandler } from "express";
 import userRepository from "../user/userRepository";
+import {
+  getTroupeInviteToken,
+  getTroupeInviteUrl,
+  verifyTroupeInviteToken,
+} from "./troupeInviteHelper";
 import troupeRepository from "./troupeRepository";
 
 const browse: RequestHandler = (req, res) => {
@@ -14,6 +19,37 @@ const browse: RequestHandler = (req, res) => {
 
 const read: RequestHandler = (req, res) => {
   res.json(req.troupe);
+};
+
+const getInviteLink: RequestHandler = (req, res) => {
+  const token = getTroupeInviteToken(req.troupe.id);
+  const inviteUrl = getTroupeInviteUrl(req.troupe.id);
+  res.json({ token, inviteUrl });
+};
+
+const getJoinInfo: RequestHandler = (req, res) => {
+  const token = req.query.token;
+  if (!verifyTroupeInviteToken(req.troupe.id, token)) {
+    res.sendStatus(403);
+    return;
+  }
+
+  res.json({
+    id: req.troupe.id,
+    name: req.troupe.name,
+    description: req.troupe.description,
+  });
+};
+
+const join: RequestHandler = (req, res) => {
+  const token = req.body?.token ?? req.query.token;
+  if (!verifyTroupeInviteToken(req.troupe.id, token)) {
+    res.sendStatus(403);
+    return;
+  }
+
+  troupeRepository.addMember(req.troupe.id, req.me.id, "ACTOR");
+  res.sendStatus(204);
 };
 
 const add: RequestHandler = (req, res) => {
@@ -88,6 +124,9 @@ const removeMember: RequestHandler = (req, res) => {
 export default {
   browse,
   read,
+  getInviteLink,
+  getJoinInfo,
+  join,
   add,
   browseMembers,
   addMember,

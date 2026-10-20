@@ -31,6 +31,7 @@ export default function MembersPage() {
   const [isInviting, setIsInviting] = useState(false);
   const [errors, setErrors] = useState<ZodIssue[]>([]);
   const [leaveError, setLeaveError] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const emailId = useId();
   const roleId = useId();
@@ -71,6 +72,19 @@ export default function MembersPage() {
     }
   };
 
+  const handleCopyInviteLink = async () => {
+    try {
+      const response = await fetch(`/api/troupes/${troupeId}/invite-link`);
+      if (!response.ok) throw new Error();
+      const data: { inviteUrl: string } = await response.json();
+      await navigator.clipboard.writeText(data.inviteUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      alert("Impossible de copier le lien d'invitation.");
+    }
+  };
+
   return (
     <>
       <div
@@ -97,6 +111,19 @@ export default function MembersPage() {
               style={{ width: "auto" }}
             >
               ➕ Inviter un membre
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              type="button"
+              className="secondary outline"
+              aria-label="Copier le lien d'invitation"
+              onClick={handleCopyInviteLink}
+              style={{ width: "auto" }}
+            >
+              {linkCopied
+                ? "✅ Lien copié !"
+                : "🔗 Copier le lien d'invitation"}
             </button>
           )}
           <button
