@@ -90,4 +90,27 @@ export default (<Contract>{
       },
     },
   },
+  delete: {
+    method: "delete",
+    path: `/api/plays/${mainPlay.id}`,
+    cases: {
+      as_admin: {
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 204, body: {} },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: actorUser.id } },
+        response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/plays/${NaN}`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 204, body: {} },
+      },
+    },
+  },
 });

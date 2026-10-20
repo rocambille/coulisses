@@ -5,14 +5,17 @@
 */
 
 import { useState } from "react";
-import { useOutletContext, useParams } from "react-router";
+import { useNavigate, useOutletContext, useParams } from "react-router";
 import { mutate } from "../../helpers/mutate";
+import { useMe } from "../auth/MeContext";
 
 interface MemberRowProps {
   member: TroupeMember;
 }
 
 export default function MemberRow({ member }: MemberRowProps) {
+  const { user } = useMe();
+  const navigate = useNavigate();
   const { troupeId } = useParams();
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
 
@@ -36,14 +39,29 @@ export default function MemberRow({ member }: MemberRowProps) {
   };
 
   const handleRemove = async () => {
-    if (!confirm("Retirer ce membre de la troupe ?")) return;
+    const isSelf = member.id === user?.id;
+    if (
+      !confirm(
+        isSelf ? "Quitter la troupe ?" : "Retirer ce membre de la troupe ?",
+      )
+    )
+      return;
 
-    await mutate(
-      `/api/troupes/${troupeId}/members/${member.id}`,
-      "delete",
-      null,
-      [`/api/troupes/${troupeId}/members`],
-    );
+    try {
+      await mutate(
+        `/api/troupes/${troupeId}/members/${member.id}`,
+        "delete",
+        null,
+        ["/api/troupes", `/api/troupes/${troupeId}/members`],
+      );
+      if (isSelf) {
+        navigate("/", { replace: true });
+      }
+    } catch {
+      alert(
+        "Impossible de retirer ce membre. Vous devez laisser au moins un administrateur dans la troupe.",
+      );
+    }
   };
 
   return (

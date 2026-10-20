@@ -6,10 +6,18 @@
 */
 
 import { use, useEffect } from "react";
-import { Link, Outlet, useOutletContext, useParams } from "react-router";
+import {
+  Link,
+  Outlet,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router";
 import { getOrFetch } from "../../helpers/cache";
+import { mutate } from "../../helpers/mutate";
 
 export default function PlayLayout() {
+  const navigate = useNavigate();
   const { troupeId, playId } = useParams();
   const {
     troupe,
@@ -43,12 +51,47 @@ export default function PlayLayout() {
     };
   }, [playId, troupeId, play.title, pushBreadcrumb]);
 
+  const handleDeletePlay = async () => {
+    if (
+      !confirm(
+        `Supprimer la pièce "${play.title}" ? Toutes les scènes, rôles et documents associés seront supprimés.`,
+      )
+    ) {
+      return;
+    }
+    await mutate(`/api/plays/${playId}`, "delete", null, [
+      `/api/troupes/${troupeId}/plays`,
+    ]);
+    navigate(`/troupes/${troupeId}`, { replace: true });
+  };
+
   return (
     <>
-      <hgroup>
-        <h2>{play.title}</h2>
-        <p>{play.description}</p>
-      </hgroup>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: "1rem",
+        }}
+      >
+        <hgroup style={{ margin: 0 }}>
+          <h2>{play.title}</h2>
+          <p>{play.description}</p>
+        </hgroup>
+        {isAdmin && (
+          <button
+            type="button"
+            className="contrast outline"
+            aria-label={`Supprimer la pièce ${play.id}`}
+            style={{ width: "auto", fontSize: "smaller" }}
+            onClick={handleDeletePlay}
+          >
+            Supprimer la pièce
+          </button>
+        )}
+      </div>
 
       <nav>
         <ul>

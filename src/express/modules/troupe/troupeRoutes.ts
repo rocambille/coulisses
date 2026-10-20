@@ -40,6 +40,18 @@ const checkIsAdmin: RequestHandler = async (req, res, next) => {
   }
 };
 
+const checkCanRemoveMember: RequestHandler = async (req, res, next) => {
+  const isSelf = req.me.id === Number(req.params.userId);
+  const isAdmin =
+    troupeRepository.findMemberRole(req.troupe.id, req.me.id) === "ADMIN";
+
+  if (isAdmin || isSelf) {
+    next();
+  } else {
+    res.sendStatus(403);
+  }
+};
+
 router.use(
   [BASE_PATH, TROUPE_PATH, MEMBERS_PATH, TROUPE_MEMBER_PATH],
   authActions.verifyAccessToken,
@@ -58,8 +70,7 @@ router
 
 router
   .route(TROUPE_MEMBER_PATH)
-  .all(checkIsAdmin)
-  .put(troupeValidators.updateMember, troupeActions.updateMember)
-  .delete(troupeActions.removeMember);
+  .put(checkIsAdmin, troupeValidators.updateMember, troupeActions.updateMember)
+  .delete(checkCanRemoveMember, troupeActions.removeMember);
 
 export default router;

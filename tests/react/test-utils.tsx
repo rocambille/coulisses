@@ -218,6 +218,7 @@ export const renderWithStub = async ({
       loader,
       children,
     },
+    ...(path !== "/" ? [{ path: "/", Component: () => null }] : []),
   ]);
   const view = await act(async () =>
     render(<Stub initialEntries={initialEntries} />),

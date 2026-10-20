@@ -45,6 +45,23 @@ describe("React: MembersPage", () => {
 
       await screen.findByRole("heading", { level: 2 });
     });
+
+    it("should leave the troupe successfully", async () => {
+      vi.spyOn(window, "confirm").mockReturnValueOnce(true);
+
+      const { user } = await renderWithStub({
+        path: "/troupes/:troupeId/members",
+        Component: MembersPage,
+        initialEntries: [`/troupes/${mainTroupe.id}/members`],
+        me: actorUser,
+      });
+
+      await user.click(
+        screen.getByRole("button", { name: /quitter la troupe/i }),
+      );
+
+      expectContractCall("members", "delete", "as_self");
+    });
   });
 
   describe("as admin", () => {

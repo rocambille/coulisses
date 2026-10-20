@@ -160,5 +160,24 @@ describe("React: TroupeDashboardPage", () => {
 
       await screen.findByText(/le titre est requis/i);
     });
+
+    it("should delete a play successfully", async () => {
+      vi.spyOn(window, "confirm").mockReturnValueOnce(true);
+
+      const { user } = await renderWithStub({
+        path: "/troupes/:troupeId",
+        Component: TroupeDashboardPage,
+        initialEntries: [`/troupes/${mainTroupe.id}`],
+        me: teacherUser,
+      });
+
+      await user.click(
+        screen.getByRole("button", {
+          name: new RegExp(`supprimer la pièce ${mainPlay.id}`, "i"),
+        }),
+      );
+
+      expectContractCall("plays", "delete", "as_admin");
+    });
   });
 });

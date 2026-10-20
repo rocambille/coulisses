@@ -87,8 +87,12 @@ export default (<Contract>{
         request: { jwtPayload: { sub: teacherUser.id } },
         response: { status: 204, body: {} },
       },
-      forbidden: {
+      as_self: {
         request: { jwtPayload: { sub: actorUser.id } },
+        response: { status: 204, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: thirdUser.id } },
         response: { status: 403, body: {} },
       },
       conflict: {

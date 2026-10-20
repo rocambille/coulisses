@@ -40,6 +40,19 @@ export default function TroupeDashboardPage() {
     setIsAddingPlay(false);
   };
 
+  const handleDeletePlay = async (play: Play) => {
+    if (
+      !confirm(
+        `Supprimer la pièce "${play.title}" ? Toutes les scènes, rôles et documents associés seront supprimés.`,
+      )
+    ) {
+      return;
+    }
+    await mutate(`/api/plays/${play.id}`, "delete", null, [
+      `/api/troupes/${troupe.id}/plays`,
+    ]);
+  };
+
   return (
     <>
       <div
@@ -115,6 +128,19 @@ export default function TroupeDashboardPage() {
                 />
               </header>
               <p>{play.description || "..."}</p>
+              {isAdmin && (
+                <footer style={{ marginTop: "1rem" }}>
+                  <button
+                    aria-label={`Supprimer la pièce ${play.id}`}
+                    type="button"
+                    className="contrast outline"
+                    style={{ fontSize: "smaller", margin: 0 }}
+                    onClick={() => handleDeletePlay(play)}
+                  >
+                    Supprimer
+                  </button>
+                </footer>
+              )}
             </article>
           ))}
         </div>
