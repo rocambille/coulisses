@@ -6,7 +6,11 @@ import { useMe } from "../auth/MeContext";
 export default function TroupeLayout() {
   const { troupeId } = useParams();
   const { user } = useMe();
-  useRefresh(); // Subscribes this component to re-renders when tick changes
+  useRefresh([
+    `/api/troupes/${troupeId}`,
+    `/api/troupes/${troupeId}/members`,
+    `/api/troupes/${troupeId}/preferences`,
+  ]);
 
   const [moreBreadcrumb, pushBreadcrumb] = useState<NavItem[]>([]);
 
@@ -18,7 +22,7 @@ export default function TroupeLayout() {
     playPreferences: PlayPreference[];
     scenePreferences: ScenePreference[];
     rolePreferences: RolePreference[];
-  }>(getOrFetch("/api/preferences/me"));
+  }>(getOrFetch(`/api/troupes/${troupeId}/preferences`));
 
   const myMemberInfo = members.find((m) => m.id === user?.id);
   const isAdmin = myMemberInfo?.role === "ADMIN";

@@ -11,7 +11,7 @@ import {
 } from "./preferenceSchemas";
 
 class PreferenceRepository {
-  findAllForUser(userId: User["id"]): {
+  findAllForTroupe(troupeId: Troupe["id"]): {
     playPreferences: PlayPreference[];
     scenePreferences: ScenePreference[];
     rolePreferences: RolePreference[];
@@ -20,25 +20,30 @@ class PreferenceRepository {
       .prepare(
         `select user_id, play_id, level, created_at 
          from play_preference
-         where user_id = ?`,
+         join play on play.id = play_preference.play_id
+         where troupe_id = ?`,
       )
-      .all(userId);
+      .all(troupeId);
 
     const sceneRows = database
       .prepare(
         `select user_id, scene_id, level, created_at
          from scene_preference
-         where user_id = ?`,
+         join scene on scene.id = scene_preference.scene_id
+         join play on play.id = scene.play_id
+         where troupe_id = ?`,
       )
-      .all(userId);
+      .all(troupeId);
 
     const roleRows = database
       .prepare(
         `select user_id, scene_id, role_id, level, created_at
          from role_preference
-         where user_id = ?`,
+         join scene on scene.id = role_preference.scene_id
+         join play on play.id = scene.play_id
+         where troupe_id = ?`,
       )
-      .all(userId);
+      .all(troupeId);
 
     return {
       playPreferences: playRows.map((row) => PlayPreferenceSchema.parse(row)),

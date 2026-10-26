@@ -6,8 +6,8 @@
 import type { RequestHandler } from "express";
 import preferenceRepository from "./preferenceRepository";
 
-const getMePreferences: RequestHandler = (req, res) => {
-  const preferences = preferenceRepository.findAllForUser(req.me.id);
+const getTroupePreferences: RequestHandler = (req, res) => {
+  const preferences = preferenceRepository.findAllForTroupe(req.troupe.id);
   res.json(preferences);
 };
 
@@ -27,7 +27,7 @@ const setRolePreference: RequestHandler = (req, res) => {
 };
 
 export default {
-  getMePreferences,
+  getTroupePreferences,
   setPlayPreference,
   setScenePreference,
   setRolePreference,
