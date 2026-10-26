@@ -5,6 +5,7 @@ import type { $ZodIssue as ZodIssue } from "zod/v4/core";
 
 import { getOrFetch } from "../../helpers/cache";
 import { mutate } from "../../helpers/mutate";
+import { useMe } from "../auth/MeContext";
 import { FormError, hasError } from "../FormError";
 import Modal from "../ui/Modal";
 import PreferenceSelector from "../ui/PreferenceSelector";
@@ -15,6 +16,7 @@ const playSchema = z.object({
 });
 
 export default function TroupeDashboardPage() {
+  const { user } = useMe();
   const { troupe, isAdmin, playPreferences } = useOutletContext<{
     troupe: Troupe;
     isAdmin: boolean;
@@ -123,7 +125,9 @@ export default function TroupeDashboardPage() {
                 <PreferenceSelector
                   playId={String(play.id)}
                   currentLevel={
-                    playPreferences.find((p) => p.play_id === play.id)?.level
+                    playPreferences.find(
+                      (p) => p.play_id === play.id && p.user_id === user?.id,
+                    )?.level
                   }
                 />
               </header>
