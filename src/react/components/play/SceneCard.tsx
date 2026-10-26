@@ -49,6 +49,49 @@ export default function SceneCard({
         />
       </header>
 
+      <div style={{ float: "right" }}>
+        <div>
+          <small>
+            {
+              scenePreferences.filter(
+                (p) => p.scene_id === scene.id && p.level === "HIGH",
+              ).length
+            }{" "}
+            🔥
+          </small>
+        </div>
+        <div>
+          <small>
+            {
+              scenePreferences.filter(
+                (p) => p.scene_id === scene.id && p.level === "MEDIUM",
+              ).length
+            }{" "}
+            👍
+          </small>
+        </div>
+        <div>
+          <small>
+            {
+              scenePreferences.filter(
+                (p) => p.scene_id === scene.id && p.level === "LOW",
+              ).length
+            }{" "}
+            🤏
+          </small>
+        </div>
+        <div>
+          <small>
+            {
+              scenePreferences.filter(
+                (p) => p.scene_id === scene.id && p.level === "NOT_INTERESTED",
+              ).length
+            }{" "}
+            ❌
+          </small>
+        </div>
+      </div>
+
       <p>
         <em>{scene.description || "..."}</em>
       </p>
