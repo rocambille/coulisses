@@ -22,38 +22,51 @@ let csrfTokenExpiresAt = Date.now();
   - Renews or regenerates it if needed
   - Persists it in a secure cookie
 */
+const CSRF_COOKIE = "__Host-x-csrf-token";
+
+// 32 random bytes as hex — works on any browser with Web Crypto
+const generateToken = (): string =>
+  Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) =>
+    b.toString(16).padStart(2, "0"),
+  ).join("");
+
+const readCookie = (name: string): string | null => {
+  const prefix = `${name}=`;
+  const entry = document.cookie
+    .split("; ")
+    .find((part) => part.startsWith(prefix));
+  return entry ? decodeURIComponent(entry.slice(prefix.length)) : null;
+};
+
+const writeCookie = (name: string, value: string, expiresAt: number) => {
+  // __Host- prefix requires Secure + Path=/ and no Domain
+  document.cookie = [
+    `${name}=${encodeURIComponent(value)}`,
+    "Path=/",
+    "Secure",
+    "SameSite=Strict",
+    `Expires=${new Date(expiresAt).toUTCString()}`,
+  ].join("; ");
+};
+
 export const csrfToken = async () => {
-  const getToken = async () => {
+  const getToken = () => {
     // Return a new token if expiration date is reached
     if (Date.now() > csrfTokenExpiresAt) {
-      return crypto.randomUUID();
+      return generateToken();
     }
 
-    // Get the stored token if it exists
-    const token = (await cookieStore.get("__Host-x-csrf-token"))?.value;
-
-    // Return a new token if not found in cookies
-    if (token == null) {
-      return crypto.randomUUID();
-    }
-
-    // Return the stored unexpired token otherwise
-    return token;
+    // Return the stored token, or a new one if not found
+    return readCookie(CSRF_COOKIE) ?? generateToken();
   };
 
-  const token = await getToken();
+  const token = getToken();
 
   // Update the expiration date for the token
   csrfTokenExpiresAt = Date.now() + csrfTokenExpiresIn;
 
   // Set/update the token in a secure cookie
-  await cookieStore.set({
-    name: "__Host-x-csrf-token",
-    value: token,
-    path: "/",
-    sameSite: "strict",
-    expires: csrfTokenExpiresAt,
-  });
+  writeCookie(CSRF_COOKIE, token, csrfTokenExpiresAt);
 
   return token;
 };
