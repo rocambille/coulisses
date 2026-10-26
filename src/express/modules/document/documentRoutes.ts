@@ -61,7 +61,8 @@ router.use(
   "/uploads/plays",
   authActions.verifyAccessToken,
   (req, res, next) => {
-    if (!documentRepository.canAccess(req.path, req.me.id)) {
+    const fileUrl = `/uploads/plays${req.path}`;
+    if (!documentRepository.canAccess(fileUrl, req.me.id)) {
       res.sendStatus(404);
       return;
     }
