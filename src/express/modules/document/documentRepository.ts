@@ -56,6 +56,19 @@ class DocumentRepository {
     return Number(row?.count);
   }
 
+  canAccess(fileUrl: string, userId: number): boolean {
+    const row = database
+      .prepare(
+        `select 1 from play_document pd
+         join play p on p.id = pd.play_id
+         join troupe_member tm on tm.troupe_id = p.troupe_id
+         where pd.file_url = ? and tm.user_id = ?`,
+      )
+      .get(fileUrl, userId);
+
+    return row !== undefined;
+  }
+
   hardDelete(id: number): boolean {
     const result = database
       .prepare("delete from play_document where id = ?")

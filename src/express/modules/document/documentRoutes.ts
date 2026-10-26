@@ -12,6 +12,7 @@ import playRepository from "../play/playRepository";
 import troupeRepository from "../troupe/troupeRepository";
 import documentActions from "./documentActions";
 import documentParamConverter from "./documentParamConverter";
+import documentRepository from "./documentRepository";
 
 const router = Router();
 
@@ -59,7 +60,13 @@ router.use([PLAY_DOCUMENTS_PATH, DOCUMENT_PATH], authActions.verifyAccessToken);
 router.use(
   "/uploads/plays",
   authActions.verifyAccessToken,
-  checkIsPlayTroupeMember,
+  (req, res, next) => {
+    if (!documentRepository.canAccess(req.path, req.me.id)) {
+      res.sendStatus(404);
+      return;
+    }
+    next();
+  },
   serveStatic(documentUploader.destDir),
 );
 
