@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { useOutletContext } from "react-router";
 import { mutate } from "../../helpers/mutate";
 
 function PreferenceSelector({
@@ -13,6 +14,7 @@ function PreferenceSelector({
   currentLevel?: string;
 }) {
   const selectId = useId();
+  const { troupe } = useOutletContext<{ troupe: Troupe }>();
   const [isPending, setIsPending] = useState(false);
 
   const handleChange = async (level: string) => {
@@ -23,16 +25,19 @@ function PreferenceSelector({
           `/api/scenes/${sceneId}/roles/${roleId}/preferences`,
           "post",
           { level },
-          ["/api/preferences/me", `/api/plays/${playId}/casting/dashboard`],
+          [
+            `/api/troupes/${troupe.id}/preferences`,
+            `/api/plays/${playId}/casting/dashboard`,
+          ],
         );
       } else if (sceneId) {
         await mutate(`/api/scenes/${sceneId}/preferences`, "post", { level }, [
-          "/api/preferences/me",
+          `/api/troupes/${troupe.id}/preferences`,
           `/api/plays/${playId}/casting/dashboard`,
         ]);
       } else {
         await mutate(`/api/plays/${playId}/preferences`, "post", { level }, [
-          "/api/preferences/me",
+          `/api/troupes/${troupe.id}/preferences`,
           `/api/plays/${playId}/casting/dashboard`,
         ]);
       }

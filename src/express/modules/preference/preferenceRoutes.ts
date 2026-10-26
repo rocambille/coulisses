@@ -13,10 +13,10 @@ import playParamConverter from "../play/playParamConverter";
 import playRepository from "../play/playRepository";
 import roleParamConverter from "../role/roleParamConverter";
 import sceneParamConverter from "../scene/sceneParamConverter";
+import troupeParamConverter from "../troupe/troupeParamConverter";
 import troupeRepository from "../troupe/troupeRepository";
 import preferenceActions from "./preferenceActions";
 import preferenceValidators from "./preferenceValidators";
-import troupeParamConverter from "../troupe/troupeParamConverter";
 
 const TROUPE_PREFERENCES_PATH = "/api/troupes/:troupeId/preferences";
 const PLAY_PREFERENCES_PATH = "/api/plays/:playId/preferences";
@@ -66,7 +66,11 @@ router.use(
   authActions.verifyAccessToken,
 );
 
-router.get(TROUPE_PREFERENCES_PATH, checkIsTroupeMember, preferenceActions.getTroupePreferences);
+router.get(
+  TROUPE_PREFERENCES_PATH,
+  checkIsTroupeMember,
+  preferenceActions.getTroupePreferences,
+);
 
 router.post(
   PLAY_PREFERENCES_PATH,
