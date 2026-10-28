@@ -226,15 +226,35 @@ export const renderWithStub = async ({
   return { ...view, user: userEvent.setup() };
 };
 
-const mockedRandomUUID = "a-b-c-d-e";
+export const mockedCsrfToken = "a".repeat(64);
 
 export const setupMocks = ({
   forceCases,
 }: {
   forceCases?: Record<`${string}.${string}`, keyof Test["cases"]>;
 } = {}) => {
-  vi.stubGlobal("cookieStore", { get: vi.fn(), set: vi.fn() });
-  vi.spyOn(crypto, "randomUUID").mockImplementation(() => mockedRandomUUID);
+  // biome-ignore lint/suspicious/noDocumentCookie: test mock setup
+  document.cookie = `__Host-x-csrf-token=${mockedCsrfToken}; Path=/; Secure; SameSite=Strict`;
+
+  vi.spyOn(crypto, "getRandomValues").mockImplementation(
+    <T extends ArrayBufferView | null>(array: T): T => {
+      if (array) {
+        const uint8 = new Uint8Array(
+          array.buffer,
+          array.byteOffset,
+          array.byteLength,
+        );
+        uint8.fill(0xaa);
+      }
+      return array;
+    },
+  );
+
+  afterEach(() => {
+    // biome-ignore lint/suspicious/noDocumentCookie: test cleanup
+    document.cookie =
+      "__Host-x-csrf-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  });
 
   const customFetch = (path: string, method: string) => {
     if (forceCases) {
@@ -334,15 +354,9 @@ export const expectContractCall = (
   };
 
   if (test.method !== "get") {
-    expect(globalThis.cookieStore.set).toHaveBeenCalledWith({
-      expires: expect.any(Number),
-      name: "__Host-x-csrf-token",
-      path: "/",
-      sameSite: "strict",
-      value: mockedRandomUUID,
-    });
+    expect(document.cookie).toContain(`__Host-x-csrf-token=${mockedCsrfToken}`);
 
-    headers["X-CSRF-Token"] = mockedRandomUUID;
+    headers["X-CSRF-Token"] = mockedCsrfToken;
   }
   if (caseDetails.request.body) {
     headers["Content-Type"] = "application/json";

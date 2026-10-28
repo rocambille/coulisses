@@ -40,6 +40,7 @@ const readCookie = (name: string): string | null => {
 
 const writeCookie = (name: string, value: string, expiresAt: number) => {
   // __Host- prefix requires Secure + Path=/ and no Domain
+  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API is missing on older devices
   document.cookie = [
     `${name}=${encodeURIComponent(value)}`,
     "Path=/",

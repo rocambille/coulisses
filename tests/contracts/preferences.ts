@@ -6,33 +6,32 @@ import {
 } from "../fixtures/preferences";
 import { mainRoles } from "../fixtures/roles";
 import { mainScenes } from "../fixtures/scenes";
+import { mainTroupe } from "../fixtures/troupes";
 import { teacherUser, thirdUser } from "../fixtures/users";
 
 export default (<Contract>{
-  get_me: {
+  get_troupe: {
     method: "get",
-    path: "/api/preferences/me",
+    path: `/api/troupes/${mainTroupe.id}/preferences`,
     cases: {
       as_member: {
         request: { jwtPayload: { sub: teacherUser.id } },
         response: {
           status: 200,
           body: {
-            playPreferences: mainPlayPreferences.filter(
-              (p) => p.user_id === teacherUser.id,
-            ),
-            scenePreferences: mainScenePreferences.filter(
-              (s) => s.user_id === teacherUser.id,
-            ),
-            rolePreferences: mainRolePreferences.filter(
-              (r) => r.user_id === teacherUser.id,
-            ),
+            playPreferences: mainPlayPreferences,
+            scenePreferences: mainScenePreferences,
+            rolePreferences: mainRolePreferences,
           },
         },
       },
       unauthorized: {
         request: { jwtPayload: null },
         response: { status: 401, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: thirdUser.id } },
+        response: { status: 403, body: {} },
       },
     },
   },

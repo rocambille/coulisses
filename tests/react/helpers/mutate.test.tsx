@@ -37,18 +37,16 @@ describe("React Helpers: mutate", () => {
     });
 
     it("should reuse CSRF token", async () => {
-      const storedValue = {
-        value: "csrf-token-value",
-      };
-      const getMock = vi.fn().mockReturnValue(storedValue);
-      vi.stubGlobal("cookieStore", { get: getMock, set: vi.fn() });
+      const randomSpy = vi.spyOn(crypto, "getRandomValues");
 
       // first call sets expiration time + 30 seconds
       await mutate("/api/health", "delete");
+      const callsAfterFirst = randomSpy.mock.calls.length;
+
       // second call should reuse CSRF token
       await mutate("/api/health", "delete");
 
-      expect(getMock).toHaveBeenCalledWith("__Host-x-csrf-token");
+      expect(randomSpy).toHaveBeenCalledTimes(callsAfterFirst);
     });
 
     it("should refresh matching cache entries when paths are provided", async () => {

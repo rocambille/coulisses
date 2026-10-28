@@ -121,11 +121,10 @@ describe("<AccountPage />", () => {
   });
 
   it("should upload a new avatar", async () => {
-    const createObjectURLMock = vi.fn().mockReturnValue("blob:mock-url");
-    vi.stubGlobal("URL", {
-      createObjectURL: createObjectURLMock,
-      revokeObjectURL: vi.fn(),
-    });
+    const createObjectURLMock = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:mock-url");
+    vi.spyOn(URL, "revokeObjectURL").mockReturnValue();
 
     const { user } = await renderWithStub({
       path: "/",
@@ -155,11 +154,8 @@ describe("<AccountPage />", () => {
   });
 
   it("should display inline errors when uploaded file is invalid", async () => {
-    const createObjectURLMock = vi.fn().mockReturnValue("blob:mock-url");
-    vi.stubGlobal("URL", {
-      createObjectURL: createObjectURLMock,
-      revokeObjectURL: vi.fn(),
-    });
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:mock-url");
+    vi.spyOn(URL, "revokeObjectURL").mockReturnValue();
 
     const { user } = await renderWithStub({
       path: "/",
