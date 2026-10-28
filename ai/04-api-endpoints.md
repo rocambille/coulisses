@@ -52,30 +52,42 @@ L'authentification repose sur un système de lien magique (token éphémère env
 - `GET /api/troupes/:troupeId`
   - **Action** : Détails d'une troupe spécifique.
 
+- `GET /api/troupes/:troupeId/invite-link` *(Admin uniquement)*
+  - **Action** : Génère une URL avec token d'invitation direct pour rejoindre la troupe (`/troupes/:troupeId/join?token=...`).
+
+- `GET /api/troupes/join/:token`
+  - **Action** : Vérifie la validité du token d'invitation et retourne les informations publiques de la troupe invitante.
+
+- `POST /api/troupes/join/:token`
+  - **Action** : L'utilisateur connecté rejoint la troupe en tant que comédien (`ACTOR`).
+
 - `GET /api/troupes/:troupeId/members`
   - **Action** : Liste tous les membres de la troupe (Admin et Comédiens).
 
 - `POST /api/troupes/:troupeId/members` *(Admin uniquement)*
   - **Body** : `{ email: string, role: 'ADMIN' | 'ACTOR' }`
-  - **Action** : Invite un utilisateur dans la troupe. Si l'email n'existe pas en base, un profil temporaire est créé.
+  - **Action** : Invite un utilisateur dans la troupe par email (magic link).
 
 - `PUT /api/troupes/:troupeId/members/:userId` *(Admin uniquement)*
   - **Body** : `{ role: 'ADMIN' | 'ACTOR' }`
   - **Action** : Modifie le rôle du membre dans la troupe.
 
-- `DELETE /api/troupes/:troupeId/members/:userId` *(Admin uniquement)*
-  - **Action** : Retire un utilisateur de la troupe (contrainte : au moins un admin doit subsister).
+- `DELETE /api/troupes/:troupeId/members/:userId`
+  - **Action** : Retire un utilisateur de la troupe (exécutable par un Admin pour exclure un membre, ou par l'utilisateur lui-même pour quitter la troupe). Contrainte : au moins un admin doit subsister.
 
 ---
 
-## 🎭 3. Répertoire (Pièces & Envies)
+## 🎭 3. Répertoire & Documents de Pièces
 
 - `GET /api/troupes/:troupeId/plays`
   - **Action** : Liste toutes les pièces proposées au sein d'une troupe.
 
 - `POST /api/troupes/:troupeId/plays` *(Admin uniquement)*
-  - **Body** : `{ title: string, description?: string }`
-  - **Action** : Crée / propose une nouvelle pièce pour la troupe.
+  - **Body (JSON ou multipart/form-data)** :
+    - `title: string`
+    - `description?: string`
+    - `document?: File` *(Optionnel - Nouveau feedback : permet de joindre directement le script/texte au format PDF ou image dès la création, sans devoir créer la pièce "à vide")*
+  - **Action** : Crée une nouvelle pièce pour la troupe et y attache éventuellement son premier document.
 
 - `GET /api/plays/:playId`
   - **Action** : Détails d'une pièce spécifique.
@@ -85,11 +97,26 @@ L'authentification repose sur un système de lien magique (token éphémère env
   - **Action** : Modifie une pièce.
 
 - `DELETE /api/plays/:playId` *(Admin uniquement)*
-  - **Action** : Supprime une pièce.
+  - **Action** : Supprime une pièce et l'ensemble de ses dépendances (documents, scènes, rôles).
 
 - `POST /api/plays/:playId/preferences` *(Comédien & Admin)*
   - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
   - **Action** : L'utilisateur enregistre ou met à jour son niveau d'envie global pour cette pièce (`play_preference`).
+
+### Documents de Pièces
+
+- `GET /api/plays/:playId/documents`
+  - **Action** : Liste tous les documents et photos associés à la pièce (PDF, images).
+
+- `POST /api/plays/:playId/documents` *(Tous les membres de la troupe)*
+  - **Body** : `multipart/form-data` avec le champ `documents` (fichiers multiples : PDF, PNG, JPEG, WEBP, GIF, max 10 Mo).
+  - **Action** : Téléverse et associe un ou plusieurs documents à la pièce.
+
+- `DELETE /api/documents/:documentId` *(Admin uniquement)*
+  - **Action** : Supprime un document et son fichier physique associé.
+
+- `GET /uploads/plays/*` *(Membres de la troupe de la pièce)*
+  - **Action** : Accès contrôlé au fichier statique uploadé, après vérification d'appartenance à la troupe.
 
 ---
 
@@ -129,10 +156,10 @@ L'authentification repose sur un système de lien magique (token éphémère env
 
 ---
 
-## ⭐️ 5. Casting & Distribution
+## ⭐️ 5. Casting, Distribution & Préférences de Troupe
 
-- `GET /api/preferences/me`
-  - **Action** : Retourne l'ensemble des préférences de l'utilisateur connecté (`{ playPreferences, scenePreferences, rolePreferences }`).
+- `GET /api/troupes/:troupeId/preferences` *(Membres de la troupe)*
+  - **Action** : Retourne l'ensemble des préférences de la troupe (`{ playPreferences, scenePreferences, rolePreferences }`), permettant d'afficher les compteurs de votes par scène et les pastilles individuelles.
 
 - `POST /api/scenes/:sceneId/preferences` *(Comédien & Admin)*
   - **Body** : `{ level: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT_INTERESTED' }`
@@ -144,6 +171,9 @@ L'authentification repose sur un système de lien magique (token éphémère env
 
 - `GET /api/plays/:playId/castings`
   - **Action** : Endpoint agrégé (Dashboard). Retourne l'ensemble de la matrice : les scènes de la pièce, les rôles associés à chaque scène, toutes les préférences des comédiens, et le casting officiel actuel.
+
+- `GET /api/plays/:playId/voting-status` *(Admin uniquement - Nouveau feedback)*
+  - **Action** : Retourne le suivi nominatif de participation aux votes pour la pièce. Liste l'ensemble des comédiens de la troupe avec leur statut : qui a voté et qui n'a pas encore voté (globalement ou par scène).
 
 - `POST /api/castings` *(Admin uniquement)*
   - **Body** : `{ user_id: number, role_id: number, scene_id: number }`
@@ -175,3 +205,19 @@ L'authentification repose sur un système de lien magique (token éphémère env
 - `POST /api/events/:eventId/presence` *(Tous les membres)*
   - **Body** : `{ status: 'PENDING' | 'PRESENT' | 'ABSENT' }`
   - **Action** : Met à jour la participation de l'utilisateur connecté à l'événement (`event_presence`).
+
+---
+
+## 🔔 7. Notifications & Alertes (Roadmap)
+
+- `POST /api/notifications/subscribe`
+  - **Body** : `{ endpoint: string, keys: { p256dh: string, auth: string } }`
+  - **Action** : Enregistre l'abonnement Web Push de l'utilisateur pour le navigateur courant.
+
+- `POST /api/notifications/unsubscribe`
+  - **Body** : `{ endpoint: string }`
+  - **Action** : Désactive et supprime un abonnement Web Push.
+
+- `POST /api/troupes/:troupeId/notify` *(Admin uniquement)*
+  - **Body** : `{ title: string, body: string, url?: string, target?: 'ALL' | 'NON_VOTERS' }`
+  - **Action** : Déclenche l'envoi d'une notification push aux membres de la troupe (ex: relance ciblée des comédiens n'ayant pas voté, ou annonce d'un nouvel événement).

@@ -8,11 +8,13 @@ Cette section décrit les informations stockées par l'application sous forme de
 
 ### L'Espace de travail
 * **Utilisateur (`user`)** : Une personne utilisant l'application. Elle est définie par un identifiant unique, un nom, une adresse email (pour la connexion via lien magique) et sa date d'inscription.
-* **Troupe (`troupe`)** : Le groupe théâtral. Elle possède un nom, une description, un lien pour rejoindre un groupe de discussion (ex: whatsapp, discord, telegram, etc.).
+* **Troupe (`troupe`)** : Le groupe théâtral. Elle possède un nom, une description, un lien pour rejoindre un groupe de discussion (ex: WhatsApp, Discord, Telegram, etc.).
 * **Membre de la Troupe (`troupe_member`)** : Le lien entre un Utilisateur et une Troupe. Cette association porte le rôle de l'utilisateur au sein de cette troupe (Administrateur ou Comédien). Un utilisateur peut être dans plusieurs troupes avec des rôles différents.
+* **Jeton d'invitation (`troupe_invite_token`)** : Jeton cryptographique signé éphémère (JWT) permettant de générer une URL d'invitation directe (`/troupes/:troupeId/join?token=...`) que l'administrateur peut copier et partager sur les réseaux/messageries.
 
-### Le Répertoire
+### Le Répertoire & Documents
 * **Pièce (`play`)** : Une œuvre proposée ou jouée par la troupe. Elle est définie par un titre, une description, et appartient à une Troupe précise.
+* **Document de Pièce (`play_document`)** : Un fichier joint associé à une pièce (texte complet, extrait de script, tapuscrit au format PDF, photo de couverture ou de page clé au format image). **Un document peut être joint directement dès la création de la pièce** pour éviter de créer une pièce "à vide", ou ajouté ultérieurement dans l'onglet Documents.
 * **Envie / Avis sur une Pièce (`play_preference`)** : L'avis d'un comédien sur une pièce proposée. Relie un Utilisateur à une Pièce avec un niveau d'envie (par exemple: "J'aimerais la jouer", "Bof").
 
 ### Le Découpage
@@ -20,14 +22,20 @@ Cette section décrit les informations stockées par l'application sous forme de
 * **Rôle (`role`)** : Un personnage de la Pièce. Il possède un nom et une description.
 * **Apparition du Rôle dans une Scène (`role_scene`)** : L'indication qu'un Rôle apparaît et interagit dans une Scène spécifique.
 
-### La Distribution (Casting)
+### La Distribution (Casting) & Suivi des votes
 * **Scène souhaitée (`scene_preference`)** : L'envie exprimée par un Utilisateur pour que la Scène soit conservée dans le spectacle monté par la troupe (indépendamment du fait d'y jouer ou non).
-* **Préférence (`role_preference`)** : L'envie exprimée par un Utilisateur pour jouer un Rôle précis dans une Scène précise. Elle contient un niveau d'envie (ex: "Très envie", "Pourquoi pas"). *(L'interface utilisateur permettra de cocher un rôle de manière globale pour remplir automatiquement les préférences de l'utilisateur pour ce rôle pour toutes les scènes dans lesquelles il apparaît).*
+* **Synthèse des votes par scène** :
+  - **Compteurs agrégés** : Nombre de comédiens ayant voté ❤️ (`HIGH`), 👍 (`MEDIUM`), 🤏 (`LOW`), ou ❌ (`NOT_INTERESTED`).
+  - **Suivi nominatif (Votants / Non-votants)** : Croisement entre la liste des membres actifs de la troupe (`troupe_member`) et les préférences enregistrées (`scene_preference`) pour identifier nominativement qui a voté et qui n'a pas encore voté sur les scènes d'une pièce.
+* **Préférence de Rôle (`role_preference`)** : L'envie exprimée par un Utilisateur pour jouer un Rôle précis dans une Scène précise. Elle contient un niveau d'envie (ex: "Très envie", "Pourquoi pas").
 * **Distribution Officielle (`casting`)** : L'assignation finale décidée par l'administrateur. Relie un Utilisateur à un Rôle pour une Scène donnée. *(Règle métier stricte : Pour une scène spécifique, un rôle ne peut être assigné qu'à un seul utilisateur).*
 
 ### L'Agenda
 * **Événement (`event`)** : Une échéance temporelle pour la Troupe (Cours, Répétitions, Représentations, etc.). Contient un titre, un type d'événement (avec un type "autre" pour les événements ne correspondant à aucun des types prédéfinis), les dates/heures de début et fin, l'éventuel lieu, une description et le lien vers l'Utilisateur créateur.
 * **Présence à l'Événement (`event_presence`)** : Le statut de participation d'un Utilisateur à un Événement. Ce statut peut être "À confirmer", "Présent" ou "Absent".
+
+### Les Notifications & Alertes (Roadmap)
+* **Abonnement Push (`push_subscription`)** : Enregistrement de l'abonnement Web Push d'un utilisateur sur un navigateur/appareil donné. Stocke l'endpoint et les clés de chiffrement (`p256dh`, `auth`) pour permettre au serveur d'envoyer des notifications ciblées (création d'événement, distribution publiée, relance de vote).
 
 ---
 
@@ -213,9 +221,41 @@ CREATE TABLE event_presence (
     FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 );
+
+-- ==========================================
+-- DOCUMENTS (PIÈCES & TEXTES)
+-- ==========================================
+
+CREATE TABLE play_document (
+    id INTEGER PRIMARY KEY,
+    play_id INTEGER NOT NULL,
+    file_url TEXT NOT NULL,
+    mime_type VARCHAR(64) NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    order_index INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ')),
+    FOREIGN KEY (play_id) REFERENCES play(id) ON DELETE CASCADE
+);
+
+-- ==========================================
+-- NOTIFICATIONS PUSH (ROADMAP)
+-- ==========================================
+
+CREATE TABLE push_subscription (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ')),
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+);
 ```
 
 ### Notes d'implémentation
 1. **SQLite Synchrone** : Les booléens sont stockés en `INTEGER` (0 ou 1) de manière native par SQLite (ex: `is_active`).
-2. **Pas de mot de passe** : L'authentification par *Magic Link* utilisera un mécanisme de jeton (potentiellement via une table `magic_link_token` externe au modèle métier principal).
-3. **Ordre alphabétique des tables de jointure** : Conformément aux bonnes pratiques, les tables d'association pure sont nommées par ordre alphabétique (`role_scene`), à l'exception des entités conceptuelles fortes (`troupe_member`, `play_like`, `event_presence`).
+2. **Pas de mot de passe** : L'authentification par *Magic Link* utilise la table `magic_link_token` avec consommation atomique du jeton.
+3. **Sécurité des documents et téléversement** : Les documents sont stockés sur le système de fichiers (`/data/uploads/plays`), servis avec contrôle d'accès strict via Express (`documentRepository.canAccess`) vérifiant que l'utilisateur demandeur appartient bien à la troupe de la pièce.
+4. **Adhésion par lien d'invitation** : Le lien d'invitation direct repose sur un jeton JWT signé avec `APP_SECRET` contenant le `troupeId`, sans persistance nécessaire en base de données.
+5. **Suivi des votes** : Le calcul des "votants" vs "non-votants" s'effectue dynamiquement en comparant les utilisateurs de `troupe_member` avec ceux présents dans `scene_preference` pour les scènes actives de la pièce.
+6. **Ordre alphabétique des tables de jointure** : Conformément aux bonnes pratiques, les tables d'association pure sont nommées par ordre alphabétique (`role_scene`), à l'exception des entités conceptuelles fortes (`troupe_member`, `play_preference`, `event_presence`).
