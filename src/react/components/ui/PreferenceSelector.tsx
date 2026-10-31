@@ -18,6 +18,12 @@ function PreferenceSelector({
   const [isPending, setIsPending] = useState(false);
 
   const handleChange = async (level: string) => {
+    const paths = [
+      `/api/troupes/${troupe.id}/preferences`,
+      `/api/plays/${playId}/castings`,
+      `/api/plays/${playId}/voting-status`,
+    ];
+
     setIsPending(true);
     try {
       if (roleId && sceneId) {
@@ -25,21 +31,22 @@ function PreferenceSelector({
           `/api/scenes/${sceneId}/roles/${roleId}/preferences`,
           "post",
           { level },
-          [
-            `/api/troupes/${troupe.id}/preferences`,
-            `/api/plays/${playId}/casting/dashboard`,
-          ],
+          paths,
         );
       } else if (sceneId) {
-        await mutate(`/api/scenes/${sceneId}/preferences`, "post", { level }, [
-          `/api/troupes/${troupe.id}/preferences`,
-          `/api/plays/${playId}/casting/dashboard`,
-        ]);
+        await mutate(
+          `/api/scenes/${sceneId}/preferences`,
+          "post",
+          { level },
+          paths,
+        );
       } else {
-        await mutate(`/api/plays/${playId}/preferences`, "post", { level }, [
-          `/api/troupes/${troupe.id}/preferences`,
-          `/api/plays/${playId}/casting/dashboard`,
-        ]);
+        await mutate(
+          `/api/plays/${playId}/preferences`,
+          "post",
+          { level },
+          paths,
+        );
       }
     } finally {
       setIsPending(false);

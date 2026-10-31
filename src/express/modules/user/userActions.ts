@@ -22,6 +22,7 @@
 import type { RequestHandler } from "express";
 
 import { deleteUploadedFile } from "../../helpers/upload";
+import notificationRepository from "../notification/notificationRepository";
 import userRepository from "./userRepository";
 
 /* ************************************************************************ */
@@ -69,6 +70,8 @@ const editMe: RequestHandler = (req, res) => {
 */
 const destroyMe: RequestHandler = (req, res) => {
   userRepository.softDelete(req.me.id);
+  notificationRepository.deleteByUser(req.me.id);
+  deleteUploadedFile(req.me.avatar_url);
 
   res.sendStatus(204);
 };

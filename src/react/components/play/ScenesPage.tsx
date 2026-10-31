@@ -6,11 +6,12 @@
 
 import { use, useState } from "react";
 import { useOutletContext, useParams } from "react-router";
-import { getOrFetch } from "../../helpers/cache";
+import { getOrFetch, refresh } from "../../helpers/cache";
 import { mutate } from "../../helpers/mutate";
 import Modal from "../ui/Modal";
 import SceneCard from "./SceneCard";
 import SceneForm, { type SceneFormData } from "./SceneForm";
+import VotingStatusModal from "./VotingStatusModal";
 
 export default function ScenesPage() {
   const { playId } = useParams();
@@ -22,6 +23,7 @@ export default function ScenesPage() {
 
   const [editingScene, setEditingScene] = useState<Scene | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [votesFor, setVotesFor] = useState<{ scene?: Scene } | null>(null);
 
   const scenes = use<Scene[]>(getOrFetch(`/api/plays/${playId}/scenes`));
   const roles = use<RoleWithScenes[]>(getOrFetch(`/api/plays/${playId}/roles`));
@@ -30,6 +32,7 @@ export default function ScenesPage() {
     await mutate(`/api/plays/${playId}/scenes`, "post", data, [
       `/api/plays/${playId}/scenes`,
       `/api/plays/${playId}/roles`,
+      `/api/plays/${playId}/voting-status`,
     ]);
     setIsAdding(false);
   };
@@ -40,6 +43,7 @@ export default function ScenesPage() {
     await mutate(`/api/scenes/${editingScene.id}`, "put", data, [
       `/api/plays/${playId}/scenes`,
       `/api/plays/${playId}/roles`,
+      `/api/plays/${playId}/voting-status`,
     ]);
     setEditingScene(null);
   };
@@ -49,7 +53,14 @@ export default function ScenesPage() {
     await mutate(`/api/scenes/${sceneId}`, "delete", null, [
       `/api/plays/${playId}/scenes`,
       `/api/plays/${playId}/roles`,
+      `/api/plays/${playId}/voting-status`,
     ]);
+  };
+
+  const showVotes = (scene?: Scene) => {
+    // Other members vote too: never open this view on a cached answer
+    refresh(`/api/plays/${playId}/voting-status`);
+    setVotesFor({ scene });
   };
 
   const emptyScene: SceneFormData = {
@@ -88,14 +99,24 @@ export default function ScenesPage() {
         </hgroup>
 
         {isAdmin && (
-          <button
-            type="button"
-            aria-label="Ajouter une scène"
-            onClick={() => setIsAdding(true)}
-            style={{ width: "auto" }}
-          >
-            ➕ Ajouter une scène
-          </button>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            <button
+              type="button"
+              className="secondary outline"
+              onClick={() => showVotes()}
+              style={{ width: "auto" }}
+            >
+              📊 Suivi des votes
+            </button>
+            <button
+              type="button"
+              aria-label="Ajouter une scène"
+              onClick={() => setIsAdding(true)}
+              style={{ width: "auto" }}
+            >
+              ➕ Ajouter une scène
+            </button>
+          </div>
         )}
       </div>
 
@@ -119,8 +140,17 @@ export default function ScenesPage() {
               if (target) setEditingScene(target);
             }}
             onDelete={handleDelete}
+            onShowVotes={showVotes}
           />
         ))
+      )}
+
+      {votesFor && (
+        <VotingStatusModal
+          playId={String(playId)}
+          scene={votesFor.scene}
+          onClose={() => setVotesFor(null)}
+        />
       )}
 
       {/* Add Modal */}

@@ -10,6 +10,7 @@ interface SceneCardProps {
   rolePreferences: RolePreference[];
   onEdit: (sceneId: number) => void;
   onDelete: (sceneId: number) => void;
+  onShowVotes: (scene: Scene) => void;
 }
 
 export default function SceneCard({
@@ -19,6 +20,7 @@ export default function SceneCard({
   rolePreferences,
   onEdit,
   onDelete,
+  onShowVotes,
 }: SceneCardProps) {
   const { playId } = useParams();
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
@@ -124,7 +126,10 @@ export default function SceneCard({
           ) : (
             roles.map((role) => {
               const myRolePreference = rolePreferences.find(
-                (p) => p.role_id === role.id && p.user_id === user?.id,
+                (p) =>
+                  p.scene_id === scene.id &&
+                  p.role_id === role.id &&
+                  p.user_id === user?.id,
               );
               return (
                 <div
@@ -171,6 +176,17 @@ export default function SceneCard({
           >
             Supprimer
           </button>
+          {scene.is_active && (
+            <button
+              aria-label={`Voir les votes de la scène ${scene.id}`}
+              type="button"
+              className="secondary outline"
+              onClick={() => onShowVotes(scene)}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Voir les votes
+            </button>
+          )}
         </footer>
       )}
     </article>

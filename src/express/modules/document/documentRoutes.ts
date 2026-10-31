@@ -5,7 +5,6 @@
 
 import type { RequestHandler } from "express";
 import { Router, static as serveStatic } from "express";
-import { createUploader } from "../../helpers/upload";
 import authActions from "../auth/authActions";
 import playParamConverter from "../play/playParamConverter";
 import playRepository from "../play/playRepository";
@@ -13,23 +12,12 @@ import troupeRepository from "../troupe/troupeRepository";
 import documentActions from "./documentActions";
 import documentParamConverter from "./documentParamConverter";
 import documentRepository from "./documentRepository";
+import documentUploader from "./documentUploader";
 
 const router = Router();
 
 const PLAY_DOCUMENTS_PATH = "/api/plays/:playId/documents";
 const DOCUMENT_PATH = "/api/documents/:documentId";
-
-const documentUploader = createUploader({
-  subfolder: "plays",
-  maxSizeBytes: 10 * 1024 * 1024,
-  allowedMimeTypes: [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/gif",
-    "application/pdf",
-  ],
-});
 
 router.param("playId", playParamConverter.convert);
 router.param("documentId", documentParamConverter.convert);

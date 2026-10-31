@@ -34,7 +34,7 @@ Cette section décrit les informations stockées par l'application sous forme de
 * **Événement (`event`)** : Une échéance temporelle pour la Troupe (Cours, Répétitions, Représentations, etc.). Contient un titre, un type d'événement (avec un type "autre" pour les événements ne correspondant à aucun des types prédéfinis), les dates/heures de début et fin, l'éventuel lieu, une description et le lien vers l'Utilisateur créateur.
 * **Présence à l'Événement (`event_presence`)** : Le statut de participation d'un Utilisateur à un Événement. Ce statut peut être "À confirmer", "Présent" ou "Absent".
 
-### Les Notifications & Alertes (Roadmap)
+### Les Notifications & Alertes
 * **Abonnement Push (`push_subscription`)** : Enregistrement de l'abonnement Web Push d'un utilisateur sur un navigateur/appareil donné. Stocke l'endpoint et les clés de chiffrement (`p256dh`, `auth`) pour permettre au serveur d'envoyer des notifications ciblées (création d'événement, distribution publiée, relance de vote).
 
 ---
@@ -238,7 +238,7 @@ CREATE TABLE play_document (
 );
 
 -- ==========================================
--- NOTIFICATIONS PUSH (ROADMAP)
+-- NOTIFICATIONS PUSH (migration 2026-10-31-push-subscription.sql)
 -- ==========================================
 
 CREATE TABLE push_subscription (
@@ -257,5 +257,5 @@ CREATE TABLE push_subscription (
 2. **Pas de mot de passe** : L'authentification par *Magic Link* utilise la table `magic_link_token` avec consommation atomique du jeton.
 3. **Sécurité des documents et téléversement** : Les documents sont stockés sur le système de fichiers (`/data/uploads/plays`), servis avec contrôle d'accès strict via Express (`documentRepository.canAccess`) vérifiant que l'utilisateur demandeur appartient bien à la troupe de la pièce.
 4. **Adhésion par lien d'invitation** : Le lien d'invitation direct repose sur un jeton JWT signé avec `APP_SECRET` contenant le `troupeId`, sans persistance nécessaire en base de données.
-5. **Suivi des votes** : Le calcul des "votants" vs "non-votants" s'effectue dynamiquement en comparant les utilisateurs de `troupe_member` avec ceux présents dans `scene_preference` pour les scènes actives de la pièce.
+5. **Suivi des votes** : Le calcul des "votants" vs "non-votants" s'effectue dynamiquement en comparant les utilisateurs de `troupe_member` (hors comptes supprimés) avec ceux présents dans `scene_preference` pour les scènes actives de la pièce. Seuls les membres `ACTOR` sont attendus : un `ADMIN` n'apparaît que s'il a voté.
 6. **Ordre alphabétique des tables de jointure** : Conformément aux bonnes pratiques, les tables d'association pure sont nommées par ordre alphabétique (`role_scene`), à l'exception des entités conceptuelles fortes (`troupe_member`, `play_preference`, `event_presence`).

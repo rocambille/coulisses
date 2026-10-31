@@ -5,6 +5,8 @@ type Case = {
   request: {
     body?: JsonObject;
     headers?: Record<string, string>;
+    // Multipart text fields, sent next to `attach`
+    fields?: Record<string, string>;
     attach?: {
       name: string;
       file: Buffer | string;

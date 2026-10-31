@@ -8,6 +8,7 @@ import React, { use } from "react";
 import { useOutletContext, useParams } from "react-router";
 import { getOrFetch } from "../../helpers/cache";
 import { mutate } from "../../helpers/mutate";
+import NotifyButton from "../ui/NotifyButton";
 import PreferenceBadge from "../ui/PreferenceBadge";
 
 export default function CastingPage() {
@@ -55,6 +56,14 @@ export default function CastingPage() {
         <h3>Distribution</h3>
         <p>Croisement des scènes, rôles et acteurs.</p>
       </hgroup>
+
+      {isAdmin && (
+        <NotifyButton
+          playId={String(playId)}
+          kind="CASTING_PUBLISHED"
+          label="📣 Annoncer la distribution à la troupe"
+        />
+      )}
 
       <div style={{ display: "block", overflowX: "auto" }}>
         <table className="striped">

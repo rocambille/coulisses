@@ -1,5 +1,7 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import type { UserEvent } from "@testing-library/user-event";
 import ScenesPage from "../../../../src/react/components/play/ScenesPage";
+import { isPushConfigured } from "../../../../src/react/helpers/push";
 import { emptyPlay, mainPlay } from "../../../fixtures/plays";
 import {
   mainPlayPreferences,
@@ -18,6 +20,8 @@ import {
   setupMocks,
   setupTroupeLayoutMocks,
 } from "../../test-utils";
+
+vi.mock("../../../../src/react/helpers/push", { spy: true });
 
 describe("React: ScenesPage", () => {
   describe("as actor", () => {
@@ -318,6 +322,145 @@ describe("React: ScenesPage", () => {
       );
 
       expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    const renderPage = () =>
+      renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: teacherUser,
+      });
+
+    // Wrapping the click in act() because React's use() is suspending
+    const openVotes = (user: UserEvent, name: RegExp) =>
+      act(async () => {
+        await user.click(screen.getByRole("button", { name }));
+      });
+
+    const section = (title: RegExp) =>
+      screen.getByRole("heading", { level: 4, name: title }).parentElement;
+
+    it("should show partial votes across all active scenes", async () => {
+      const { user } = await renderPage();
+
+      await openVotes(user, /suivi des votes/i);
+
+      const inProgress = await screen.findByRole("heading", {
+        level: 4,
+        name: /vote en cours \(2\)/i,
+      });
+
+      expect(inProgress.parentElement?.textContent).toContain(actorUser.name);
+      expect(inProgress.parentElement?.textContent).toContain("1/2 scènes");
+      expectContractCall("preferences", "voting_status", "as_admin");
+    });
+
+    it("should remind actors from the global view", async () => {
+      vi.mocked(isPushConfigured).mockReturnValue(true);
+
+      const { user } = await renderPage();
+
+      await openVotes(user, /suivi des votes/i);
+      await user.click(
+        await screen.findByRole("button", { name: /relancer/i }),
+      );
+
+      await screen.findByText(/n'a activé les notifications/i);
+      expectContractCall("notifications", "notify", "vote_reminder");
+    });
+
+    it("should not offer a reminder on the view of a single scene", async () => {
+      vi.mocked(isPushConfigured).mockReturnValue(true);
+
+      const { user } = await renderPage();
+
+      await openVotes(
+        user,
+        new RegExp(`votes de la scène ${mainScenes[2].id}`, "i"),
+      );
+
+      await screen.findByRole("heading", { level: 4 });
+      expect(screen.queryByRole("button", { name: /relancer/i })).toBeNull();
+    });
+
+    it("should list who voted on a single scene", async () => {
+      const { user } = await renderPage();
+
+      await openVotes(
+        user,
+        new RegExp(`votes de la scène ${mainScenes[0].id}`, "i"),
+      );
+
+      await screen.findByRole("heading", {
+        level: 4,
+        name: /ont voté \(2\)/i,
+      });
+      expect(screen.queryByText(/n'ont pas encore voté/i)).toBeNull();
+    });
+
+    it("should list actors who did not vote, but not admins", async () => {
+      const { user } = await renderPage();
+
+      await openVotes(
+        user,
+        new RegExp(`votes de la scène ${mainScenes[2].id}`, "i"),
+      );
+
+      await screen.findByRole("heading", {
+        level: 4,
+        name: /n'ont pas encore voté \(1\)/i,
+      });
+      expect(section(/n'ont pas encore voté/i)?.textContent).toContain(
+        actorUser.name,
+      );
+      expect(section(/n'ont pas encore voté/i)?.textContent).not.toContain(
+        teacherUser.name,
+      );
+    });
+
+    it("should not offer votes on an inactive scene", async () => {
+      await renderPage();
+
+      expect(
+        screen.queryByRole("button", {
+          name: new RegExp(`votes de la scène ${mainScenes[1].id}`, "i"),
+        }),
+      ).toBeNull();
+    });
+
+    it("should show a role vote only on the scene it was cast on", async () => {
+      setupTroupeLayoutMocks({
+        troupe: mainTroupe,
+        members: mainTroupeMembers,
+        isAdmin: true,
+        playPreferences: mainPlayPreferences,
+        rolePreferences: [
+          {
+            user_id: actorUser.id,
+            scene_id: mainScenes[1].id,
+            role_id: mainRoles[0].id,
+            level: "NOT_INTERESTED",
+            created_at: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+        scenePreferences: mainScenePreferences,
+      });
+
+      await renderWithStub({
+        path: "/plays/:playId/scenes",
+        Component: ScenesPage,
+        initialEntries: [`/plays/${mainPlay.id}/scenes`],
+        me: actorUser,
+      });
+
+      const select = (sceneId: number) =>
+        screen.getByLabelText<HTMLSelectElement>(
+          `Niveau d'envie pour le rôle ${mainRoles[0].id} dans la scène ${sceneId}`,
+        );
+
+      expect(select(mainScenes[1].id).value).toBe("NOT_INTERESTED");
+      expect(select(mainScenes[0].id).value).toBe("");
     });
   });
 });

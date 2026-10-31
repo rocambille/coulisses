@@ -7,7 +7,7 @@ import {
 import { mainRoles } from "../fixtures/roles";
 import { mainScenes } from "../fixtures/scenes";
 import { mainTroupe } from "../fixtures/troupes";
-import { teacherUser, thirdUser } from "../fixtures/users";
+import { actorUser, teacherUser, thirdUser } from "../fixtures/users";
 
 export default (<Contract>{
   get_troupe: {
@@ -32,6 +32,48 @@ export default (<Contract>{
       forbidden: {
         request: { jwtPayload: { sub: thirdUser.id } },
         response: { status: 403, body: {} },
+      },
+    },
+  },
+  voting_status: {
+    method: "get",
+    path: `/api/plays/${mainPlay.id}/voting-status`,
+    cases: {
+      as_admin: {
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: {
+          status: 200,
+          body: {
+            active_scene_ids: [mainScenes[0].id, mainScenes[2].id],
+            members: [
+              {
+                id: actorUser.id,
+                name: actorUser.name,
+                role: "ACTOR",
+                voted_scene_ids: [mainScenes[0].id],
+              },
+              {
+                id: teacherUser.id,
+                name: teacherUser.name,
+                role: "ADMIN",
+                voted_scene_ids: [mainScenes[0].id],
+              },
+            ],
+          },
+        },
+      },
+      unauthorized: {
+        request: { jwtPayload: null },
+        response: { status: 401, body: {} },
+      },
+      forbidden: {
+        request: { jwtPayload: { sub: actorUser.id } },
+        response: { status: 403, body: {} },
+      },
+      not_found: {
+        specialPath: `/api/plays/${NaN}/voting-status`,
+        request: { jwtPayload: { sub: teacherUser.id } },
+        response: { status: 404, body: {} },
       },
     },
   },

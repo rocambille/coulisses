@@ -106,6 +106,10 @@ import eventRoutes from "./modules/event/eventRoutes";
 
 router.use(eventRoutes);
 
+import notificationRoutes from "./modules/notification/notificationRoutes";
+
+router.use(notificationRoutes);
+
 import playRoutes from "./modules/play/playRoutes";
 
 router.use(playRoutes);

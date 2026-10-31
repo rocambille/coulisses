@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+export const DOCUMENT_MAX_SIZE_BYTES = 10 * 1024 * 1024;
+
+export const DOCUMENT_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+];
+
 export const PlayDocumentSchema = z.object({
   id: z.number(),
   play_id: z.number(),

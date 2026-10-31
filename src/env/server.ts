@@ -55,6 +55,11 @@ export const serverEnvSchema = clientEnvSchema
     DKIM_PRIVATE_KEY: z.string().optional(),
     DKIM_DOMAIN: z.string().optional(),
     DKIM_SELECTOR: z.string().default("mail"),
+    VAPID_PRIVATE_KEY: z.string().optional(),
+    VAPID_SUBJECT: z
+      .string()
+      .regex(/^(mailto:|https:\/\/)/, "VAPID_SUBJECT must be mailto: or https:")
+      .optional(),
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV === "production" && data.SMTP_URL == null) {
@@ -62,6 +67,23 @@ export const serverEnvSchema = clientEnvSchema
         code: "custom",
         path: ["SMTP_URL"],
         message: "SMTP_URL must be defined in production environment",
+      });
+    }
+
+    const vapidKeys = [
+      "VITE_VAPID_PUBLIC_KEY",
+      "VAPID_PRIVATE_KEY",
+      "VAPID_SUBJECT",
+    ] as const;
+
+    if (
+      vapidKeys.some((key) => data[key] != null) &&
+      vapidKeys.some((key) => data[key] == null)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["VAPID_PRIVATE_KEY"],
+        message: `Push notifications require all of ${vapidKeys.join(", ")}`,
       });
     }
 

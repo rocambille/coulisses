@@ -4,6 +4,7 @@
 */
 
 import database from "../../../database";
+import documentRepository from "../document/documentRepository";
 import { type PlayDTOWithTroupeId, PlaySchema } from "./playSchemas";
 
 class PlayRepository {
@@ -16,6 +17,31 @@ class PlayRepository {
       .run(play.troupe_id, play.title, play.description ?? null);
 
     return Number(result.lastInsertRowid);
+  }
+
+  createWithDocument(
+    play: PlayDTOWithTroupeId,
+    document: Pick<PlayDocument, "file_url" | "mime_type" | "original_name">,
+  ): Play["id"] {
+    /* use transaction so a play never exists without its document */
+    database.exec("BEGIN");
+
+    try {
+      const playId = this.create(play);
+
+      documentRepository.create({
+        ...document,
+        play_id: playId,
+        order_index: 1,
+      });
+
+      database.exec("COMMIT");
+
+      return playId;
+    } catch (error) {
+      database.exec("ROLLBACK");
+      throw error;
+    }
   }
 
   find(id: Play["id"]): Play | null {

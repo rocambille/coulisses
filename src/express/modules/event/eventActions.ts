@@ -4,6 +4,7 @@
 */
 
 import type { RequestHandler } from "express";
+import notificationHelper from "../notification/notificationHelper";
 import eventRepository from "./eventRepository";
 
 const browse: RequestHandler = (req, res) => {
@@ -13,11 +14,25 @@ const browse: RequestHandler = (req, res) => {
 
 const add: RequestHandler = (req, res) => {
   const insertId = eventRepository.create(req.body);
+
+  notificationHelper.eventAdded(req.body, req.me.id);
+
   res.status(201).json({ insertId });
 };
 
 const edit: RequestHandler = (req, res) => {
   eventRepository.update(req.body);
+
+  const isRescheduled = (key: "start_time" | "end_time") =>
+    new Date(req.body[key]).getTime() !== new Date(req.event[key]).getTime();
+
+  if (isRescheduled("start_time") || isRescheduled("end_time")) {
+    notificationHelper.eventRescheduled(
+      { ...req.event, ...req.body },
+      req.me.id,
+    );
+  }
+
   res.sendStatus(204);
 };
 

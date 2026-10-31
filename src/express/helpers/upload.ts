@@ -9,6 +9,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import type { RequestHandler } from "express";
 import multer from "multer";
 
 export interface UploaderOptions {
@@ -61,6 +62,8 @@ export const createUploader = (
   const uploader = multer({
     storage,
     limits: { fileSize: maxSizeBytes },
+    // Browsers send file names as UTF-8, multer defaults to latin1
+    defParamCharset: "utf8",
     fileFilter: (_req, file, cb) => {
       if (allowedMimeTypes.includes(file.mimetype)) {
         cb(null, true);
@@ -88,4 +91,21 @@ export const deleteUploadedFile = (relativeUrl?: string | null): void => {
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
   }
+};
+
+/*
+  discardFileOnFailure:
+  - multer stores req.file before the following handlers run
+  - Removes that file when the request ends up failing, so a rejected
+    payload does not leave an orphan on disk
+  - Must be registered before the uploader
+*/
+export const discardFileOnFailure: RequestHandler = (req, res, next) => {
+  res.on("finish", () => {
+    if (req.file != null && res.statusCode >= 400) {
+      fs.rmSync(req.file.path, { force: true });
+    }
+  });
+
+  next();
 };

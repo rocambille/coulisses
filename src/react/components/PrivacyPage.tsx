@@ -27,20 +27,17 @@ function PrivacyPage() {
             <strong>Votre compte</strong> : votre email, votre nom (par défaut
             le début de votre email) et, si vous en ajoutez une, votre photo.
           </li>
+          <li>
+            <strong>Vos notifications</strong> : si vous les activez, l'adresse
+            d'abonnement de votre navigateur et ses clés de chiffrement. Elles
+            ne servent qu'à vous envoyer les notifications de vos troupes.
+          </li>
         </ul>
         <p>
           Les seuls cookies utilisés sont nécessaires au fonctionnement : votre
           session de connexion et une protection contre les requêtes
           frauduleuses. Aucun outil de mesure d'audience ni aucun traceur
           publicitaire.
-        </p>
-      </section>
-
-      <section>
-        <h2>Pourquoi</h2>
-        <p>
-          Pour calculer les tendances partagées entre boutiques, et pour évaluer
-          l'intérêt du concept pendant le test.
         </p>
       </section>
 
@@ -57,6 +54,10 @@ function PrivacyPage() {
             données pour son fonctionnement (corriger un doublon, extraire les
             indicateurs du test).
           </li>
+          <li>
+            Les notifications transitent, chiffrées, par le service de votre
+            navigateur (Google, Apple, Mozilla ou Microsoft).
+          </li>
         </ul>
       </section>
 
@@ -65,7 +66,9 @@ function PrivacyPage() {
         <p>
           Les données sont conservées pendant la durée du test. À la fin du
           test, elles sont supprimées, ou reprises dans le produit final
-          uniquement avec l'accord des troupes.
+          uniquement avec l'accord des troupes. Un abonnement aux notifications
+          est supprimé dès que vous les désactivez, que vous vous déconnectez ou
+          que vous supprimez votre compte.
         </p>
       </section>
 

@@ -162,11 +162,21 @@ class UserRepository {
     Semantics:
     - Marks the row as deleted without removing it
     - Default find queries automatically ignore it
+    - Erases personal data: the row stays for the votes and castings that
+      reference it, but it no longer identifies anyone
+    - Releases the email (replaced by a unique placeholder): user.email is
+      unique, and find queries ignore deleted rows, so keeping it would
+      make any new sign-up with the same address fail
   */
   softDelete(id: User["id"]): boolean {
-    const query = database.prepare(
-      "update user set deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') where id = ?",
-    );
+    const query = database.prepare(`
+      update user
+      set email = 'deleted-' || id || '@deleted.invalid',
+          name = 'Compte supprimé',
+          avatar_url = null,
+          deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+      where id = ?
+    `);
     const result = query.run(id);
 
     return result.changes > 0;

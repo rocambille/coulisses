@@ -29,7 +29,7 @@ L'authentification repose sur un système de lien magique (token éphémère env
   - **Action** : Met à jour les informations du compte.
 
 - `DELETE /api/users/me`
-  - **Action** : Supprime (soft-delete) le compte de l'utilisateur connecté.
+  - **Action** : Supprime (soft-delete) le compte de l'utilisateur connecté : son nom, son email et sa photo sont effacés, et l'email redevient disponible pour une nouvelle inscription. La ligne reste pour les votes et castings qui la référencent.
 
 - `POST /api/users/me/avatar`
   - **Body** : `multipart/form-data` avec le champ `avatar` (fichier image).
@@ -87,7 +87,7 @@ L'authentification repose sur un système de lien magique (token éphémère env
     - `title: string`
     - `description?: string`
     - `document?: File` *(Optionnel - Nouveau feedback : permet de joindre directement le script/texte au format PDF ou image dès la création, sans devoir créer la pièce "à vide")*
-  - **Action** : Crée une nouvelle pièce pour la troupe et y attache éventuellement son premier document.
+  - **Action** : Crée une nouvelle pièce pour la troupe et y attache éventuellement son premier document (PDF, PNG, JPEG, WEBP, GIF, max 10 Mo), le tout de manière atomique : si le document est refusé, la pièce n'est pas créée.
 
 - `GET /api/plays/:playId`
   - **Action** : Détails d'une pièce spécifique.
@@ -173,7 +173,8 @@ L'authentification repose sur un système de lien magique (token éphémère env
   - **Action** : Endpoint agrégé (Dashboard). Retourne l'ensemble de la matrice : les scènes de la pièce, les rôles associés à chaque scène, toutes les préférences des comédiens, et le casting officiel actuel.
 
 - `GET /api/plays/:playId/voting-status` *(Admin uniquement - Nouveau feedback)*
-  - **Action** : Retourne le suivi nominatif de participation aux votes pour la pièce. Liste l'ensemble des comédiens de la troupe avec leur statut : qui a voté et qui n'a pas encore voté (globalement ou par scène).
+  - **Réponse** : `{ active_scene_ids: number[], members: { id, name, role, voted_scene_ids: number[] }[] }`
+  - **Action** : Retourne le suivi nominatif de participation aux votes pour la pièce, sur les scènes actives. Permet de savoir qui a voté et qui n'a pas encore voté (globalement ou par scène).
 
 - `POST /api/castings` *(Admin uniquement)*
   - **Body** : `{ user_id: number, role_id: number, scene_id: number }`
@@ -208,16 +209,23 @@ L'authentification repose sur un système de lien magique (token éphémère env
 
 ---
 
-## 🔔 7. Notifications & Alertes (Roadmap)
+## 🔔 7. Notifications & Alertes
 
 - `POST /api/notifications/subscribe`
   - **Body** : `{ endpoint: string, keys: { p256dh: string, auth: string } }`
-  - **Action** : Enregistre l'abonnement Web Push de l'utilisateur pour le navigateur courant.
+  - **Action** : Enregistre l'abonnement Web Push de l'utilisateur pour le navigateur courant. L'`endpoint` doit appartenir à un service push connu (protection SSRF).
 
 - `POST /api/notifications/unsubscribe`
   - **Body** : `{ endpoint: string }`
-  - **Action** : Désactive et supprime un abonnement Web Push.
+  - **Action** : Supprime un abonnement Web Push de l'utilisateur connecté.
 
-- `POST /api/troupes/:troupeId/notify` *(Admin uniquement)*
-  - **Body** : `{ title: string, body: string, url?: string, target?: 'ALL' | 'NON_VOTERS' }`
-  - **Action** : Déclenche l'envoi d'une notification push aux membres de la troupe (ex: relance ciblée des comédiens n'ayant pas voté, ou annonce d'un nouvel événement).
+- `POST /api/plays/:playId/notify` *(Admin uniquement)*
+  - **Body** : `{ kind: 'VOTE_REMINDER' | 'CASTING_PUBLISHED' }`
+  - **Réponse** : `{ recipients: number }`, le nombre de personnes abonnées ciblées.
+  - **Action** : Envoie une notification dont le serveur rédige le texte et le lien : relance des comédiens dont le vote est incomplet, ou annonce de la distribution à la troupe.
+
+Les autres notifications sont automatiques et n'atteignent jamais leur auteur : nouvelle pièce, nouveau document, nouvel événement, changement d'horaire d'un événement.
+
+Les votes des comédiens (`ACTOR`) notifient aussi automatiquement les administrateurs de la troupe :
+- à chaque vote sur une pièce, avec le niveau d'envie ;
+- au premier vote sur une scène ou un rôle d'une pièce, une seule fois par comédien et par pièce. Ce message indique que le comédien a commencé à voter, pas qu'il a terminé.

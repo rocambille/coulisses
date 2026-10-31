@@ -2,6 +2,11 @@ import { allPlays, mainPlay } from "../fixtures/plays";
 import { emptyTroupe, mainTroupe } from "../fixtures/troupes";
 import { actorUser, teacherUser, thirdUser } from "../fixtures/users";
 
+const dummyImageBuffer = Buffer.from(
+  "UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=",
+  "base64",
+);
+
 export default (<Contract>{
   browse: {
     method: "get",
@@ -65,12 +70,51 @@ export default (<Contract>{
         },
         response: { status: 201, body: { insertId: expect.any(Number) } },
       },
+      as_admin_with_document: {
+        request: {
+          fields: { title: "New Play", description: "" },
+          attach: {
+            name: "document",
+            file: dummyImageBuffer,
+            options: { filename: "page1.webp", contentType: "image/webp" },
+          },
+          jwtPayload: { sub: teacherUser.id },
+        },
+        response: { status: 201, body: { insertId: expect.any(Number) } },
+      },
       bad_request: {
         request: {
           body: {},
           jwtPayload: { sub: teacherUser.id },
         },
         response: { status: 400, body: expect.any(Array) },
+      },
+      bad_request_with_document: {
+        request: {
+          fields: { description: "" },
+          attach: {
+            name: "document",
+            file: dummyImageBuffer,
+            options: { filename: "page1.webp", contentType: "image/webp" },
+          },
+          jwtPayload: { sub: teacherUser.id },
+        },
+        response: { status: 400, body: expect.any(Array) },
+      },
+      invalid_file_type: {
+        request: {
+          fields: { title: "New Play", description: "" },
+          attach: {
+            name: "document",
+            file: Buffer.from("plain text"),
+            options: { filename: "doc.txt", contentType: "text/plain" },
+          },
+          jwtPayload: { sub: teacherUser.id },
+        },
+        response: {
+          status: 400,
+          body: { message: expect.stringMatching(/Invalid file type/i) },
+        },
       },
       unauthorized: {
         request: { jwtPayload: null },

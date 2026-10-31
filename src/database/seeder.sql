@@ -51,7 +51,7 @@ values
 
 insert into event(id, troupe_id, owner_id, type, title, start_time, end_time, location, description)
 values
-  (1, 1, 1, 'COURSE', 'Cours du jeudi', '2026-06-04 19:00:00', '2026-06-04 21:00:00', 'Salle des fêtes', 'Répétition de l''acte 1');
+  (1, 1, 1, 'COURSE', 'Cours du jeudi', '2026-06-04T17:00:00Z', '2026-06-04T19:00:00Z', 'Salle des fêtes', 'Répétition de l''acte 1');
 
 insert into event_presence(event_id, user_id, status)
 values

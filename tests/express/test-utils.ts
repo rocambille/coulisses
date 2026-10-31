@@ -18,6 +18,10 @@ vi.mock("../../src/database", () => ({
 
 import { scanMigrationFiles } from "../../scripts/database-helpers";
 
+// Use this in test files rather than importing src/database: this module is
+// what registers the in-memory mock, so a direct import can reach the real file.
+export const mockedDatabase = database;
+
 const mockDatabase = () => {
   /* drop existing tables */
   const existingTables = database
@@ -149,6 +153,12 @@ export const check = async (test: Test, caseName: keyof Test["cases"]) => {
 
   if (caseDetails.request.body != null) {
     apiCall.send(caseDetails.request.body);
+  }
+
+  if (caseDetails.request.fields != null) {
+    for (const [key, value] of Object.entries(caseDetails.request.fields)) {
+      apiCall.field(key, value);
+    }
   }
 
   if (caseDetails.request.attach != null) {

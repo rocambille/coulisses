@@ -305,6 +305,7 @@ Environment variables are defined and validated in `src/env/client.ts` (client) 
 - `SMTP_URL`: Optional in development (magic links print to console); required in production.
 - `DKIM_PRIVATE_KEY`: Optional path to private key file or inline PEM string for DKIM signing.
 - `DKIM_DOMAIN` / `DKIM_SELECTOR`: Optional domain and selector overrides (auto-derived from SMTP_URL hostname and `"mail"` if omitted).
+- `VITE_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT`: Optional Web Push configuration, all three or none. Generate the keys with `npx web-push generate-vapid-keys`. Without them, push notifications are disabled.
 
 Never commit `.env`. Never commit `data/sqlite/database.sqlite`. Both are in `.gitignore`.
 

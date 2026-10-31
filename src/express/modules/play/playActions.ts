@@ -4,6 +4,7 @@
 */
 
 import type { RequestHandler } from "express";
+import notificationHelper from "../notification/notificationHelper";
 import playRepository from "./playRepository";
 
 const browse: RequestHandler = (req, res) => {
@@ -16,10 +17,21 @@ const read: RequestHandler = (req, res) => {
 };
 
 const add: RequestHandler = (req, res) => {
-  const insertId = playRepository.create({
-    ...req.body,
-    troupe_id: req.troupe.id,
-  });
+  const play = { ...req.body, troupe_id: req.troupe.id };
+
+  const insertId = req.file
+    ? playRepository.createWithDocument(play, {
+        file_url: `/uploads/plays/${req.file.filename}`,
+        mime_type: req.file.mimetype,
+        original_name: req.file.originalname,
+      })
+    : playRepository.create(play);
+
+  notificationHelper.playAdded(
+    { ...play, id: insertId },
+    req.file != null,
+    req.me.id,
+  );
 
   res.status(201).json({ insertId });
 };

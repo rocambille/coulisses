@@ -8,7 +8,9 @@ import { Router } from "express";
 const router = Router();
 
 import type { RequestHandler } from "express";
+import { discardFileOnFailure } from "../../helpers/upload";
 import authActions from "../auth/authActions";
+import documentUploader from "../document/documentUploader";
 import troupeParamConverter from "../troupe/troupeParamConverter";
 import troupeRepository from "../troupe/troupeRepository";
 import playActions from "./playActions";
@@ -53,6 +55,8 @@ router.get(TROUPE_PLAYS_PATH, checkIsTroupeMember, playActions.browse);
 router.post(
   TROUPE_PLAYS_PATH,
   checkIsTroupeAdmin,
+  discardFileOnFailure,
+  documentUploader.single("document"),
   playValidators.add,
   playActions.add,
 );

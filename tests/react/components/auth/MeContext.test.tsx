@@ -4,6 +4,7 @@ import {
   MeProvider,
   useMe,
 } from "../../../../src/react/components/auth/MeContext";
+import { disablePush } from "../../../../src/react/helpers/push";
 import {
   expectContractCall,
   renderHookAsync,
@@ -11,6 +12,8 @@ import {
   requestValue,
   setupMocks,
 } from "../../test-utils";
+
+vi.mock("../../../../src/react/helpers/push", { spy: true });
 
 describe("React Components: MeContext", () => {
   beforeEach(() => {
@@ -105,6 +108,21 @@ describe("React Components: MeContext", () => {
 
       await act(async () => await auth.logout());
 
+      expectContractCall("auth", "logout", "anyone");
+    });
+
+    it("should log out even when the push subscription cannot be removed", async () => {
+      vi.mocked(disablePush).mockRejectedValueOnce(new Error("500"));
+
+      const { result } = await renderHookAsync(useMe, {
+        wrapper: ({ children }) => (
+          <MeProvider initialUser={null}>{children}</MeProvider>
+        ),
+      });
+
+      await act(async () => await result.current.logout());
+
+      expect(disablePush).toHaveBeenCalled();
       expectContractCall("auth", "logout", "anyone");
     });
   });

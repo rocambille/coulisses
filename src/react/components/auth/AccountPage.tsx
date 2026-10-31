@@ -4,6 +4,7 @@
 
   Design notes:
   - Uses AccountDetailsForm to update user details
+  - Uses NotificationToggle to manage push notifications on this device
   - Uses LogoutForm to log out
   - Uses AccountDeleteForm to delete the account
 
@@ -15,6 +16,7 @@ import AccountDeleteForm from "./AccountDeleteForm";
 import AccountDetailsForm from "./AccountDetailsForm";
 import AvatarUploadForm from "./AvatarUploadForm";
 import LogoutForm from "./LogoutForm";
+import NotificationToggle from "./NotificationToggle";
 
 function AccountPage() {
   return (
@@ -27,6 +29,8 @@ function AccountPage() {
       <AccountDetailsForm />
 
       <AvatarUploadForm />
+
+      <NotificationToggle />
 
       <LogoutForm />
 

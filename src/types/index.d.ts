@@ -9,6 +9,8 @@ type CastingMatrix =
 type EventData = import("../express/modules/event/eventSchemas").EventData;
 type EventPresence =
   import("../express/modules/event/eventSchemas").EventPresence;
+type NotificationKind =
+  import("../express/modules/notification/notificationSchemas").NotificationKind;
 type Play = import("../express/modules/play/playSchemas").Play;
 type PlayDocument =
   import("../express/modules/document/documentSchemas").PlayDocument;
@@ -25,6 +27,8 @@ type Troupe = import("../express/modules/troupe/troupeSchemas").Troupe;
 type TroupeMember =
   import("../express/modules/troupe/troupeSchemas").TroupeMember;
 type User = import("../express/modules/user/userSchemas").User;
+type VotingStatus =
+  import("../express/modules/preference/preferenceSchemas").VotingStatus;
 
 type NavItem = {
   label: string;

@@ -162,6 +162,7 @@ export async function createServerWith(routesPath: string) {
 
   app.use("/images", express.static("./src/assets/images"));
   app.use("/manifest.json", express.static("./src/assets/manifest.json"));
+  app.use("/sw.js", express.static("./src/assets/sw.js"));
 
   /* ********************************************************************** */
   /* API routes                                                             */

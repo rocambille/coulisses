@@ -26,10 +26,10 @@ function AccountDeleteForm() {
       <hgroup>
         <h2>Suppression du compte</h2>
         <p>
-          Tu pourras demander à un admin de le restaurer plus tard. Tu peux
-          demander une suppression définitive si tu le souhaites. Dans tous les
-          cas, la suppression de ton compte sera effective et tu ne pourras plus
-          te connecter.
+          Ton nom, ton email et ta photo seront définitivement effacés. Tes
+          votes et ta place dans la distribution restent dans tes troupes, sans
+          ton nom. Tu pourras créer un nouveau compte avec le même email, mais
+          sans retrouver celui-ci.
         </p>
       </hgroup>
 

@@ -36,6 +36,7 @@ function isValidTimezone(timeZone: string): boolean {
  */
 export const clientEnvSchema = z.object({
   VITE_CONTACT_EMAIL: z.email().optional(),
+  VITE_VAPID_PUBLIC_KEY: z.string().optional(),
   VITE_TIMEZONE: z
     .string()
     .refine(isValidTimezone, {

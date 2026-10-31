@@ -8,6 +8,7 @@ import {
   PlayPreferenceSchema,
   RolePreferenceSchema,
   ScenePreferenceSchema,
+  VotingStatusSchema,
 } from "./preferenceSchemas";
 
 class PreferenceRepository {
@@ -52,6 +53,77 @@ class PreferenceRepository {
       ),
       rolePreferences: roleRows.map((row) => RolePreferenceSchema.parse(row)),
     };
+  }
+
+  /*
+    Votes are only tracked on active scenes, for members who still have an
+    account: soft deleting a user keeps their troupe_member row.
+  */
+  findVotingStatus(playId: Play["id"]): VotingStatus {
+    const scenes = database
+      .prepare(
+        `select id from scene
+         where play_id = ? and is_active = 1
+         order by order_in_play`,
+      )
+      .all(playId);
+
+    const members = database
+      .prepare(
+        `select u.id, u.name, tm.role,
+           (
+             select json_group_array(sp.scene_id)
+             from scene_preference sp
+             join scene s on s.id = sp.scene_id
+             where sp.user_id = u.id and s.play_id = p.id and s.is_active = 1
+           ) as voted_scene_ids
+         from play p
+         join troupe_member tm on tm.troupe_id = p.troupe_id
+         join user u on u.id = tm.user_id
+         where p.id = ? and u.deleted_at is null
+         order by u.name`,
+      )
+      .all(playId);
+
+    return VotingStatusSchema.parse({
+      active_scene_ids: scenes.map((scene) => scene.id),
+      members: members.map((member) => ({
+        ...member,
+        voted_scene_ids: JSON.parse(String(member.voted_scene_ids)),
+      })),
+    });
+  }
+
+  hasVotedInPlay(userId: User["id"], playId: Play["id"]): boolean {
+    const row = database
+      .prepare(
+        `select exists (
+           select 1
+           from scene_preference sp
+           join scene s on s.id = sp.scene_id
+           where sp.user_id = ? and s.play_id = ?
+           union all
+           select 1
+           from role_preference rp
+           join scene s on s.id = rp.scene_id
+           where rp.user_id = ? and s.play_id = ?
+         ) as has_voted`,
+      )
+      .get(userId, playId, userId, playId);
+
+    return row?.has_voted === 1;
+  }
+
+  findIncompleteVoterIds(playId: Play["id"]): User["id"][] {
+    const { active_scene_ids, members } = this.findVotingStatus(playId);
+
+    return members
+      .filter(
+        (member) =>
+          member.role === "ACTOR" &&
+          member.voted_scene_ids.length < active_scene_ids.length,
+      )
+      .map((member) => member.id);
   }
 
   upsertPlayPreference(playPreference: PlayPreference): void {

@@ -57,6 +57,7 @@ Ce document détaille les spécifications fonctionnelles déduites du contexte. 
   - Ajout d'une répétition ou modification d'horaire d'un événement.
   - Publication ou modification de la distribution officielle (casting).
   - Relance de vote pour les comédiens n'ayant pas encore exprimé leurs souhaits sur les scènes.
+- **Fonctionnalité 6.3 (Souhaitable)** : En tant qu'administrateur, je veux être notifié à chaque vote d'un comédien sur une pièce, et la première fois qu'il vote sur une scène ou un rôle d'une pièce, afin de suivre la participation sans ouvrir l'application.
 
 ---
 
@@ -70,9 +71,9 @@ Ce document détaille les spécifications fonctionnelles déduites du contexte. 
 5. **Gestion & Droits** : Suppression de pièces, exclusion de membres, possibilité de quitter la troupe.
 
 ### Priorités issues des retours utilisateurs (Sprint en cours / Roadmap immédiate) :
-1. **Document direct à la création de pièce** : Permettre d'attacher un fichier texte/PDF dès l'ajout d'une pièce dans la troupe (sans devoir créer la pièce "à vide").
-2. **Visibilité détaillée des votes (Votants vs Non-votants)** : Interface permettant à l'administrateur de voir la liste nominative des personnes ayant voté et celles n'ayant pas encore voté sur les scènes.
-3. **Système de Notifications Push** : Intégration de Web Push Notifications pour alerter la troupe des nouveautés (événements, distribution, relance de vote).
+1. ✅ **Document direct à la création de pièce** *(implémenté, à déployer)* : Permettre d'attacher un fichier texte/PDF dès l'ajout d'une pièce dans la troupe (sans devoir créer la pièce "à vide"). Le document reste optionnel.
+2. ✅ **Visibilité détaillée des votes (Votants vs Non-votants)** *(implémenté, à déployer)* : Interface permettant à l'administrateur de voir la liste nominative des personnes ayant voté et celles n'ayant pas encore voté sur les scènes.
+3. ✅ **Système de Notifications Push** *(implémenté, à déployer ; parcours iPhone à valider sur un appareil réel)* : Intégration de Web Push Notifications pour alerter la troupe des nouveautés (événements, distribution, relance de vote).
 
 ### Ce qui reste exclu à ce stade :
 - **Extraction automatique de texte par OCR** : Analyse automatique des photos pour en extraire le script.

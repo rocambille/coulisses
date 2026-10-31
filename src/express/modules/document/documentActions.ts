@@ -5,6 +5,7 @@
 
 import type { RequestHandler } from "express";
 import { deleteUploadedFile } from "../../helpers/upload";
+import notificationHelper from "../notification/notificationHelper";
 import documentRepository from "./documentRepository";
 import type { PlayDocument } from "./documentSchemas";
 
@@ -51,6 +52,8 @@ const upload: RequestHandler = (req, res) => {
       created.push(doc);
     }
   }
+
+  notificationHelper.documentsAdded(req.play, req.me.id);
 
   res.status(201).json(created);
 };

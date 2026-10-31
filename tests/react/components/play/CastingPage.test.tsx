@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
 import CastingPage from "../../../../src/react/components/play/CastingPage";
+import { isPushConfigured } from "../../../../src/react/helpers/push";
 import { mainPlay } from "../../../fixtures/plays";
 import {
   mainPlayPreferences,
@@ -16,6 +17,8 @@ import {
   setupMocks,
   setupTroupeLayoutMocks,
 } from "../../test-utils";
+
+vi.mock("../../../../src/react/helpers/push", { spy: true });
 
 describe("React: CastingPage", () => {
   describe("as actor", () => {
@@ -96,6 +99,39 @@ describe("React: CastingPage", () => {
       await user.click(await screen.getByRole("button", { name: label }));
 
       expectContractCall("castings", "unassign", "as_admin");
+    });
+
+    it("should announce the casting and report who was reached", async () => {
+      vi.mocked(isPushConfigured).mockReturnValue(true);
+
+      const { user } = await renderWithStub({
+        path: "/plays/:playId/casting",
+        Component: CastingPage,
+        initialEntries: [`/plays/${mainPlay.id}/casting`],
+        me: teacherUser,
+      });
+
+      await user.click(
+        screen.getByRole("button", { name: /annoncer la distribution/i }),
+      );
+
+      await screen.findByText(/n'a activé les notifications/i);
+      expectContractCall("notifications", "notify", "casting_published");
+    });
+
+    it("should hide the announcement when push is not configured", async () => {
+      vi.mocked(isPushConfigured).mockReturnValue(false);
+
+      await renderWithStub({
+        path: "/plays/:playId/casting",
+        Component: CastingPage,
+        initialEntries: [`/plays/${mainPlay.id}/casting`],
+        me: teacherUser,
+      });
+
+      expect(
+        screen.queryByRole("button", { name: /annoncer la distribution/i }),
+      ).toBeNull();
     });
   });
 });

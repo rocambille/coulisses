@@ -20,6 +20,7 @@ import preferenceValidators from "./preferenceValidators";
 
 const TROUPE_PREFERENCES_PATH = "/api/troupes/:troupeId/preferences";
 const PLAY_PREFERENCES_PATH = "/api/plays/:playId/preferences";
+const VOTING_STATUS_PATH = "/api/plays/:playId/voting-status";
 const SCENE_PREFERENCES_PATH = "/api/scenes/:sceneId/preferences";
 const ROLE_PREFERENCES_PATH = "/api/scenes/:sceneId/roles/:roleId/preferences";
 
@@ -44,6 +45,16 @@ const checkIsPlayTroupeMember: RequestHandler = (req, res, next) => {
   }
 };
 
+const checkIsPlayTroupeAdmin: RequestHandler = (req, res, next) => {
+  if (
+    troupeRepository.findMemberRole(req.play.troupe_id, req.me.id) === "ADMIN"
+  ) {
+    next();
+  } else {
+    res.sendStatus(403);
+  }
+};
+
 const checkIsSceneTroupeMember: RequestHandler = (req, res, next) => {
   const play = playRepository.find(req.scene.play_id);
   if (
@@ -60,6 +71,7 @@ router.use(
   [
     TROUPE_PREFERENCES_PATH,
     PLAY_PREFERENCES_PATH,
+    VOTING_STATUS_PATH,
     SCENE_PREFERENCES_PATH,
     ROLE_PREFERENCES_PATH,
   ],
@@ -70,6 +82,12 @@ router.get(
   TROUPE_PREFERENCES_PATH,
   checkIsTroupeMember,
   preferenceActions.getTroupePreferences,
+);
+
+router.get(
+  VOTING_STATUS_PATH,
+  checkIsPlayTroupeAdmin,
+  preferenceActions.getVotingStatus,
 );
 
 router.post(

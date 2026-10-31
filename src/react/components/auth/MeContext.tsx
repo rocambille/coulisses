@@ -21,6 +21,7 @@ import {
 } from "react";
 import { getOrFetch } from "../../helpers/cache";
 import { mutate } from "../../helpers/mutate";
+import { disablePush } from "../../helpers/push";
 
 /* ************************************************************************ */
 /* Types                                                                    */
@@ -74,6 +75,10 @@ export function MeProvider({
   }, []);
 
   const logout = useCallback(async () => {
+    // Before the session ends, so a shared device stops receiving the alerts
+    // of this account. This must never prevent logging out.
+    await disablePush().catch(() => {});
+
     await mutate("/api/auth/logout", "post");
 
     setUser(null);

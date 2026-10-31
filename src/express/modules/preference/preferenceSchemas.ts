@@ -30,6 +30,19 @@ export const RolePreferenceSchema = PreferenceSchema.extend({
   role_id: z.number(),
 });
 
+export const VotingStatusSchema = z.object({
+  active_scene_ids: z.array(z.number()),
+  members: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      role: z.enum(["ADMIN", "ACTOR"]),
+      voted_scene_ids: z.array(z.number()),
+    }),
+  ),
+});
+
+export type VotingStatus = z.infer<typeof VotingStatusSchema>;
 export type Preference = z.infer<typeof PreferenceSchema>;
 export type PlayPreference = z.infer<typeof PlayPreferenceSchema>;
 export type ScenePreference = z.infer<typeof ScenePreferenceSchema>;

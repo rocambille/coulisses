@@ -30,9 +30,12 @@ Ce document décrit la structure, les composants et les parcours utilisateurs de
    - N'importe quel membre peut consulter le calendrier commun (`/troupes/:troupeId/calendar`) et ajouter un événement (Répétition, Cours, Représentation, Autre).
    - Chaque membre voit l'événement avec un statut "À confirmer" (`PENDING`) par défaut.
    - D'un clic, il valide sa "Présence" (`PRESENT`) ou son "Absence" (`ABSENT`).
-6. **Notifications Push (Roadmap)**
-   - L'utilisateur peut activer les notifications push Web depuis son navigateur.
-   - Dès qu'un nouvel événement est créé ou que le casting est publié, une notification est envoyée aux membres abonnés.
+6. **Notifications Push**
+   - L'utilisateur active ou désactive les notifications push pour son appareil depuis son compte (`/account`). Sur iPhone et iPad, l'application doit d'abord être ajoutée à l'écran d'accueil.
+   - La déconnexion désabonne le navigateur, pour qu'un appareil partagé ne reçoive plus les alertes du compte.
+   - Une nouvelle pièce, un nouveau document, un nouvel événement ou un changement d'horaire notifient automatiquement les membres abonnés.
+   - Les administrateurs sont notifiés à chaque vote d'un comédien sur une pièce, et à son premier vote sur une scène ou un rôle de chaque pièce.
+   - La distribution se construit clic par clic : l'admin l'annonce avec un bouton dédié sur `CastingPage`. De même, il relance les comédiens depuis `VotingStatusModal`.
 
 ---
 
@@ -84,6 +87,8 @@ Construits avec **Pico CSS** (selon le standard StartER, sans tailwind ni librai
 - `CastingPage` : Tableau de bord de distribution matriciel croisant scènes, rôles, comédiens, préférences et assignations.
 - `CalendarPage` : Vue calendrier interactif mensuel avec cartes d'événements et toggles de présence.
 - `AvatarUploadForm` : Formulaire de téléversement et suppression d'avatar.
+- `NotificationToggle` : Activation des notifications push pour l'appareil courant.
+- `NotifyButton` : Envoi par un admin d'une notification sur une pièce, avec le nombre de personnes atteintes.
 
 ---
 
@@ -105,7 +110,7 @@ src/
 │       └── play/             # Logique Pièces (PlayLayout, ScenesPage, SceneForm, SceneCard, RolesPage, CastingPage, DocumentsPage)
 ├── express/                  # API Backend
 │   ├── routes.ts             # Enregistrement centralisé des routes
-│   └── modules/              # Modules métier (auth, user, troupe, play, scene, role, preference, casting, event, document...)
+│   └── modules/              # Modules métier (auth, user, troupe, play, scene, role, preference, casting, event, document, notification...)
 └── types/                    # Types TypeScript partagés (User, Troupe, Play, Scene, Role, Event, PlayDocument...)
 ```
 
