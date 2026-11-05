@@ -30,12 +30,17 @@ import { disablePush } from "../../helpers/push";
 type MeContextType = {
   user: User | null;
   isAuthenticated: boolean;
-  sendMagicLink: (email: string) => Promise<void>;
+  // next: the page the link of the email opens once logged in
+  sendMagicLink: (email: string, next?: string) => Promise<void>;
   verifyMagicLink: (token: string) => Promise<void>;
+  verifyCode: (email: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
+  logoutEverywhere: () => Promise<void>;
+  // Resolves with the address waiting for confirmation, if the email changed
   updateMe: (
     newMe: Omit<User, "id" | "created_at" | "deleted_at" | "avatar_url">,
-  ) => Promise<void>;
+  ) => Promise<{ pendingEmail: string | null }>;
+  confirmEmail: (code: string) => Promise<void>;
   updateMeAvatar: (fileOrNull: File | null) => Promise<void>;
   deleteMe: () => Promise<void>;
 };
@@ -64,12 +69,25 @@ export function MeProvider({
   /* Actions                                                                */
   /* ********************************************************************** */
 
-  const sendMagicLink = useCallback(async (email: string) => {
-    await mutate("/api/auth/magic-link", "post", { email });
+  const sendMagicLink = useCallback(async (email: string, next?: string) => {
+    await mutate(
+      "/api/auth/magic-link",
+      "post",
+      next == null ? { email } : { email, next },
+    );
   }, []);
 
   const verifyMagicLink = useCallback(async (token: string) => {
     const response = await mutate("/api/auth/verify", "post", { token });
+    const data: User = await response.json();
+    setUser(data);
+  }, []);
+
+  const verifyCode = useCallback(async (email: string, code: string) => {
+    const response = await mutate("/api/auth/verify-code", "post", {
+      email,
+      code,
+    });
     const data: User = await response.json();
     setUser(data);
   }, []);
@@ -84,16 +102,49 @@ export function MeProvider({
     setUser(null);
   }, []);
 
+  const logoutEverywhere = useCallback(async () => {
+    await disablePush().catch(() => {});
+
+    await mutate("/api/auth/logout-everywhere", "post");
+
+    setUser(null);
+  }, []);
+
   const updateMe = useCallback(
     async (
       newMe: Omit<User, "id" | "created_at" | "deleted_at" | "avatar_url">,
     ) => {
-      await mutate("/api/users/me", "put", newMe, "/api/users/me");
+      const response = await mutate(
+        "/api/users/me",
+        "put",
+        newMe,
+        "/api/users/me",
+      );
 
       setUser(await getOrFetch<User | null>("/api/users/me"));
+
+      if (response.status !== 202) {
+        return { pendingEmail: null };
+      }
+
+      const { pending_email }: { pending_email: string } =
+        await response.json();
+
+      return { pendingEmail: pending_email };
     },
     [],
   );
+
+  const confirmEmail = useCallback(async (code: string) => {
+    const response = await mutate(
+      "/api/users/me/email",
+      "post",
+      { code },
+      "/api/users/me",
+    );
+    const data: User = await response.json();
+    setUser(data);
+  }, []);
 
   const updateMeAvatar = useCallback(async (fileOrNull: File | null) => {
     if (fileOrNull == null) {
@@ -125,8 +176,11 @@ export function MeProvider({
         isAuthenticated: user != null,
         sendMagicLink,
         verifyMagicLink,
+        verifyCode,
         logout,
+        logoutEverywhere,
         updateMe,
+        confirmEmail,
         updateMeAvatar,
         deleteMe,
       }}

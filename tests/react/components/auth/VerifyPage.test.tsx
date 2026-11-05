@@ -51,6 +51,27 @@ describe("<VerifyPage />", () => {
 
     expect(mockedNavigate).toHaveBeenCalledWith("/", { replace: true });
   });
+  it.each([
+    ["the next page", "/troupes/1/join?token=abc", "/troupes/1/join?token=abc"],
+    ["home instead of another site", "//evil.example/troupes", "/"],
+    ["home instead of a full URL", "https://evil.example/", "/"],
+  ])("should redirect to %s", async (_label, next, expected) => {
+    const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
+    vi.mocked(ReactRouter.useNavigate).mockImplementation(() => mockedNavigate);
+
+    await renderWithStub({
+      path: "/verify",
+      Component: VerifyPage,
+      initialEntries: [
+        `/verify?token=${requestValue("auth", "verify", "success", "token")}&next=${encodeURIComponent(next)}`,
+      ],
+      me: null,
+    });
+
+    expectContractCall("auth", "verify", "success");
+    expect(mockedNavigate).toHaveBeenCalledWith(expected, { replace: true });
+  });
+
   it("should display error when token is invalid", async () => {
     const mockedNavigate = vi.fn().mockImplementation((_to: string) => {});
     vi.mocked(ReactRouter.useNavigate).mockImplementation(() => mockedNavigate);

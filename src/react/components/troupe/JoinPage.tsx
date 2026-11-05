@@ -5,15 +5,22 @@
 
   Behavior:
   - Fetches troupe info from the public GET /api/troupes/:troupeId/join endpoint
-  - If unauthenticated: shows troupe info + login form (magic link)
+  - If unauthenticated: shows troupe info + login form, which brings the
+    user back here once logged in (by code, or by the link of the email)
   - If authenticated: shows troupe info + "Rejoindre" button
   - After join: redirects to the troupe dashboard
 */
 
-import { useEffect, useId, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useEffect, useState } from "react";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router";
 
 import { mutate } from "../../helpers/mutate";
+import MagicLinkForm from "../auth/MagicLinkForm";
 import { useMe } from "../auth/MeContext";
 
 type TroupeJoinInfo = {
@@ -26,17 +33,15 @@ export default function JoinPage() {
   const { troupeId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, sendMagicLink } = useMe();
+  const location = useLocation();
+  const { user, isAuthenticated } = useMe();
 
   const token = searchParams.get("token");
-  const emailId = useId();
 
   const [troupeInfo, setTroupeInfo] = useState<TroupeJoinInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
 
   // Fetch troupe info on mount (public endpoint, no auth needed)
   useEffect(() => {
@@ -79,21 +84,6 @@ export default function JoinPage() {
     } catch {
       setError("Impossible de rejoindre la troupe. Veuillez réessayer.");
       setJoining(false);
-    }
-  };
-
-  const handleSendMagicLink = async (formData: FormData) => {
-    const email = formData.get("email") as string;
-    if (!email) {
-      setEmailError("L'adresse email est requise.");
-      return;
-    }
-    setEmailError(null);
-    try {
-      await sendMagicLink(email);
-      setMagicLinkSent(true);
-    } catch {
-      setEmailError("Impossible d'envoyer le lien de connexion.");
     }
   };
 
@@ -148,40 +138,10 @@ export default function JoinPage() {
             {joining ? "Inscription en cours..." : "Rejoindre la troupe"}
           </button>
         </footer>
-      ) : magicLinkSent ? (
-        <footer>
-          <p>
-            📧 Un lien de connexion a été envoyé à votre adresse email. Vérifiez
-            votre boîte de réception puis cliquez sur le lien pour vous
-            connecter. Vous pourrez ensuite rejoindre la troupe.
-          </p>
-        </footer>
       ) : (
         <footer>
           <p>Connectez-vous pour rejoindre cette troupe :</p>
-          <form
-            aria-label="Formulaire de connexion pour rejoindre la troupe"
-            action={handleSendMagicLink}
-          >
-            <label htmlFor={emailId}>
-              Adresse email
-              <input
-                id={emailId}
-                name="email"
-                type="email"
-                placeholder="votre.adresse@mail.com"
-                aria-label="Email"
-                required
-                aria-invalid={emailError ? true : undefined}
-              />
-              {emailError && (
-                <small style={{ color: "var(--pico-color-red-500)" }}>
-                  {emailError}
-                </small>
-              )}
-            </label>
-            <button type="submit">Recevoir un lien de connexion</button>
-          </form>
+          <MagicLinkForm next={`${location.pathname}${location.search}`} />
         </footer>
       )}
     </article>

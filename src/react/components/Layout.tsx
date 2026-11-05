@@ -17,7 +17,7 @@
 */
 
 import { Suspense } from "react";
-import { Outlet, useLocation } from "react-router";
+import { matchPath, Outlet, useLocation } from "react-router";
 import MagicLinkForm from "./auth/MagicLinkForm";
 import { useMe } from "./auth/MeContext";
 import NavBar from "./NavBar";
@@ -50,7 +50,10 @@ function Layout() {
       {/* **************************************************************** */}
 
       <main>
-        {isAuthenticated || location.pathname === "/verify" ? (
+        {isAuthenticated ||
+        location.pathname === "/verify" ||
+        // Invitations show their troupe before asking to log in
+        matchPath("/troupes/:troupeId/join", location.pathname) ? (
           /*
             Suspense boundary:
             - Catches React suspensions from use(getOrFetch(...)) in child components
@@ -61,7 +64,13 @@ function Layout() {
             <Outlet />
           </Suspense>
         ) : (
-          <MagicLinkForm />
+          <MagicLinkForm
+            next={
+              location.pathname === "/"
+                ? undefined
+                : `${location.pathname}${location.search}`
+            }
+          />
         )}
       </main>
 

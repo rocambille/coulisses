@@ -22,7 +22,7 @@
 */
 
 import { createValidator } from "../../helpers/validation";
-import { UserDTOSchema } from "./userSchemas";
+import { EmailConfirmationDTOSchema, UserDTOSchema } from "./userSchemas";
 
 const editMe = createValidator(
   { body: UserDTOSchema },
@@ -33,6 +33,9 @@ const editMe = createValidator(
   },
 );
 
+const confirmMeEmail = createValidator({ body: EmailConfirmationDTOSchema });
+
 export default {
   editMe,
+  confirmMeEmail,
 };

@@ -72,6 +72,7 @@ router.use(
 */
 const ME_PATH = "/api/users/me";
 const ME_AVATAR_PATH = "/api/users/me/avatar";
+const ME_EMAIL_PATH = "/api/users/me/email";
 
 /* ************************************************************************ */
 /* Authenticated routes                                                     */
@@ -88,6 +89,13 @@ router
   .get(userActions.readMe)
   .put(userValidators.editMe, userActions.editMe)
   .delete(userActions.destroyMe);
+
+router.post(
+  ME_EMAIL_PATH,
+  authActions.verifyAccessToken,
+  userValidators.confirmMeEmail,
+  userActions.confirmMeEmail,
+);
 
 router
   .route(ME_AVATAR_PATH)

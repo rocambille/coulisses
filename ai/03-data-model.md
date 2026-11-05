@@ -254,7 +254,7 @@ CREATE TABLE push_subscription (
 
 ### Notes d'implémentation
 1. **SQLite Synchrone** : Les booléens sont stockés en `INTEGER` (0 ou 1) de manière native par SQLite (ex: `is_active`).
-2. **Pas de mot de passe** : L'authentification par *Magic Link* utilise la table `magic_link_token` avec consommation atomique du jeton.
+2. **Pas de mot de passe** : La table `magic_link_token` contient chaque secret envoyé par e-mail : le lien (`token_hash`, SHA-256) et le code à 6 chiffres (`code_hash`, HMAC avec `APP_SECRET`) d'une connexion, ou le code d'un changement d'adresse (`new_email` renseigné). `failed_attempts` et `created_at` servent aux limites. `user.session_version` est recopié dans chaque session : l'incrémenter les invalide toutes (migration `2026-11-05-auth-hardening.sql`).
 3. **Sécurité des documents et téléversement** : Les documents sont stockés sur le système de fichiers (`/data/uploads/plays`), servis avec contrôle d'accès strict via Express (`documentRepository.canAccess`) vérifiant que l'utilisateur demandeur appartient bien à la troupe de la pièce.
 4. **Adhésion par lien d'invitation** : Le lien d'invitation direct repose sur un jeton JWT signé avec `APP_SECRET` contenant le `troupeId`, sans persistance nécessaire en base de données.
 5. **Suivi des votes** : Le calcul des "votants" vs "non-votants" s'effectue dynamiquement en comparant les utilisateurs de `troupe_member` (hors comptes supprimés) avec ceux présents dans `scene_preference` pour les scènes actives de la pièce. Seuls les membres `ACTOR` sont attendus : un `ADMIN` n'apparaît que s'il a voté.

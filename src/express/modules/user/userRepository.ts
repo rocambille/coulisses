@@ -115,27 +115,68 @@ class UserRepository {
     });
   }
 
+  /*
+    Find a user along with the version of their sessions.
+
+    Behavior:
+    - Ignores soft-deleted rows (`deleted_at is null`)
+  */
+  findWithSessionVersion(
+    id: User["id"],
+  ): { user: User; sessionVersion: number } | null {
+    const row = database
+      .prepare(
+        "select id, email, name, avatar_url, created_at, deleted_at, session_version from user where id = ? and deleted_at is null",
+      )
+      .get(id);
+
+    if (row == null) {
+      return null;
+    }
+
+    return {
+      user: UserSchema.parse(row),
+      sessionVersion: Number(row.session_version),
+    };
+  }
+
   /* ********************************************************************** */
   /* Update                                                                 */
   /* ********************************************************************** */
 
   /*
-    Update an existing user.
+    Update the name of a user.
 
-    Contract:
-    - Returns the number of affected rows
-    - Does not check existence beforehand
-
-    Why:
-    - Allows callers to decide how to interpret "0 rows affected"
+    Notes:
+    - The email has its own method: it is the only way to log in, so it
+      only changes once the new address is confirmed (see userActions)
   */
-  update(
-    user: Omit<User, "avatar_url" | "created_at" | "deleted_at">,
-  ): boolean {
+  updateName(id: User["id"], name: User["name"]): boolean {
     const query = database.prepare(
-      "update user set email = ?, name = ? where id = ? and deleted_at is null",
+      "update user set name = ? where id = ? and deleted_at is null",
     );
-    const result = query.run(user.email, user.name, user.id);
+    const result = query.run(name, id);
+
+    return result.changes > 0;
+  }
+
+  updateEmail(id: User["id"], email: User["email"]): boolean {
+    const query = database.prepare(
+      "update user set email = ? where id = ? and deleted_at is null",
+    );
+    const result = query.run(email, id);
+
+    return result.changes > 0;
+  }
+
+  /*
+    Invalidate every session of a user (see authActions.verifyAccessToken).
+  */
+  bumpSessionVersion(id: User["id"]): boolean {
+    const query = database.prepare(
+      "update user set session_version = session_version + 1 where id = ?",
+    );
+    const result = query.run(id);
 
     return result.changes > 0;
   }

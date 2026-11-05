@@ -45,3 +45,7 @@ export const UserDTOSchema = UserSchema.omit({
 });
 
 export type UserDTO = z.infer<typeof UserDTOSchema>;
+
+export const EmailConfirmationDTOSchema = z.object({
+  code: z.string().regex(/^\d{6}$/),
+});

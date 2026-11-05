@@ -79,9 +79,86 @@ describe("<AccountPage />", () => {
       me: standardUser,
     });
 
-    await user.click(screen.getByRole("button", { name: /déconnecter/i }));
+    await user.click(screen.getByRole("button", { name: /^se déconnecter$/i }));
 
     expectContractCall("auth", "logout", "anyone");
+  });
+
+  it("should log out of every device", async () => {
+    const { user } = await renderWithStub({
+      path: "/",
+      Component: AccountPage,
+      initialEntries: ["/"],
+      me: standardUser,
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: /tous les appareils/i }),
+    );
+
+    expectContractCall("auth", "logout_everywhere", "as_user");
+  });
+
+  describe("email change", () => {
+    const requestEmailChange = async () => {
+      const { user } = await renderWithStub({
+        path: "/",
+        Component: AccountPage,
+        initialEntries: ["/"],
+        me: standardUser,
+      });
+
+      const email = screen.getByRole("textbox", { name: /^email$/i });
+      await user.clear(email);
+      await user.type(
+        email,
+        String(requestValue("users", "edit_me", "email_change", "email")),
+      );
+      await user.click(screen.getByRole("button", { name: /enregistrer$/i }));
+
+      return user;
+    };
+
+    it("should ask for the code sent to the new address", async () => {
+      await requestEmailChange();
+
+      expectContractCall("users", "edit_me", "email_change");
+      await screen.findByText(
+        String(requestValue("users", "edit_me", "email_change", "email")),
+      );
+    });
+
+    it("should confirm the new address with its code", async () => {
+      const user = await requestEmailChange();
+
+      await user.type(
+        await screen.findByLabelText(/code de confirmation/i),
+        String(requestValue("users", "confirm_me_email", "as_me", "code")),
+      );
+      await user.click(
+        screen.getByRole("button", { name: /confirmer ma nouvelle adresse/i }),
+      );
+
+      expectContractCall("users", "confirm_me_email", "as_me");
+      await waitFor(() =>
+        expect(screen.queryByLabelText(/code de confirmation/i)).toBeNull(),
+      );
+    });
+
+    it("should explain why a code is refused", async () => {
+      setupMocks({ forceCases: { "users.confirm_me_email": "email_taken" } });
+      const user = await requestEmailChange();
+
+      await user.type(
+        await screen.findByLabelText(/code de confirmation/i),
+        "654321",
+      );
+      await user.click(
+        screen.getByRole("button", { name: /confirmer ma nouvelle adresse/i }),
+      );
+
+      await screen.findByText(/déjà utilisée par un autre compte/i);
+    });
   });
 
   it("should submit delete form", async () => {

@@ -3,7 +3,7 @@
   Centralize all authentication-related actions and middleware.
 
   This file handles:
-  - User authentication (magic link)
+  - User authentication (link or code sent by email)
   - JWT creation and verification
   - Authentication cookie management
 
@@ -13,17 +13,25 @@
 
   Security model:
   - Stateless authentication via JWT stored in HttpOnly cookies
-  - Medium-lived tokens (7 days)
+  - 8-day idle timeout, 30-day absolute timeout
+  - Server-side revocation of every session of a user through a version
 */
 
-import crypto from "node:crypto";
-import type { CookieOptions, RequestHandler } from "express";
+import type { CookieOptions, RequestHandler, Response } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
-import nodemailer from "nodemailer";
 
 import { serverEnv } from "../../../env/server";
+import notificationRepository from "../notification/notificationRepository";
 import userRepository from "../user/userRepository";
+import {
+  checkCode,
+  hashToken,
+  isCodeFormat,
+  issueChallenge,
+  sendLoginEmail,
+} from "./authHelper";
 import authRepository from "./authRepository";
+import { toSafeNextPath } from "./authSchemas";
 
 /*
   Extend Express Request to carry authenticated user data.
@@ -41,7 +49,15 @@ declare global {
 /* Security options                                                         */
 /* ************************************************************************ */
 
-const magicLinkTimeout = 15 * 60 * 1000; // 15 minutes
+/*
+  Session lifetime:
+  - Idle timeout: each authenticated request renews the token and the
+    cookie for SESSION_IDLE_TIMEOUT
+  - Absolute timeout: whatever the activity, a new login is required
+    SESSION_ABSOLUTE_TIMEOUT_SECONDS after the last one (auth_time)
+*/
+const SESSION_IDLE_TIMEOUT = "8d";
+const SESSION_ABSOLUTE_TIMEOUT_SECONDS = 30 * 24 * 60 * 60;
 
 /*
   Cookie configuration for authentication token.
@@ -55,57 +71,89 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: "strict",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  maxAge: 8 * 24 * 60 * 60 * 1000, // 8 days, as SESSION_IDLE_TIMEOUT
+};
+
+/*
+  ver: the session_version of the user when the session started. Bumping
+  it in the database invalidates every session issued before.
+*/
+type SessionPayload = JwtPayload & {
+  sub: string;
+  ver: number;
+  auth_time: number;
 };
 
 /*
   Minimal JWT wrapper to:
   - Encapsulate signing and verification
-  - Enforce payload typing between sign and verify methods
+  - Pin the algorithm, so a token cannot choose how it is checked
 */
-class TokenSigner<Payload extends JwtPayload | string = JwtPayload> {
+class TokenSigner {
   #secret: string;
 
   constructor(secret: string) {
     this.#secret = secret;
   }
 
-  signSession(payload: Payload): string {
-    return jwt.sign(payload, this.#secret, { expiresIn: cookieOptions.maxAge });
+  signSession(payload: Pick<SessionPayload, "sub" | "ver" | "auth_time">) {
+    return jwt.sign(payload, this.#secret, {
+      algorithm: "HS256",
+      expiresIn: SESSION_IDLE_TIMEOUT,
+    });
   }
 
-  verify(token: string): Payload {
-    return jwt.verify(token, this.#secret) as Payload;
+  verify(token: string): Partial<SessionPayload> {
+    return jwt.verify(token, this.#secret, {
+      algorithms: ["HS256"],
+    }) as Partial<SessionPayload>;
   }
 }
 
 const tokenSigner = new TokenSigner(serverEnv.APP_SECRET);
 
-const transporter = serverEnv.SMTP_URL
-  ? nodemailer.createTransport({
-      url: serverEnv.SMTP_URL,
-      ...(serverEnv.DKIM_PRIVATE_KEY &&
-        serverEnv.DKIM_DOMAIN && {
-          dkim: {
-            domainName: serverEnv.DKIM_DOMAIN,
-            keySelector: serverEnv.DKIM_SELECTOR,
-            privateKey: serverEnv.DKIM_PRIVATE_KEY,
-          },
-        }),
-    })
-  : null;
+const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
-const trustedBaseUrl = serverEnv.APP_BASE_URL.replace(/\/+$/, "");
+/*
+  startSession(res, userId):
+  - Sets a fresh session cookie, as after a login
+  - Returns the user, or null when the account no longer exists
+*/
+const startSession = (res: Response, userId: User["id"]) => {
+  const session = userRepository.findWithSessionVersion(userId);
+
+  if (session == null) {
+    return null;
+  }
+
+  res.cookie(
+    "__Host-auth",
+    tokenSigner.signSession({
+      sub: userId.toString(),
+      ver: session.sessionVersion,
+      auth_time: nowInSeconds(),
+    }),
+    cookieOptions,
+  );
+
+  return session.user;
+};
 
 /* ************************************************************************ */
 /* Actions                                                                  */
 /* ************************************************************************ */
 
 /*
-  Send a magic link to the user's email.
+  Send a login email (link and code).
+
+  Body:
+  - email
+  - next (optional): the page to open once logged in through the link.
+    Ignored unless it is a path of this site (see authSchemas)
 
   Response:
-  - 204 on success
+  - 204, including when the account asked for too many emails: the answer
+    must not tell whether an account exists
 */
 const sendMagicLink: RequestHandler = async (req, res) => {
   const { email } = req.body;
@@ -118,28 +166,10 @@ const sendMagicLink: RequestHandler = async (req, res) => {
   // Find or create user ID
   const userId = userRepository.findByEmailOrCreate(email);
 
-  // Generate opaque token
-  const rawToken = crypto.randomBytes(32).toString("hex");
-  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const challenge = issueChallenge(userId, null);
 
-  // Store in DB
-  const expiresAt = new Date(Date.now() + magicLinkTimeout);
-  authRepository.insertToken(userId, tokenHash, expiresAt);
-
-  const magicLink = `${trustedBaseUrl}/verify?token=${rawToken}`;
-
-  if (transporter) {
-    await transporter.sendMail({
-      from: { name: "Coulisses", address: "hello@codecollectif.fr" },
-      to: email,
-      subject: "Login link",
-      html: `<a href="${magicLink}">Click here to login</a>`,
-    });
-  } else {
-    console.info("----------------------------------------------------------");
-    console.info(`Magic Link for ${email}:`);
-    console.info(magicLink);
-    console.info("----------------------------------------------------------");
+  if (challenge != null) {
+    await sendLoginEmail(email, challenge, toSafeNextPath(req.body.next));
   }
 
   res.sendStatus(204);
@@ -148,7 +178,7 @@ const sendMagicLink: RequestHandler = async (req, res) => {
 /* ************************************************************************ */
 
 /*
-  Authenticate an existing user and issue an access token.
+  Authenticate with the link of a login email.
 
   Response:
   - 201 with user
@@ -162,40 +192,72 @@ const verifyMagicLink: RequestHandler = (req, res) => {
     return;
   }
 
-  try {
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const userId = authRepository.consume(hashToken(token));
+  const user = userId == null ? null : startSession(res, userId);
 
-    const userId = authRepository.consume(tokenHash);
-
-    if (userId == null) {
-      throw new Error("Invalid, expired, or already consumed token");
-    }
-
-    const user = userRepository.find(userId);
-
-    if (user == null) {
-      throw new Error("User not found");
-    }
-
-    const sessionToken = tokenSigner.signSession({ sub: user.id.toString() });
-
-    res.cookie("__Host-auth", sessionToken, cookieOptions);
-
-    res.status(201).json(user);
-  } catch {
+  if (user == null) {
     res.sendStatus(401);
+    return;
   }
+
+  res.status(201).json(user);
 };
 
 /* ************************************************************************ */
 
 /*
-  Destroy the authentication cookie.
+  Authenticate with the code of a login email.
+
+  Response:
+  - 201 with user
+  - 400 when the code is not 6 digits
+  - 401 on any other error, whether the account exists or not
+*/
+const verifyCode: RequestHandler = (req, res) => {
+  const { email, code } = req.body;
+
+  if (typeof email !== "string" || !isCodeFormat(code)) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const userId = userRepository.findByEmail(email)?.id;
+  const isValid = userId != null && checkCode(userId, code, "login") != null;
+  const user = isValid ? startSession(res, userId) : null;
+
+  if (user == null) {
+    res.sendStatus(401);
+    return;
+  }
+
+  res.status(201).json(user);
+};
+
+/* ************************************************************************ */
+
+/*
+  Destroy the authentication cookie of this device.
 
   Notes:
-  - Stateless logout: token invalidation relies on expiration
+  - Other devices stay logged in: see destroyAllSessions
 */
 const destroyAccessToken: RequestHandler = (_req, res) => {
+  res.clearCookie("__Host-auth", cookieOptions);
+
+  res.sendStatus(204);
+};
+
+/*
+  Log out of every device.
+
+  Notes:
+  - Bumps the session version, which every existing token now fails
+  - Push subscriptions go too: logged out devices must stop receiving alerts
+*/
+const destroyAllSessions: RequestHandler = (req, res) => {
+  userRepository.bumpSessionVersion(req.me.id);
+  notificationRepository.deleteByUser(req.me.id);
+
   res.clearCookie("__Host-auth", cookieOptions);
 
   res.sendStatus(204);
@@ -224,17 +286,33 @@ const verifyAccessToken: RequestHandler = (req, res, next) => {
 
     const payload = tokenSigner.verify(token);
 
-    const me = userRepository.find(Number(payload.sub));
+    const session = userRepository.findWithSessionVersion(Number(payload.sub));
 
-    if (me == null) {
+    if (session == null) {
       throw new Error("User not found");
     }
 
-    // Refresh cookie (extends expiration)
-    const freshToken = tokenSigner.signSession({ sub: me.id.toString() });
+    // Also rejects tokens issued before versions existed (no ver claim)
+    if (payload.ver !== session.sessionVersion) {
+      throw new Error("Session revoked");
+    }
+
+    if (
+      typeof payload.auth_time !== "number" ||
+      nowInSeconds() - payload.auth_time > SESSION_ABSOLUTE_TIMEOUT_SECONDS
+    ) {
+      throw new Error("Session too old");
+    }
+
+    // Refresh cookie (extends the idle timeout, not the absolute one)
+    const freshToken = tokenSigner.signSession({
+      sub: session.user.id.toString(),
+      ver: session.sessionVersion,
+      auth_time: payload.auth_time,
+    });
     res.cookie("__Host-auth", freshToken, cookieOptions);
 
-    req.me = me;
+    req.me = session.user;
 
     next();
   } catch {
@@ -249,6 +327,9 @@ const verifyAccessToken: RequestHandler = (req, res, next) => {
 export default {
   sendMagicLink,
   verifyMagicLink,
+  verifyCode,
   destroyAccessToken,
+  destroyAllSessions,
   verifyAccessToken,
+  startSession,
 };

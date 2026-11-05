@@ -22,6 +22,13 @@
 import type { RequestHandler } from "express";
 
 import { deleteUploadedFile } from "../../helpers/upload";
+import authActions from "../auth/authActions";
+import {
+  checkCode,
+  issueChallenge,
+  sendEmailChangeCode,
+  sendEmailChangedNotice,
+} from "../auth/authHelper";
 import notificationRepository from "../notification/notificationRepository";
 import userRepository from "./userRepository";
 
@@ -51,10 +58,68 @@ const readMe: RequestHandler = (req, res) => {
   Response:
   - 204 No Content on success
 */
-const editMe: RequestHandler = (req, res) => {
-  userRepository.update(req.body);
+const editMe: RequestHandler = async (req, res) => {
+  const { name, email } = req.body;
 
-  res.sendStatus(204);
+  userRepository.updateName(req.me.id, name);
+
+  if (email === req.me.email) {
+    res.sendStatus(204);
+    return;
+  }
+
+  // The email is how the account logs in: it changes only once the new
+  // address proves it can receive mail (see confirmMeEmail)
+  const challenge = issueChallenge(req.me.id, email);
+
+  if (challenge == null) {
+    res.sendStatus(429);
+    return;
+  }
+
+  await sendEmailChangeCode(email, challenge.code);
+
+  res.status(202).json({ pending_email: email });
+};
+
+/* ************************************************************************ */
+
+/*
+  Confirm a pending email change with the code sent to the new address.
+
+  Response:
+  - 200 with the updated user, and a new session cookie: every other
+    session is closed, since the way to log in just changed
+  - 400 on a wrong or expired code
+  - 409 when the new address is now used by another account
+*/
+const confirmMeEmail: RequestHandler = async (req, res) => {
+  const newEmail = checkCode(
+    req.me.id,
+    req.body.code,
+    "email_change",
+  )?.newEmail;
+
+  if (newEmail == null) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const owner = userRepository.findByEmail(newEmail);
+
+  if (owner != null && owner.id !== req.me.id) {
+    res.sendStatus(409);
+    return;
+  }
+
+  userRepository.updateEmail(req.me.id, newEmail);
+  userRepository.bumpSessionVersion(req.me.id);
+
+  const me = authActions.startSession(res, req.me.id);
+
+  await sendEmailChangedNotice(req.me.email, newEmail);
+
+  res.json(me);
 };
 
 /* ************************************************************************ */
@@ -124,6 +189,7 @@ const deleteMeAvatar: RequestHandler = (req, res) => {
 export default {
   readMe,
   editMe,
+  confirmMeEmail,
   destroyMe,
   uploadMeAvatar,
   deleteMeAvatar,

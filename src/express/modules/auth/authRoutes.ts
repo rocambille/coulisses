@@ -40,7 +40,18 @@ import authActions from "./authActions";
 
 router.post("/api/auth/magic-link", authActions.sendMagicLink);
 router.post("/api/auth/verify", authActions.verifyMagicLink);
+router.post("/api/auth/verify-code", authActions.verifyCode);
 router.post("/api/auth/logout", authActions.destroyAccessToken);
+
+/* ************************************************************************ */
+/* Authenticated routes                                                     */
+/* ************************************************************************ */
+
+router.post(
+  "/api/auth/logout-everywhere",
+  authActions.verifyAccessToken,
+  authActions.destroyAllSessions,
+);
 
 /* ************************************************************************ */
 /* Export                                                                   */

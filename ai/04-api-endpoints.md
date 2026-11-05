@@ -11,22 +11,36 @@ La structure de l'API suit une approche "hybride" :
 
 ## 🔒 1. Authentification & Compte Utilisateur
 
-L'authentification repose sur un système de lien magique (token éphémère envoyé par email) et l'utilisation de cookies HTTP-Only (`__Host-auth`) pour le maintien de session.
+L'authentification repose sur un e-mail contenant à la fois un lien et un code à 6 chiffres (valables 15 minutes, à usage unique : utiliser l'un consomme l'autre), et sur un cookie HTTP-Only (`__Host-auth`) pour la session. La session expire après 8 jours d'inactivité et, quoi qu'il arrive, 30 jours après la connexion.
 
 - `POST /api/auth/magic-link`
   - **Body** : `{ email: string }`
-  - **Action** : Crée (ou trouve) le `User` et envoie un email contenant un lien de connexion.
-  
+  - **Action** : Crée (ou trouve) le `User` et envoie l'e-mail de connexion, qui remplace le précédent. Au-delà de 5 e-mails en 15 minutes pour un même compte, plus rien n'est envoyé ; la réponse reste `204` pour ne pas révéler l'existence du compte.
+
 - `POST /api/auth/verify`
   - **Body** : `{ token: string }`
-  - **Action** : Valide le token magique et renvoie un cookie sécurisé contenant la session.
+  - **Action** : Valide le lien et renvoie un cookie sécurisé contenant la session.
+
+- `POST /api/auth/verify-code`
+  - **Body** : `{ email: string, code: string }`
+  - **Action** : Valide le code et renvoie un cookie sécurisé contenant la session. Après 5 erreurs, le code de cet e-mail est désactivé ; après 10 erreurs en 24 h, les codes du compte sont refusés. Dans les deux cas, le lien de l'e-mail reste valable : personne ne peut bloquer la connexion d'un autre.
+
+- `POST /api/auth/logout`
+  - **Action** : Déconnecte l'appareil courant.
+
+- `POST /api/auth/logout-everywhere`
+  - **Action** : Invalide toutes les sessions du compte (sur tous les appareils) et supprime ses abonnements aux notifications.
 
 - `GET /api/users/me`
   - **Action** : Renvoie le profil de l'utilisateur connecté (`User`).
 
 - `PUT /api/users/me`
-  - **Body** : `{ name?: string, email?: string }`
-  - **Action** : Met à jour les informations du compte.
+  - **Body** : `{ name: string, email: string }`
+  - **Action** : Met à jour le nom. Si l'e-mail change, il n'est pas modifié tout de suite : un code est envoyé à la nouvelle adresse (`202 { pending_email }`, ou `429` après 5 codes en 15 minutes).
+
+- `POST /api/users/me/email`
+  - **Body** : `{ code: string }`
+  - **Action** : Confirme le changement d'e-mail avec le code reçu (`409` si l'adresse a été prise entre-temps). Prévient l'ancienne adresse, ferme les sessions des autres appareils et renouvelle celle de l'appareil courant.
 
 - `DELETE /api/users/me`
   - **Action** : Supprime (soft-delete) le compte de l'utilisateur connecté : son nom, son email et sa photo sont effacés, et l'email redevient disponible pour une nouvelle inscription. La ligne reste pour les votes et castings qui la référencent.

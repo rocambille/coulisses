@@ -5,12 +5,14 @@
   Route: /verify?token=...
   - Reads the token from the query string
   - Calls verifyMagicLink from MeContext
-  - Redirects to Dashboard on success
+  - Redirects to the `next` page on success (see authSchemas), or to the
+    Dashboard
   - Shows an error message on failure
 */
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
+import { toSafeNextPath } from "../../../express/modules/auth/authSchemas";
 import { useMe } from "./MeContext";
 
 function VerifyPage() {
@@ -20,6 +22,8 @@ function VerifyPage() {
   const [error, setError] = useState(false);
 
   const token = searchParams.get("token");
+  // Checked again here: the link of an email can be edited before opening it
+  const next = toSafeNextPath(searchParams.get("next")) ?? "/";
 
   useEffect(() => {
     const verify = async () => {
@@ -30,13 +34,13 @@ function VerifyPage() {
 
       try {
         await verifyMagicLink(token);
-        navigate("/", { replace: true });
+        navigate(next, { replace: true });
       } catch {
         setError(true);
       }
     };
     verify();
-  }, [token, verifyMagicLink, navigate]);
+  }, [token, next, verifyMagicLink, navigate]);
 
   if (error) {
     return (

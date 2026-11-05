@@ -13,7 +13,12 @@ type Case = {
       options?: { filename?: string; contentType?: string } | string;
     };
     // Mocked JWT payload to simulate different users
-    jwtPayload?: { sub: User["id"] | string } | null;
+    // ver and auth_time default to a fresh session of the current version
+    jwtPayload?: {
+      sub: User["id"] | string;
+      ver?: number;
+      auth_time?: number;
+    } | null;
     // Explicitly bypass CSRF to test protection
     withoutCsrfProtection?: boolean;
   };

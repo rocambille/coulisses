@@ -176,7 +176,12 @@ export const check = async (test: Test, caseName: keyof Test["cases"]) => {
         throw new Error("Invalid token");
       }
 
-      return { sub: caseDetails.request.jwtPayload.sub.toString() };
+      return {
+        ver: 0,
+        auth_time: Math.floor(Date.now() / 1000),
+        ...caseDetails.request.jwtPayload,
+        sub: caseDetails.request.jwtPayload.sub.toString(),
+      };
     });
   }
 

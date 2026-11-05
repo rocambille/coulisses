@@ -13,17 +13,27 @@
 import { useMe } from "./MeContext";
 
 function LogoutForm() {
-  const { logout } = useMe();
+  const { logout, logoutEverywhere } = useMe();
 
   return (
     <form action={logout}>
       <hgroup>
         <h2>Déconnexion</h2>
-        <p>Tu vas être déconnecté de ton compte.</p>
+        <p>
+          Tu vas être déconnecté de ton compte sur cet appareil. Si tu penses
+          qu'une session est restée ouverte ailleurs, déconnecte-toi de tous tes
+          appareils.
+        </p>
       </hgroup>
-
       <button className="secondary" type="submit">
         Se déconnecter
+      </button>{" "}
+      <button
+        className="secondary outline"
+        type="submit"
+        formAction={logoutEverywhere}
+      >
+        Se déconnecter de tous les appareils
       </button>
     </form>
   );

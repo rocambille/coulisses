@@ -1,3 +1,4 @@
+import { authCodes, emailChanges } from "../fixtures/auth";
 import { corruptedUser, standardUser, userWithAvatar } from "../fixtures/users";
 
 const dummyImageBuffer = Buffer.from(
@@ -48,10 +49,55 @@ export default (<Contract>{
     cases: {
       as_me: {
         request: {
-          body: { email: "updated@mail.com", name: "updated" },
+          body: { email: standardUser.email, name: "updated" },
           jwtPayload: { sub: standardUser.id },
         },
         response: { status: 204, body: {} },
+      },
+      email_change: {
+        request: {
+          body: { email: "updated@mail.com", name: standardUser.name },
+          jwtPayload: { sub: standardUser.id },
+        },
+        response: { status: 202, body: { pending_email: "updated@mail.com" } },
+      },
+    },
+  },
+  confirm_me_email: {
+    method: "post",
+    path: "/api/users/me/email",
+    cases: {
+      as_me: {
+        request: {
+          body: { code: authCodes.emailChange },
+          jwtPayload: { sub: standardUser.id },
+        },
+        response: {
+          status: 200,
+          body: { ...standardUser, email: emailChanges.success },
+        },
+      },
+      bad_request: {
+        request: { body: { code: "x" }, jwtPayload: { sub: standardUser.id } },
+        response: { status: 400, body: expect.any(Array) },
+      },
+      wrong_code: {
+        request: {
+          body: { code: authCodes.wrong },
+          jwtPayload: { sub: standardUser.id },
+        },
+        response: { status: 400, body: {} },
+      },
+      email_taken: {
+        request: {
+          body: { code: authCodes.emailChange },
+          jwtPayload: { sub: userWithAvatar.id },
+        },
+        response: { status: 409, body: {} },
+      },
+      unauthorized: {
+        request: {},
+        response: { status: 401, body: {} },
       },
     },
   },
