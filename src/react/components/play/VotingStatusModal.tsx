@@ -8,16 +8,50 @@ import { Suspense, use } from "react";
 import { getOrFetch } from "../../helpers/cache";
 import Modal from "../ui/Modal";
 import NotifyButton from "../ui/NotifyButton";
+import PreferenceBadge from "../ui/PreferenceBadge";
 
 type Member = VotingStatus["members"][number];
+type Vote = Member["votes"][number];
+
+const LEVELS: Vote["level"][] = ["HIGH", "MEDIUM", "LOW", "NOT_INTERESTED"];
+
+/*
+  One badge per level. Counts only make sense across several scenes: a row of
+  badges without scene names would be unreadable on a long play.
+*/
+function VoteSummary({
+  votes,
+  withCounts,
+}: {
+  votes: Vote[];
+  withCounts: boolean;
+}) {
+  return LEVELS.map((level) => {
+    const count = votes.filter((vote) => vote.level === level).length;
+
+    return (
+      count > 0 && (
+        <span key={level}>
+          {" "}
+          <PreferenceBadge level={level} />
+          {withCounts && count}
+        </span>
+      )
+    );
+  });
+}
 
 function MemberList({
   title,
   members,
+  votesOf,
+  withCounts,
   detail,
 }: {
   title: string;
   members: Member[];
+  votesOf: (member: Member) => Vote[];
+  withCounts: boolean;
   detail?: (member: Member) => string;
 }) {
   if (members.length === 0) return null;
@@ -31,6 +65,7 @@ function MemberList({
         {members.map((member) => (
           <li key={member.id}>
             {member.name}
+            <VoteSummary votes={votesOf(member)} withCounts={withCounts} />
             {detail && <small> ({detail(member)})</small>}
           </li>
         ))}
@@ -56,8 +91,12 @@ function VotingStatusContent({
     return <p>Aucune scène active pour le moment.</p>;
   }
 
-  const countVotes = (member: Member) =>
-    sceneIds.filter((id) => member.voted_scene_ids.includes(id)).length;
+  const votesOf = (member: Member) =>
+    member.votes.filter((vote) => sceneIds.includes(vote.scene_id));
+
+  const countVotes = (member: Member) => votesOf(member).length;
+
+  const listProps = { votesOf, withCounts: scene == null };
 
   // A reminder covers the whole play, so it is offered on the global view only
   const canRemind =
@@ -75,11 +114,15 @@ function VotingStatusContent({
   return (
     <>
       <MemberList
-        title="N'ont pas encore voté"
-        members={tracked.filter((member) => countVotes(member) === 0)}
+        title="Ont voté"
+        {...listProps}
+        members={tracked.filter(
+          (member) => countVotes(member) === sceneIds.length,
+        )}
       />
       <MemberList
         title="Vote en cours"
+        {...listProps}
         members={tracked.filter((member) => {
           const votes = countVotes(member);
           return votes > 0 && votes < sceneIds.length;
@@ -87,10 +130,9 @@ function VotingStatusContent({
         detail={(member) => `${countVotes(member)}/${sceneIds.length} scènes`}
       />
       <MemberList
-        title="Ont voté"
-        members={tracked.filter(
-          (member) => countVotes(member) === sceneIds.length,
-        )}
+        title="N'ont pas encore voté"
+        {...listProps}
+        members={tracked.filter((member) => countVotes(member) === 0)}
       />
       {canRemind && (
         <NotifyButton

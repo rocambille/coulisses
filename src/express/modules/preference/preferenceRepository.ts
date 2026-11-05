@@ -72,11 +72,13 @@ class PreferenceRepository {
       .prepare(
         `select u.id, u.name, tm.role,
            (
-             select json_group_array(sp.scene_id)
+             select json_group_array(
+               json_object('scene_id', sp.scene_id, 'level', sp.level)
+             )
              from scene_preference sp
              join scene s on s.id = sp.scene_id
              where sp.user_id = u.id and s.play_id = p.id and s.is_active = 1
-           ) as voted_scene_ids
+           ) as votes
          from play p
          join troupe_member tm on tm.troupe_id = p.troupe_id
          join user u on u.id = tm.user_id
@@ -89,7 +91,7 @@ class PreferenceRepository {
       active_scene_ids: scenes.map((scene) => scene.id),
       members: members.map((member) => ({
         ...member,
-        voted_scene_ids: JSON.parse(String(member.voted_scene_ids)),
+        votes: JSON.parse(String(member.votes)),
       })),
     });
   }
@@ -121,7 +123,7 @@ class PreferenceRepository {
       .filter(
         (member) =>
           member.role === "ACTOR" &&
-          member.voted_scene_ids.length < active_scene_ids.length,
+          member.votes.length < active_scene_ids.length,
       )
       .map((member) => member.id);
   }

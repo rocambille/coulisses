@@ -173,8 +173,8 @@ L'authentification repose sur un système de lien magique (token éphémère env
   - **Action** : Endpoint agrégé (Dashboard). Retourne l'ensemble de la matrice : les scènes de la pièce, les rôles associés à chaque scène, toutes les préférences des comédiens, et le casting officiel actuel.
 
 - `GET /api/plays/:playId/voting-status` *(Admin uniquement - Nouveau feedback)*
-  - **Réponse** : `{ active_scene_ids: number[], members: { id, name, role, voted_scene_ids: number[] }[] }`
-  - **Action** : Retourne le suivi nominatif de participation aux votes pour la pièce, sur les scènes actives. Permet de savoir qui a voté et qui n'a pas encore voté (globalement ou par scène).
+  - **Réponse** : `{ active_scene_ids: number[], members: { id, name, role, votes: { scene_id, level }[] }[] }`
+  - **Action** : Retourne le suivi nominatif de participation aux votes pour la pièce, sur les scènes actives. Permet de savoir qui a voté, avec quels niveaux d'envie, et qui n'a pas encore voté (globalement ou par scène).
 
 - `POST /api/castings` *(Admin uniquement)*
   - **Body** : `{ user_id: number, role_id: number, scene_id: number }`

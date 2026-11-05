@@ -1,4 +1,10 @@
-import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import type { UserEvent } from "@testing-library/user-event";
 import ScenesPage from "../../../../src/react/components/play/ScenesPage";
 import { isPushConfigured } from "../../../../src/react/helpers/push";
@@ -397,6 +403,42 @@ describe("React: ScenesPage", () => {
         name: /ont voté \(2\)/i,
       });
       expect(screen.queryByText(/n'ont pas encore voté/i)).toBeNull();
+    });
+
+    it("should show each vote after the name on a single scene", async () => {
+      const { user } = await renderPage();
+
+      await openVotes(
+        user,
+        new RegExp(`votes de la scène ${mainScenes[0].id}`, "i"),
+      );
+
+      await screen.findByRole("heading", { level: 4 });
+      const items = within(section(/ont voté/i) as HTMLElement).getAllByRole(
+        "listitem",
+      );
+
+      expect(items.map((item) => item.textContent)).toEqual([
+        `${actorUser.name} 👍`,
+        `${teacherUser.name} 🔥`,
+      ]);
+      expect(within(items[0]).getByTitle("Pourquoi pas")).toBeDefined();
+    });
+
+    it("should count votes by level across the play", async () => {
+      const { user } = await renderPage();
+
+      await openVotes(user, /suivi des votes/i);
+
+      await screen.findByRole("heading", { level: 4 });
+      const items = within(
+        section(/vote en cours/i) as HTMLElement,
+      ).getAllByRole("listitem");
+
+      expect(items.map((item) => item.textContent)).toEqual([
+        `${actorUser.name} 👍1 (1/2 scènes)`,
+        `${teacherUser.name} 🔥1 (1/2 scènes)`,
+      ]);
     });
 
     it("should list actors who did not vote, but not admins", async () => {

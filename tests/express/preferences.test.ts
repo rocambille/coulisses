@@ -48,7 +48,9 @@ describe("GET /api/plays/:playId/voting-status", () => {
     const { members } = await votingStatusBody();
 
     expect(
-      members.find((member) => member.id === actorUser.id)?.voted_scene_ids,
+      members
+        .find((member) => member.id === actorUser.id)
+        ?.votes.map((vote) => vote.scene_id),
     ).toEqual([mainScenes[0].id]);
   });
 

@@ -37,7 +37,12 @@ export const VotingStatusSchema = z.object({
       id: z.number(),
       name: z.string(),
       role: z.enum(["ADMIN", "ACTOR"]),
-      voted_scene_ids: z.array(z.number()),
+      votes: z.array(
+        z.object({
+          scene_id: z.number(),
+          level: PreferenceSchema.shape.level,
+        }),
+      ),
     }),
   ),
 });
